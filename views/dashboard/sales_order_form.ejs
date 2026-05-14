@@ -1,0 +1,975 @@
+<%- include('../partials/header') %>
+
+<style>
+  :root {
+    --primary: #4361ee;
+    --secondary: #3f37c9;
+    --success: #4cc9f0;
+    --danger: #f72585;
+    --light: #f8f9fa;
+    --dark: #212529;
+    --border: #dee2e6;
+    --shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .tab-nav {
+    display: flex;
+    gap: 8px;
+    background: white;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+
+  .tab-nav a {
+    text-decoration: none;
+    padding: 8px 16px;
+    font-weight: 500;
+    border-radius: 6px;
+    color: var(--dark);
+    transition: all 0.2s ease;
+  }
+
+  .tab-nav a:hover {
+    background: rgba(67, 97, 238, 0.1);
+  }
+
+  .tab-nav a.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: var(--shadow);
+  }
+
+  .section {
+    display: none;
+    padding: 0 24px;
+  }
+
+  .section.active {
+    display: block;
+  }
+
+  .btn {
+    padding: 8px 16px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+  }
+
+  .btn:hover {
+    background: var(--secondary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+  }
+
+  .btn-delete {
+    background: var(--danger);
+  }
+
+  .btn-delete:hover {
+    background: #d1145a;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    box-shadow: var(--shadow);
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  table th, table td {
+    border: 1px solid var(--border);
+    padding: 12px;
+    text-align: left;
+  }
+
+  table th {
+    background: var(--primary);
+    color: black;
+    font-weight: 500;
+  }
+
+  table tr:nth-child(even) {
+    background-color: #f8f9fa;
+  }
+
+  table tr:hover {
+    background-color: rgba(67, 97, 238, 0.05);
+  }
+
+  form {
+    margin-top: 20px;
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: var(--dark);
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border 0.2s ease;
+  }
+
+  .form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+  }
+
+  .pagination {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .page-link {
+    padding: 8px 16px;
+    background: var(--primary);
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+  }
+
+  .page-link:hover {
+    background: var(--secondary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+  }
+
+  .page-link.disabled {
+    background: #cccccc;
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  #loading-indicator {
+    padding: 20px;
+    text-align: center;
+    display: none;
+  }
+
+  /* Order items table */
+  .order-items {
+    width: 100%;
+    margin: 20px 0;
+    border-collapse: collapse;
+  }
+
+  .order-items th {
+    background: #f8f9fa;
+    color: var(--dark);
+    text-align: left;
+    padding: 12px;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .order-items td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .order-items input[type="number"] {
+    width: 80px;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+
+  .order-items .remove-item {
+    color: var(--danger);
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  /* Product search */
+  .product-search {
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  .product-search input {
+    width: 100%;
+    padding: 10px 40px 10px 15px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  .product-search .search-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+  }
+
+  /* Totals section */
+  .totals-section {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 6px;
+    margin-top: 20px;
+  }
+
+  .totals-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .totals-row.total {
+    font-weight: bold;
+    font-size: 1.1em;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    margin-top: 8px;
+  }
+
+  /* Status badges */
+  .status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .status-pending {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .status-completed {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .status-cancelled {
+    background: #f8d7da;
+    color: #721c24;
+  }
+
+  /* Product selection dropdown */
+  .dropdown {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+  }
+
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    z-index: 1;
+    border-radius: 0 0 6px 6px;
+    border: 1px solid var(--border);
+    border-top: none;
+  }
+
+  .dropdown-content a {
+    color: var(--dark);
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    transition: background 0.2s;
+  }
+
+  .dropdown-content a:hover {
+    background-color: #f1f1f1;
+  }
+
+  .show {
+    display: block;
+  }
+
+/* Improved table styling */
+  .orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  
+  .orders-table th, .orders-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .orders-table th {
+    background-color: #f5f5f5;
+    font-weight: 600;
+  }
+  
+  /* Badge styling */
+  .status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+  
+  .status-created { background-color: #e3f2fd; color: #1976d2; }
+  .status-accountant-review { background-color: #fff8e1; color: #ff8f00; }
+  .status-accountant-approved { background-color: #e8f5e9; color: #388e3c; }
+  .status-dispatch-pending { background-color: #f3e5f5; color: #8e24aa; }
+  .status-dispatched { background-color: #e0f7fa; color: #00acc1; }
+  .status-delivered { background-color: #e8f5e9; color: #2e7d32; }
+  .status-cancelled { background-color: #ffebee; color: #d32f2f; }
+  
+  .type-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .type-cod { background-color: #fce4ec; color: #c2185b; }
+  .type-prepaid { background-color: #e8f5e9; color: #2e7d32; }
+  
+  /* Action buttons */
+  .actions-cell {
+    width: 200px;
+  }
+  
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  
+  .btn-edit {
+    background-color: #2196f3;
+    color: white;
+    border: none;
+  }
+  
+  .btn-edit:hover {
+    background-color: #1976d2;
+  }
+  
+  .btn-track {
+    background-color: #ff9800;
+    color: white;
+    border: none;
+  }
+  
+  .btn-track:hover {
+    background-color: #f57c00;
+  }
+  
+  .btn-delete {
+    background-color: #f44336;
+    color: white;
+    border: none;
+  }
+  
+  .btn-delete:hover {
+    background-color: #d32f2f;
+  }
+  
+  /* Modal dialog for tracking */
+  .modal-dialog {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+  }
+  
+  .modal-content {
+    background-color: white;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+    max-width: 90%;
+    position: relative;
+  }
+  
+  .close-btn {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 24px;
+    cursor: pointer;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+  
+  .form-group input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  
+  .btn-primary {
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .btn-primary:hover {
+    background-color: #388e3c;
+  }
+
+  .actions-cell {
+    width: 220px; /* Slightly wider to accommodate both buttons */
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .btn-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    min-width: 80px;
+    height: 32px;
+    border: none;
+  }
+
+  .btn-text {
+    margin-left: 5px;
+  }
+
+  .btn-edit {
+    background-color: #2196f3;
+    color: white;
+  }
+
+  .btn-edit:hover {
+    background-color: #1976d2;
+  }
+
+  .btn-track {
+    background-color: #ff9800;
+    color: white;
+  }
+
+  .btn-track:hover {
+    background-color: #f57c00;
+  }
+
+  .btn-delete {
+    background-color: #f44336;
+    color: white;
+  }
+
+  .btn-delete:hover {
+    background-color: #d32f2f;
+  }
+
+  .action-form {
+    margin: 0;
+    display: inline;
+  }
+
+  /* Product search dropdown styles */
+#product-dropdown {
+  display: none;
+  position: absolute;
+  background-color: white;
+  width: calc(100% - 30px);
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 1000;
+}
+
+.dropdown-item {
+  padding: 10px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+.dropdown-item:hover {
+  background-color: #f5f5f5;
+}
+
+.dropdown-item.error {
+  color: #dc3545;
+}
+
+.product-search {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<div class="tab-nav">
+  <a href="/dashboard/sales">Home</a>
+  <a href="/dashboard/sales/orders" class="active">Orders</a>
+</div>
+
+<!-- TAB: Edit Order -->
+<div class="section active" id="edit">
+  <h2>Edit Order #<%= order.orderNumber || order._id.toString().slice(-6).toUpperCase() %></h2>
+  
+  <form id="order-form" action="/dashboard/sales/orders/<%= order._id %>/update" method="POST">
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="customerName">Customer Name *</label>
+        <input type="text" id="customerName" name="customerName" class="form-control" 
+               value="<%= order.customerName %>" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="customerContact">Contact Number *</label>
+        <input type="text" id="customerContact" name="customerContact" class="form-control" 
+               value="<%= order.customerContact %>" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="customerGSTIN">GSTIN (Optional)</label>
+        <input type="text" id="customerGSTIN" name="customerGSTIN" class="form-control"
+               value="<%= order.customerGSTIN || '' %>">
+      </div>
+      
+      <div class="form-group">
+        <label for="orderType">Order Type *</label>
+        <select id="orderType" name="orderType" class="form-control" required disabled>
+          <option value="cod" <%= order.orderType === 'cod' ? 'selected' : '' %>>Cash on Delivery (COD)</option>
+          <option value="prepaid" <%= order.orderType === 'prepaid' ? 'selected' : '' %>>Prepaid</option>
+        </select>
+        <small class="form-text text-muted">Order type cannot be changed after creation</small>
+      </div>
+    </div>
+
+    <h4>Shipping Address</h4>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="shippingStreet">Street *</label>
+        <input type="text" id="shippingStreet" name="shippingAddress[street]" class="form-control" 
+               value="<%= order.shippingAddress.street %>" required>
+      </div>
+      <div class="form-group">
+        <label for="shippingCity">City *</label>
+        <input type="text" id="shippingCity" name="shippingAddress[city]" class="form-control" 
+               value="<%= order.shippingAddress.city %>" required>
+      </div>
+      <div class="form-group">
+        <label for="shippingState">State *</label>
+        <input type="text" id="shippingState" name="shippingAddress[state]" class="form-control" 
+               value="<%= order.shippingAddress.state %>" required>
+      </div>
+      <div class="form-group">
+        <label for="shippingPostalCode">Postal Code *</label>
+        <input type="text" id="shippingPostalCode" name="shippingAddress[postalCode]" class="form-control" 
+               value="<%= order.shippingAddress.postalCode %>" required>
+      </div>
+    </div>
+
+    <h4>Billing Address</h4>
+    <div class="form-check" style="margin-bottom: 15px;">
+      <input type="checkbox" id="sameAsShipping" class="form-check-input" 
+             <%= JSON.stringify(order.billingAddress) === JSON.stringify(order.shippingAddress) ? 'checked' : '' %>>
+      <label for="sameAsShipping" class="form-check-label">Same as shipping address</label>
+    </div>
+    
+    <div class="form-grid" id="billing-address-fields">
+      <div class="form-group">
+        <label for="billingStreet">Street *</label>
+        <input type="text" id="billingStreet" name="billingAddress[street]" class="form-control" 
+               value="<%= order.billingAddress.street %>" required>
+      </div>
+      <div class="form-group">
+        <label for="billingCity">City *</label>
+        <input type="text" id="billingCity" name="billingAddress[city]" class="form-control" 
+               value="<%= order.billingAddress.city %>" required>
+      </div>
+      <div class="form-group">
+        <label for="billingState">State *</label>
+        <input type="text" id="billingState" name="billingAddress[state]" class="form-control" 
+               value="<%= order.billingAddress.state %>" required>
+      </div>
+      <div class="form-group">
+        <label for="billingPostalCode">Postal Code *</label>
+        <input type="text" id="billingPostalCode" name="billingAddress[postalCode]" class="form-control" 
+               value="<%= order.billingAddress.postalCode %>" required>
+      </div>
+    </div>
+
+    <h4>Order Items</h4>
+    <div class="product-search">
+      <input type="text" id="product-search" placeholder="Search products..." autocomplete="off">
+      <i class="fas fa-search search-icon"></i>
+      <div id="product-dropdown" class="dropdown-content"></div>
+    </div>
+    
+    <table class="order-items">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Price</th>
+          <th>Quantity</th>
+          <th>Total</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="order-items-container">
+        <% order.items.forEach((item, index) => { %>
+          <tr class="order-item" data-product-id="<%= item.product %>">
+            <td>
+              <%= item.productName %>
+              <input type="hidden" name="items[product][]" value="<%= item.product %>">
+              <input type="hidden" name="items[productName][]" value="<%= item.productName %>">
+            </td>
+            <td>
+              <input type="number" class="price-input" name="items[price][]" 
+                     value="<%= item.price %>" min="0" step="0.01" required>
+            </td>
+            <td>
+              <input type="number" class="quantity-input" name="items[quantity][]" 
+                     value="<%= item.quantity %>" min="1" required>
+            </td>
+            <td class="item-total">₹<%= (item.price * item.quantity).toFixed(2) %></td>
+            <td>
+              <button type="button" class="btn btn-sm btn-danger remove-item" style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;">
+              <i class="fas fa-trash"></i>
+            </button>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+
+    <div class="totals-section">
+      <div class="totals-row">
+        <span>Subtotal:</span>
+        <span id="subtotal-display">₹<%= order.subtotal.toFixed(2) %></span>
+        <input type="hidden" id="subtotal" name="subtotal" value="<%= order.subtotal %>">
+      </div>
+      <div class="totals-row">
+        <span>Tax:</span>
+        <div>
+          <select id="tax-rate" name="taxRate" class="form-control" style="width: 100px; display: inline-block;">
+            <option value="0" <%= order.taxRate === 0 ? 'selected' : '' %>>NA (0%)</option>
+            <option value="3" <%= order.taxRate === 3 ? 'selected' : '' %>>3%</option>
+            <option value="18" <%= order.taxRate === 18 ? 'selected' : '' %>>18%</option>
+          </select>
+          <span id="tax-amount-display">₹<%= order.tax.toFixed(2) %></span>
+          <input type="hidden" id="tax" name="tax" value="<%= order.tax %>">
+        </div>
+      </div>
+      <div class="totals-row total">
+        <span>Grand Total:</span>
+        <span id="total-display">₹<%= order.total.toFixed(2) %></span>
+        <input type="hidden" id="total" name="total" value="<%= order.total %>">
+      </div>
+    </div>
+
+    <!-- Add Advance Payment Section -->
+  <div id="advance-payment-container" class="totals-row" 
+       style="<%= order.orderType !== 'cod' ? 'display: none;' : '' %>">
+    <label for="advancePayment" style="width: 200px;">Advance Payment:</label>
+    <input type="number" id="advancePayment" name="advancePayment" 
+           class="form-control" style="width: 100px; display: inline-block;"
+           min="0" step="0.01" value="<%= order.advancePayment || 0 %>">
+    <span id="balance-display">(Balance: ₹<%= (order.total - (order.advancePayment || 0)).toFixed(2) %>)</span>
+  </div>
+</div>
+
+<!-- Add Accountant Notes Field -->
+<div class="form-group">
+  <label for="accountantDescription">Accountant Notes (Internal Use)</label>
+  <textarea id="accountantDescription" name="accountantDescription" 
+            class="form-control" rows="2"><%= order.accountantDescription || '' %></textarea>
+</div>
+    <div class="form-group">
+      <label for="notes">Order Notes (Optional)</label>
+      <textarea id="notes" name="notes" class="form-control" rows="3"><%= order.notes || '' %></textarea>
+    </div>
+
+    <div class="form-footer">
+      <button type="submit" class="btn btn-primary">Update Order</button>
+      <a href="/dashboard/sales" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  const availableProducts = <%- JSON.stringify(products) %>;
+
+document.addEventListener('DOMContentLoaded', function() {
+  const productSearch = document.getElementById('product-search');
+  const productDropdown = document.getElementById('product-dropdown');
+  const itemsContainer = document.getElementById('order-items-container');
+
+  // === Product Search ===
+  productSearch.addEventListener('input', debounce(function() {
+    const searchTerm = this.value.trim().toLowerCase();
+    if (searchTerm.length < 2) {
+      productDropdown.style.display = 'none';
+      return;
+    }
+
+    productDropdown.innerHTML = '';
+    
+    // Filter products locally
+    const filteredProducts = availableProducts.filter(product => 
+      product.name.toLowerCase().includes(searchTerm) || 
+      (product.sku && product.sku.toLowerCase().includes(searchTerm))
+    );
+
+    if (filteredProducts.length === 0) {
+      productDropdown.innerHTML = '<div class="dropdown-item">No products found</div>';
+    } else {
+      filteredProducts.forEach(product => {
+        const item = document.createElement('div');
+        item.className = 'dropdown-item';
+        item.innerHTML = `
+          <strong>${product.name}</strong>
+          <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+            <span>SKU: ${product.sku || 'N/A'}</span>
+            <span>₹${product.price.toFixed(2)}</span>
+          </div>
+        `;
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          addProductToOrder(product);
+          productSearch.value = '';
+          productDropdown.style.display = 'none';
+        });
+        productDropdown.appendChild(item);
+      });
+    }
+
+    productDropdown.style.display = 'block';
+  }, 300));
+
+  function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+  }
+
+  // === Add Product to Order ===
+  function addProductToOrder(product) {
+    const row = document.createElement('tr');
+    row.className = 'order-item';
+    row.dataset.productId = product._id;
+
+    row.innerHTML = `
+      <td>
+        ${product.name}
+        <input type="hidden" name="items[product][]" value="${product._id}">
+        <input type="hidden" name="items[productName][]" value="${product.name}">
+      </td>
+      <td>
+        <input type="number" class="price-input" name="items[price][]" 
+               value="${product.price}" min="0" step="0.01" required>
+      </td>
+      <td>
+        <input type="number" class="quantity-input" name="items[quantity][]" 
+               value="1" min="1" required>
+      </td>
+      <td class="item-total">₹${product.price.toFixed(2)}</td>
+      <td>
+        <button type="button" class="btn btn-sm btn-danger remove-item">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
+    `;
+
+    itemsContainer.appendChild(row);
+
+    // Bind event listeners
+    row.querySelector('.price-input').addEventListener('input', updateItemTotal);
+    row.querySelector('.quantity-input').addEventListener('input', updateItemTotal);
+    row.querySelector('.remove-item').addEventListener('click', function () {
+      row.remove();
+      calculateTotals();
+    });
+
+    calculateTotals();
+  }
+
+  // === Update Row Total and Recalculate ===
+  function updateItemTotal(e) {
+    const row = e.target.closest('tr');
+    const price = parseFloat(row.querySelector('.price-input')?.value) || 0;
+    const quantity = parseInt(row.querySelector('.quantity-input')?.value) || 0;
+    row.querySelector('.item-total').textContent = '₹' + (price * quantity).toFixed(2);
+    calculateTotals();
+  }
+
+  // === Calculate Totals from MRP ===
+  function calculateTotals() {
+    const taxRate = parseFloat(document.getElementById('tax-rate')?.value) || 0;
+    const discount = 0;
+    let total = 0;
+
+    // Sum up totals
+    itemsContainer.querySelectorAll('tr').forEach(row => {
+      const price = parseFloat(row.querySelector('.price-input')?.value) || 0;
+      const qty = parseInt(row.querySelector('.quantity-input')?.value) || 0;
+      total += price * qty;
+    });
+
+    const taxInclusiveTotal = total;
+    const subtotal = taxInclusiveTotal / (1 + taxRate / 100);
+    const tax = taxInclusiveTotal - subtotal;
+
+    // Update displays
+    document.getElementById('tax-amount-display').textContent = `₹${tax.toFixed(2)}`;
+    document.getElementById('tax').value = tax.toFixed(2);
+    document.getElementById('total-display').textContent = `₹${taxInclusiveTotal.toFixed(2)}`;
+    document.getElementById('total').value = taxInclusiveTotal.toFixed(2);
+    document.getElementById('subtotal-display').textContent = `₹${subtotal.toFixed(2)}`;
+    document.getElementById('subtotal').value = subtotal.toFixed(2);
+    advanceInput.value = 0;
+    document.getElementById('balance-display').textContent = '(Balance: ₹0.00)';
+  }
+
+  // === Tax Rate Change Listener ===
+  document.getElementById('tax-rate').addEventListener('change', calculateTotals);
+
+  // === Initialize for existing rows ===
+  document.querySelectorAll('.price-input, .quantity-input').forEach(input => {
+    input.addEventListener('input', updateItemTotal);
+  });
+
+  document.querySelectorAll('.remove-item').forEach(button => {
+    button.addEventListener('click', function () {
+      this.closest('tr').remove();
+      calculateTotals();
+    });
+  });
+
+  // === Address Auto Fill ===
+  const sameAsShipping = document.getElementById('sameAsShipping');
+  sameAsShipping?.addEventListener('change', function () {
+    if (this.checked) {
+      document.getElementById('billingStreet').value = document.getElementById('shippingStreet').value;
+      document.getElementById('billingCity').value = document.getElementById('shippingCity').value;
+      document.getElementById('billingState').value = document.getElementById('shippingState').value;
+      document.getElementById('billingPostalCode').value = document.getElementById('shippingPostalCode').value;
+    }
+  });
+
+  // === Close dropdown on click outside ===
+  document.addEventListener('click', function (e) {
+    if (!productSearch.contains(e.target) && !productDropdown.contains(e.target)) {
+      productDropdown.style.display = 'none';
+    }
+  });
+
+  const orderType = document.getElementById('orderType').value;
+  const advanceContainer = document.getElementById('advance-payment-container');
+  const advanceInput = document.getElementById('advancePayment');
+  
+  // Initialize based on current order type
+  if (orderType !== 'cod') {
+    advanceContainer.style.display = 'none';
+    advanceInput.value = 0;
+    updateBalanceDisplay();
+  }
+
+  // Handle advance payment changes
+  advanceInput.addEventListener('input', function() {
+    updateBalanceDisplay();
+  });
+
+  function updateBalanceDisplay() {
+    const total = parseFloat(document.getElementById('total').value) || 0;
+    const advance = parseFloat(advanceInput.value) || 0;
+    
+    if (advance > total) {
+      alert('Advance payment cannot exceed order total');
+      advanceInput.value = total.toFixed(2);
+      document.getElementById('balance-display').textContent = `(Balance: ₹0.00)`;
+    } else {
+      const balance = total - advance;
+      document.getElementById('balance-display').textContent = `(Balance: ₹${balance.toFixed(2)})`;
+    }
+  }
+});
+</script>
+

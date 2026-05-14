@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details - Dispatcher</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #eef2ff;
+            --secondary: #6c757d;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #94a3b8;
+            --border: #e2e8f0;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f1f5f9;
+            color: var(--dark);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 24px;
+            transition: all 0.3s ease;
+            }
+
+            .card:hover {
+            box-shadow: var(--card-shadow-hover);
+            }
+
+            .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px 12px 0 0 !important;
+            padding: 20px 24px;
+            border: none;
+            }
+
+            .card-header h5 {
+            margin: 0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            }
+
+            .card-body {
+            padding: 24px;
+            }
+
+        .document-section {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .document-card {
+            background: #f8fafc;
+            border: 1px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            min-width: 150px;
+            transition: all 0.3s ease;
+        }
+
+        .document-card:hover {
+            background: #e2e8f0;
+            border-color: var(--primary);
+        }
+        /* Header Styles */
+        .dispatcher-header {
+            background: linear-gradient(135deg, var(--primary) 0%, #3a56d4 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .logo-icon {
+            font-size: 2rem;
+        }
+        
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .logo-text p {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .user-info {
+            text-align: right;
+        }
+        
+        .user-info .name {
+            font-weight: 600;
+        }
+        
+        .user-info .role {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        
+        /* Main Content */
+        .main-content {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        /* Page Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .page-title h2 {
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .page-subtitle {
+            color: var(--gray);
+            font-size: 1rem;
+        }
+        
+        .order-status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 1.5rem;
+            border: none;
+        }
+        
+        .card-header {
+            background: var(--primary-light);
+            border-bottom: 1px solid var(--border);
+            padding: 1.25rem 1.5rem;
+            border-radius: 12px 12px 0 0 !important;
+        }
+        
+        .card-header h5 {
+            font-weight: 600;
+            color: var(--dark);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .info-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        /* Status Badges */
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+        
+        .status-approved {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+        
+        .status-dispatched {
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+        }
+        
+        .status-delivered {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+        
+        .status-cancelled {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+        
+        /* Order Type Badges */
+        .type-cod {
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+        }
+        
+        .type-prepaid {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+        
+        .type-credit {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+        
+        /* Products Table */
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .products-table th {
+            background: var(--primary-light);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 1px solid var(--border);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .products-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+        
+        .products-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* Amount Summary */
+        .amount-summary {
+            background: var(--light);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        
+        .amount-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .amount-row:last-child {
+            border-bottom: none;
+            font-weight: 700;
+            font-size: 1.125rem;
+            color: var(--dark);
+        }
+        
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.7rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.4rem;
+            top: 0.4rem;
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+        
+        .timeline-date {
+            font-size: 0.875rem;
+            color: var(--gray);
+            margin-bottom: 0.25rem;
+        }
+        
+        .timeline-content {
+            font-size: 0.875rem;
+            color: var(--dark);
+        }
+        
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .btn-action {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+            padding: 0.75rem;
+        }
+        
+        /* Modal Styles */
+        .modal-header {
+            background: var(--primary-light);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        /* Overdue Indicator */
+        .overdue {
+            color: var(--danger);
+            font-weight: 600;
+        }
+        
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .user-menu {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .main-content {
+                padding: 0 1rem;
+            }
+            
+            .page-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .order-status {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .dispatcher-header {
+                padding: 1rem;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .products-table {
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Header -->
+    <header class="dispatcher-header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <i class="bi bi-truck"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>Dispatcher Portal</h1>
+                    <p>Order Management System</p>
+                </div>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="name"><%= user.name %></div>
+                    <div class="role">Dispatcher</div>
+                </div>
+                <div class="user-avatar">
+                    <%= user.name.charAt(0).toUpperCase() %>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div>
+                <h2>Order #<%= order.invoiceNo %></h2>
+                <p class="page-subtitle">
+                    Created on <%= new Date(order.createdAt).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric'
+                    }) %>
+                </p>
+                <div class="order-status mt-2">
+                    <span class="badge status-<%= order.status %>">
+                        <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                    </span>
+                    <% if (order.trackingId) { %>
+                        <span class="text-muted">
+                            <i class="bi bi-truck"></i> Tracking ID: <strong><%= order.trackingId %></strong>
+                        </span>
+                    <% } %>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="/dispatcher/dashboard" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Orders
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Left Column -->
+            <div class="col-lg-8">
+                <!-- Customer & Order Information -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-person-circle"></i> Customer & Order Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Customer Name</span>
+                                <span class="info-value"><%= order.customer.name %></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Mobile Number</span>
+                                <span class="info-value"><%= order.customer.mobileNumber %></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Order Type</span>
+                                <span class="badge type-<%= order.orderType %>">
+                                    <%= order.orderType.toUpperCase() %>
+                                </span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Sales Person</span>
+                                <span class="info-value"><%= order.salesPerson.name %></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Order Date</span>
+                                <span class="info-value"><%= new Date(order.orderDate).toLocaleDateString() %></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Due Date</span>
+                                <span class="info-value <%= new Date(order.dueDate) < new Date() ? 'overdue' : '' %>">
+                                    <%= new Date(order.dueDate).toLocaleDateString() %>
+                                    <% if (new Date(order.dueDate) < new Date()) { %>
+                                        <i class="bi bi-exclamation-triangle ms-1" title="Overdue"></i>
+                                    <% } %>
+                                </span>
+                            </div>
+                        </div>
+                         <% if (order.poNumber) { %>
+                        <div class="info-item">
+                        <span class="info-label">PO Number</span>
+                        <span class="info-value"><%= order.poNumber %></span>
+                        </div>
+                        <% } %>
+                        <% if (order.poDate) { %>
+                        <div class="info-item">
+                        <span class="info-label">PO Date</span>
+                        <span class="info-value"><%= new Date(order.poDate).toLocaleDateString() %></span>
+                        </div>
+                        <% } %>
+                        <% if (order.orderType === 'credit') { %>
+                        <div class="info-item">
+                        <span class="info-label">Credit Amount</span>
+                        <span class="info-value">₹<%= order.creditAmount.toLocaleString() %></span>
+                        </div>
+                        <% } %>
+                        
+                        
+                        <% if (order.customer.billingAddress) { %>
+                        <div class="mt-3">
+                            <span class="info-label">Billing Address</span>
+                            <p class="info-value mb-0 mt-1">
+                                <%= order.customer.billingAddress.street %>, 
+                                <%= order.customer.billingAddress.city %>, 
+                                <%= order.customer.billingAddress.state %> - 
+                                <%= order.customer.billingAddress.pincode %>
+                            </p>
+                        </div>
+                        <% } %>
+                        <% if (order.customer.shippingAddress) { %>
+                        <div class="mt-4">
+                            <span class="info-label">Shipping Address</span>
+                            <p class="info-value mb-0">
+                            <%= order.customer.shippingAddress.street %>, 
+                            <%= order.customer.shippingAddress.city %>, 
+                            <%= order.customer.shippingAddress.state %> - 
+                            <%= order.customer.shippingAddress.pincode %>
+                            </p>
+                        </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Products -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-box-seam"></i> Products</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="products-table">
+                                <thead>
+                                    <tr>
+                                        <th>Product Name</th>
+                                        <th>Quantity</th>
+                                        <th>Rate (₹)</th>
+                                        <th>Total (₹)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% order.products.forEach((product, index) => { %>
+                                    <tr>
+                                        <td>
+                                            <strong><%= product.name %></strong>
+                                        </td>
+                                        <td><%= product.quantity %></td>
+                                        <td>₹<%= product.rate.toLocaleString() %></td>
+                                        <td><strong>₹<%= product.total.toLocaleString() %></strong></td>
+                                    </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Amount Summary -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-calculator"></i> Amount Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="amount-summary">
+                            <div class="amount-row">
+                                <span>Subtotal:</span>
+                                <span>₹<%= order.subtotal.toLocaleString() %></span>
+                            </div>
+                            <div class="amount-row">
+                                <span>GST (18%):</span>
+                                <span>₹<%= order.gstAmount.toLocaleString() %></span>
+                            </div>
+                            <div class="amount-row">
+                                <span>Total Amount:</span>
+                                <span>₹<%= order.totalAmount.toLocaleString() %></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="col-lg-4">
+                <!-- Order Timeline -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-clock-history"></i> Order Timeline</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-date">
+                                    <%= new Date(order.createdAt).toLocaleDateString('en-US', { 
+                                        year: 'numeric', 
+                                        month: 'short', 
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    }) %>
+                                </div>
+                                <div class="timeline-content">
+                                    <strong>Order Created</strong><br>
+                                    by <%= order.salesPerson.name %>
+                                </div>
+                            </div>
+                            
+                            <% if (order.approvedAt) { %>
+                            <div class="timeline-item">
+                                <div class="timeline-date">
+                                    <%= new Date(order.approvedAt).toLocaleDateString('en-US', { 
+                                        year: 'numeric', 
+                                        month: 'short', 
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    }) %>
+                                </div>
+                                <div class="timeline-content">
+                                    <strong>Order Approved</strong>
+                                </div>
+                            </div>
+                            <% } %>
+                            
+                            <% if (order.dispatchedAt) { %>
+                            <div class="timeline-item">
+                                <div class="timeline-date">
+                                    <%= new Date(order.dispatchedAt).toLocaleDateString('en-US', { 
+                                        year: 'numeric', 
+                                        month: 'short', 
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    }) %>
+                                </div>
+                                <div class="timeline-content">
+                                    <strong>Order Dispatched</strong>
+                                    <% if (order.trackingId) { %>
+                                        <br>Tracking: <%= order.trackingId %>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <% } %>
+                            
+                            <% if (order.deliveredAt) { %>
+                            <div class="timeline-item">
+                                <div class="timeline-date">
+                                    <%= new Date(order.deliveredAt).toLocaleDateString('en-US', { 
+                                        year: 'numeric', 
+                                        month: 'short', 
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    }) %>
+                                </div>
+                                <div class="timeline-content">
+                                    <strong>Order Delivered</strong>
+                                </div>
+                            </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                      <!-- Documents -->
+                        <div class="card">
+                            <div class="card-header">
+                            <h5><i class="bi bi-files"></i> Documents</h5>
+                            </div>
+                            <div class="card-body">
+                            <div class="document-section">
+                                <% if (order.piDocument?.original) { %>
+                                <a href="/api/file/files/<%= order.piDocument.original %>?bucket=piDocuments" 
+                                target="_blank" 
+                                class="document-card text-decoration-none">
+                                <div class="document-icon">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                </div>
+                                <div class="text-primary fw-semibold">PI Document</div>
+                                <small class="text-muted">Click to view</small>
+                                </a>
+                                <% } else { %>
+                                <div class="document-card">
+                                <div class="document-icon text-muted">
+                                    <i class="bi bi-file-earmark-plus"></i>
+                                </div>
+                                <div class="text-muted fw-semibold">PI Document</div>
+                                <small class="text-muted">Not uploaded</small>
+                                </div>
+                                <% } %>
+                            </div>
+                            
+                            <% if (!order.piDocument?.original) { %>
+                            <div class="mt-3">
+                                <form id="piUploadForm" enctype="multipart/form-data">
+                                <div class="input-group">
+                                    <input type="file" 
+                                        class="form-control" 
+                                        name="piDocument" 
+                                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                        required>
+                                    <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-upload"></i> Upload
+                                    </button>
+                                </div>
+                                </form>
+                            </div>
+                            <% } %>
+                            </div>
+                        </div>
+                    <!-- Quick Actions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="bi bi-lightning"></i> Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="quick-actions">
+                                <!-- Print Invoice Button - Available for all statuses -->
+                                <button class="btn btn-info btn-action" onclick="printInvoice('<%= order._id %>')">
+                                    <i class="bi bi-printer"></i> Print Invoice
+                                </button>
+                                
+                                <% if (order.status === 'approved') { %>
+                                    <button class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#dispatchModal">
+                                        <i class="bi bi-truck"></i> Mark as Dispatched
+                                    </button>
+                                    <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#sendBackModal">
+                                        <i class="bi bi-arrow-counterclockwise"></i> Send Back for Update
+                                    </button>
+                                <% } %>
+                                
+                                <% if (order.status === 'dispatched') { %>
+                                     <button class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#dispatchModal">
+                                        <i class="bi bi-truck"></i> Update Tracking ID
+                                    </button>
+                                    <button class="btn btn-success btn-action" onclick="updateOrderStatus('delivered')">
+                                        <i class="bi bi-check-lg"></i> Mark as Delivered
+                                    </button>
+                                    <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#sendBackModal">
+                                        <i class="bi bi-arrow-counterclockwise"></i> Send Back for Update
+                                    </button>
+                                <% } %>
+                                
+                                <% if (order.status === 'delivered') { %>
+                                    <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#sendBackModal">
+                                        <i class="bi bi-arrow-counterclockwise"></i> Send Back for Update
+                                    </button>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                <!-- Tracking Information -->
+                <% if (order.trackingId) { %>
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-geo-alt"></i> Tracking Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-item">
+                            <span class="info-label">Tracking ID</span>
+                            <span class="info-value"><%= order.trackingId %></span>
+                        </div>
+                        <% if (order.dispatchedAt) { %>
+                        <div class="info-item mt-2">
+                            <span class="info-label">Dispatched Date</span>
+                            <span class="info-value"><%= new Date(order.dispatchedAt).toLocaleDateString() %></span>
+                        </div>
+                        <% } %>
+                    </div>
+                </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dispatch Modal -->
+    <div class="modal fade" id="dispatchModal" tabindex="-1" aria-labelledby="dispatchModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="dispatchModalLabel">
+                        <i class="bi bi-truck me-2"></i>Update Tracking ID
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>You are about to update the tracking ID for order <strong>#<%= order.invoiceNo %></strong>.</p>
+                    
+                    <form id="dispatchForm">
+                        <div class="mb-3">
+                            <label for="trackingId" class="form-label">Tracking ID <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="trackingId" name="trackingId" required 
+                                   placeholder="Enter tracking number">
+                            <div class="form-text">Please enter the courier tracking ID for this shipment.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dispatchNotes" class="form-label">Notes (Optional)</label>
+                            <textarea class="form-control" id="dispatchNotes" name="dispatchNotes" rows="3" 
+                                      placeholder="Add any additional notes about the dispatch..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitDispatch()">
+                        <i class="bi bi-check-lg"></i> Confirm Update
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Send Back Modal -->
+    <div class="modal fade" id="sendBackModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-arrow-counterclockwise text-warning me-2"></i>
+                        Send Order Back for Update
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>This will change the order status to <strong>Pending</strong> and allow the sales person to make changes.</p>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Reason for sending back (optional):</label>
+                        <textarea id="sendBackReason" class="form-control" rows="3" placeholder="Enter reason for sending this order back for update..."></textarea>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Note:</strong> The sales person will be able to edit all order details except the invoice number.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" onclick="confirmSendBack()">
+                        <i class="bi bi-arrow-counterclockwise me-2"></i>
+                        Send Back for Update
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Send back for update with reason
+        async function confirmSendBack() {
+            const reason = document.getElementById('sendBackReason').value.trim();
+            
+            if (!confirm('Are you sure you want to send this order back for update? This will change the status to pending.')) {
+                return;
+            }
+
+            try {
+                const payload = { 
+                    status: 'pending',
+                    sendBack: true 
+                };
+                
+                if (reason) {
+                    payload.reason = reason;
+                }
+
+                const response = await fetch(`/api/dispatcher/orders/<%= order._id %>/send-back`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('sendBackModal'));
+                    modal.hide();
+                    
+                    alert('Order has been sent back for update successfully!');
+                    location.reload();
+                } else {
+                    const error = await response.json();
+                    alert('Error sending back for update: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Send back error:', error);
+                alert('Error sending order back for update');
+            }
+        }
+
+        // Reset modal when closed
+        document.getElementById('sendBackModal').addEventListener('hidden.bs.modal', function () {
+            document.getElementById('sendBackReason').value = '';
+        });
+
+        // Update Order Status
+        async function updateOrderStatus(status, trackingId = null) {
+            if (!confirm(`Are you sure you want to mark this order as ${status}?`)) {
+                return;
+            }
+
+            try {
+                const payload = { status };
+                if (trackingId) {
+                    payload.trackingId = trackingId;
+                }
+
+                const response = await fetch(`/api/dispatcher/orders/<%= order._id %>/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    const error = await response.json();
+                    alert('Error updating status: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Status update error:', error);
+                alert('Error updating order status');
+            }
+        }
+
+        // Submit Dispatch with Tracking ID
+        function submitDispatch() {
+            const trackingId = document.getElementById('trackingId').value.trim();
+            const dispatchNotes = document.getElementById('dispatchNotes').value.trim();
+
+            if (!trackingId) {
+                alert('Please enter a tracking ID');
+                return;
+            }
+
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('dispatchModal'));
+            modal.hide();
+
+            // Update order status with tracking ID
+            updateOrderStatus('dispatched', trackingId);
+        }
+
+        // Auto-focus on tracking input when modal opens
+        document.getElementById('dispatchModal').addEventListener('shown.bs.modal', function () {
+            document.getElementById('trackingId').focus();
+        });
+
+        // Handle Enter key in tracking input
+        document.getElementById('trackingId').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitDispatch();
+            }
+        });
+
+        // Print/Download Invoice
+    function printInvoice(orderId) {
+        // Open invoice in new tab
+        window.open(`/api/account/orders/${orderId}/invoice`, '_blank');
+    }
+
+    // Alternative: Direct download instead of opening in new tab
+    function downloadInvoice(orderId) {
+        // Create a temporary link and trigger download
+        const link = document.createElement('a');
+        link.href = `/api/account/orders/${orderId}/invoice`;
+        link.download = `invoice-${orderId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // If you want both options, you can add a dropdown menu
+    function showInvoiceOptions(orderId) {
+        // You can implement a custom dropdown or use Bootstrap dropdown
+        const options = confirm('Choose:\nOK for Print View\nCancel for Download');
+        if (options) {
+            window.open(`/api/account/orders/${orderId}/invoice`, '_blank');
+        } else {
+            downloadInvoice(orderId);
+        }
+    }
+    </script>
+</body>
+</html>

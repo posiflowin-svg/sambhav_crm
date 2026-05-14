@@ -1,0 +1,2278 @@
+<!-- views/admin/reports.ejs -->
+<%- include('../partials/header') %>
+
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<!-- DataTables -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<!-- Bootstrap Bundle JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- DataTables -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<style>
+  :root {
+    --primary: #4361ee;
+    --primary-light: #3a86ff;
+    --secondary: #3f37c9;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --info: #06b6d4;
+    --dark: #1f2937;
+    --light: #f8fafc;
+    --gray: #6b7280;
+    --white: #ffffff;
+    --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --card-shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  body {
+    background-color: #f9fafb;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #374151;
+  }
+
+  .tab-nav {
+    display: flex;
+    gap: 8px;
+    background-color: var(--white);
+    padding: 12px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .tab-nav a {
+    text-decoration: none;
+    color: var(--gray);
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+
+  .tab-nav a.active,
+  .tab-nav a:hover {
+    background-color: var(--primary);
+    color: var(--white);
+  }
+
+  .admin-content {
+    padding: 24px;
+    max-width: 1800px;
+    margin: 0 auto;
+  }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .page-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--dark);
+    margin: 0;
+  }
+
+  .page-subtitle {
+    color: var(--gray);
+    margin: 4px 0 0 0;
+    font-size: 14px;
+  }
+
+  .stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--white);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    border-left: 4px solid var(--primary);
+  }
+
+  .stat-card.pending { border-left-color: var(--warning); }
+  .stat-card.approved { border-left-color: var(--info); }
+  .stat-card.dispatched { border-left-color: var(--primary); }
+  .stat-card.delivered { border-left-color: var(--success); }
+
+  .stat-card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .stat-card .value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 4px;
+  }
+
+  .filter-section {
+    background: var(--white);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 24px;
+  }
+
+  .filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    align-items: end;
+  }
+
+  .search-section {
+    background: var(--white);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 20px;
+  }
+
+  .search-form {
+    display: flex;
+    gap: 12px;
+    align-items: end;
+  }
+
+  .search-form .form-control {
+    flex: 1;
+  }
+
+  /* Status badges */
+  .badge {
+    font-size: 0.75em;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 20px;
+  }
+
+  .status-pending { background-color: #fef3c7; color: #92400e; }
+  .status-approved { background-color: #dbeafe; color: #1e40af; }
+  .status-dispatched { background-color: #e0e7ff; color: #3730a3; }
+  .status-delivered { background-color: #d1fae5; color: #065f46; }
+  .status-cancelled { background-color: #fee2e2; color: #991b1b; }
+
+  /* Order type badges */
+  .type-cod { background-color: #e7f3ff; color: #0d6efd; }
+  .type-prepaid { background-color: #e7f6ec; color: #198754; }
+  .type-credit { background-color: #fef7e6; color: #fd7e14; }
+
+  /* Table styles */
+  .table-container {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+  }
+
+  .table th {
+    background-color: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+    font-weight: 600;
+    color: var(--gray);
+    padding: 12px 16px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .table td {
+    padding: 12px 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 14px;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 6px;
+  }
+
+  .btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .overdue {
+    color: #ef4444;
+    font-weight: 600;
+  }
+
+  .export-buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 768px) {
+    .filter-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .search-form {
+      flex-direction: column;
+    }
+    
+    .action-buttons {
+      flex-direction: column;
+    }
+    
+    .export-buttons {
+      flex-direction: column;
+    }
+  }
+
+  /* User Performance Stats */
+  .user-performance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .performance-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+    border: 1px solid #eaeaea;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .performance-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  }
+
+  .performance-card.overall {
+    border-left: 4px solid #667eea;
+  }
+
+  .performance-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+  }
+
+  .performance-icon.revenue {
+    background: linear-gradient(135deg, #10b981, #059669);
+  }
+
+  .performance-icon.tax {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+  }
+
+  .performance-content {
+    flex: 1;
+  }
+
+  .performance-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2d3748;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+
+  .performance-label {
+    font-size: 0.9rem;
+    color: #718096;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  .performance-breakdown {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .breakdown-item {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+  }
+
+  .breakdown-item.admin {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+  }
+
+  .breakdown-item.sales {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+  }
+
+  /* Revenue Distribution Styles */
+        .revenue-distribution {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+            border: 1px solid #eaeaea;
+        }
+
+        .distribution-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .distribution-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .distribution-chart {
+            flex: 1;
+            min-width: 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .distribution-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 12px;
+            background: #f8fafc;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .distribution-item:hover {
+            background: white;
+            border-color: #e2e8f0;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .distribution-bar-container {
+            flex: 1;
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .distribution-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 1.5s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .admin-distribution .distribution-bar {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .sales-distribution .distribution-bar {
+            background: linear-gradient(90deg, #10b981, #059669);
+        }
+
+        .distribution-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex: 1;
+        }
+
+        .distribution-label {
+            font-weight: 600;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .distribution-label i {
+            font-size: 1.1rem;
+        }
+
+        .admin-distribution .distribution-label i {
+            color: #667eea;
+        }
+
+        .sales-distribution .distribution-label i {
+            color: #10b981;
+        }
+
+        .distribution-value {
+            font-weight: 700;
+            color: #2d3748;
+            font-size: 0.95rem;
+        }
+
+        .chart-container {
+            flex: 1;
+            min-width: 250px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .circular-chart {
+            width: 220px;
+            height: 220px;
+            position: relative;
+        }
+
+        .circle-bg {
+            fill: none;
+            stroke: #e2e8f0;
+            stroke-width: 3.8;
+        }
+
+        .circle {
+            fill: none;
+            stroke-width: 4;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dasharray 1.5s ease;
+        }
+
+        .admin-circle {
+            stroke: url(#adminGradient);
+            stroke-dasharray: 0 100;
+        }
+
+        .sales-circle {
+            stroke: url(#salesGradient);
+            stroke-dasharray: 0 100;
+        }
+
+        .chart-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .total-revenue {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 0.25rem;
+        }
+
+        .total-label {
+            font-size: 0.85rem;
+            color: #718096;
+            font-weight: 500;
+        }
+
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: #4a5568;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .admin-color {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .sales-color {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        /* User Performance Stats */
+        .user-performance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .performance-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border: 1px solid #eaeaea;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .performance-card.overall {
+            grid-column: span 2;
+        }
+
+        .performance-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .performance-icon.revenue {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .performance-icon.tax {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .performance-content {
+            flex: 1;
+        }
+
+        .performance-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 0.25rem;
+        }
+
+        .performance-label {
+            font-size: 0.9rem;
+            color: #718096;
+            margin-bottom: 0.5rem;
+        }
+
+        .performance-breakdown {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .breakdown-item {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .breakdown-item.admin {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+
+        .breakdown-item.sales {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        /* Modal Styles */
+        .modal-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-bottom: none;
+        }
+
+        .modal-title {
+            font-weight: 600;
+        }
+
+        .btn-close-white {
+            filter: invert(1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #eaeaea;
+        }
+
+        .section-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin: 0;
+        }
+
+        .customer-type-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .admin-customer {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .sales-customer {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-outline-admin {
+            color: #667eea;
+            border-color: #667eea;
+        }
+
+        .btn-outline-admin:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-outline-sales {
+            color: #10b981;
+            border-color: #10b981;
+        }
+
+        .btn-outline-sales:hover {
+            background: #10b981;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .distribution-container {
+                flex-direction: column;
+            }
+            
+            .chart-container {
+                order: -1;
+            }
+            
+            .performance-card.overall {
+                grid-column: span 1;
+            }
+            
+            .user-performance-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+  /* Customer Type Badges */
+  .customer-type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-top: 0.25rem;
+  }
+
+  .customer-type-badge.admin-customer {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+  }
+
+  .customer-type-badge.sales-customer {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+  }
+
+  /* Customer Type Filter Buttons */
+  .btn-outline-admin {
+    color: #667eea;
+    border-color: #667eea;
+  }
+
+  .btn-outline-admin:hover,
+  .btn-check:checked + .btn-outline-admin {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+  }
+
+  .btn-outline-sales {
+    color: #10b981;
+    border-color: #10b981;
+  }
+
+  .btn-outline-sales:hover,
+  .btn-check:checked + .btn-outline-sales {
+    background: #10b981;
+    border-color: #10b981;
+    color: white;
+  }
+
+  /* Orders Section */
+  .orders-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+    border: 1px solid #eaeaea;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .section-title {
+    margin: 0;
+    color: #2d3748;
+    font-weight: 600;
+  }
+
+  /* Table Enhancements */
+  .order-id-container {
+    line-height: 1.2;
+  }
+
+  .customer-info {
+    line-height: 1.2;
+  }
+
+  .date-container {
+    line-height: 1.2;
+  }
+
+  .order-date {
+    font-weight: 500;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .user-performance-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .performance-card {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .performance-breakdown {
+      justify-content: center;
+    }
+    
+    .distribution-info {
+      flex-direction: column;
+      align-items: start;
+      gap: 0.25rem;
+    }
+    
+    .section-header {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: start;
+    }
+  }
+  /* Reports Page Specific Styles */
+.reports-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.reports-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 15px;
+  color: white;
+}
+
+.header-content h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.header-content p {
+  margin: 0.5rem 0 0 0;
+  opacity: 0.9;
+  font-size: 1.1rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Filters Section */
+.filters-section {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  margin-bottom: 2rem;
+  border: 1px solid #eaeaea;
+}
+
+.filters-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #2d3748;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filters-title i {
+  color: #667eea;
+}
+
+.filter-row {
+  display: flex;
+  gap: 1.5rem;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  flex: 1;
+  min-width: 180px;
+}
+
+.filter-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+.filter-group .form-select,
+.filter-group .form-control {
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.filter-group .form-select:focus,
+.filter-group .form-control:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Quick Period Filters */
+.quick-filters {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.quick-filter-btn {
+  padding: 0.5rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  color: #4a5568;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.quick-filter-btn:hover {
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.quick-filter-btn.active {
+  background: #667eea;
+  border-color: #667eea;
+  color: white;
+}
+
+/* Statistics Cards */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  border: 1px solid #eaeaea;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stat-card h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #718096;
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-card .value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0.5rem 0;
+  line-height: 1;
+}
+
+.stat-card .trend {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0.5rem 0;
+}
+
+.trend.up { color: #10b981; }
+.trend.down { color: #ef4444; }
+.trend.neutral { color: #6b7280; }
+
+.stat-card .comparison {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* Report Tables */
+.report-section {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  margin-bottom: 2rem;
+  border: 1px solid #eaeaea;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.section-header h3 {
+  margin: 0;
+  color: #2d3748;
+  font-weight: 600;
+  font-size: 1.3rem;
+}
+
+.section-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.table-responsive {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.table {
+  margin: 0;
+  border-collapse: collapse;
+}
+
+.table thead th {
+  background: #f7fafc;
+  border-bottom: 2px solid #e2e8f0;
+  padding: 1rem;
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.table tbody td {
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+}
+
+.table tbody tr:hover {
+  background: #f8fafc;
+}
+
+/* User Info in Tables */
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-info strong {
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.user-info small {
+  color: #718096;
+  font-size: 0.8rem;
+}
+
+/* Badge Styles */
+.badge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.badge.status-pending { 
+  background: #fef3c7; 
+  color: #d97706; 
+  border: 1px solid #fbbf24;
+}
+
+.badge.status-approved { 
+  background: #dbeafe; 
+  color: #1d4ed8; 
+  border: 1px solid #60a5fa;
+}
+
+.badge.status-dispatched { 
+  background: #e0e7ff; 
+  color: #3730a3; 
+  border: 1px solid #818cf8;
+}
+
+.badge.status-delivered { 
+  background: #d1fae5; 
+  color: #065f46; 
+  border: 1px solid #34d399;
+}
+
+.badge.status-cancelled { 
+  background: #fee2e2; 
+  color: #b91c1c; 
+  border: 1px solid #fca5a5;
+}
+
+.badge.type-cod { 
+  background: #f0f9ff; 
+  color: #0369a1; 
+  border: 1px solid #7dd3fc;
+}
+
+.badge.type-prepaid { 
+  background: #f0fdf4; 
+  color: #166534; 
+  border: 1px solid #86efac;
+}
+
+.badge.type-credit { 
+  background: #faf5ff; 
+  color: #7c3aed; 
+  border: 1px solid #c4b5fd;
+}
+
+/* Buttons */
+.btn {
+  border-radius: 10px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-outline-primary {
+  border: 2px solid #667eea;
+  color: #667eea;
+  background: white;
+}
+
+.btn-outline-primary:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  border-radius: 8px;
+}
+
+/* Loading States */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Modal Styles */
+.modal-content {
+  border-radius: 15px;
+  border: none;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 15px 15px 0 0;
+  padding: 1.5rem;
+}
+
+.modal-title {
+  font-weight: 600;
+  font-size: 1.3rem;
+}
+
+.modal-body {
+  padding: 2rem;
+}
+
+/* User Stats in Modal */
+.user-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.user-stat-card {
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 10px;
+  text-align: center;
+  border-left: 4px solid #667eea;
+}
+
+.user-stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0.5rem 0;
+}
+
+.user-stat-label {
+  font-size: 0.85rem;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .reports-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .filter-row {
+    flex-direction: column;
+  }
+  
+  .filter-group {
+    min-width: 100%;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: start;
+  }
+  
+  .table-responsive {
+    font-size: 0.85rem;
+  }
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #9ca3af;
+}
+
+.empty-state i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state h4 {
+  margin: 0.5rem 0;
+  color: #6b7280;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+.circle {
+    fill: none;
+    stroke-width: 4;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: all 1.5s ease;
+}
+
+.admin-circle {
+    stroke-dasharray: 0 100;
+}
+
+.sales-circle {
+    stroke-dasharray: 0 100;
+    stroke-dashoffset: 0;
+}
+</style>
+
+<div class="tab-nav">
+  <a href="/admin/reports" class="active">
+    <i class="bi bi-speedometer2"></i> Dashboard
+  </a>
+  <a href="/admin/users">
+    <i class="bi bi-people-fill"></i> Users
+  </a>
+  <a href="/admin/orders">
+    <i class="bi bi-cart-fill"></i> Orders
+  </a>
+  <a href="/customers">
+    <i class="bi bi-person-lines-fill"></i> Customers
+  </a>
+</div>
+
+<div class="admin-content">
+  <div class="reports-container">
+    <!-- Header -->
+    <div class="reports-header">
+      <div class="header-content">
+        <h1>Sales Analytics</h1>
+        <p>Comprehensive sales performance reports and insights</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-light" id="stockManagement">
+          <i class="bi bi-box-seam"></i> Stock Management
+        </button>
+        <button class="btn btn-light" id="inquiryManagement">
+          <i class="bi bi-chat-dots"></i> Inquiry
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <div class="filters-title">
+        <i class="bi bi-funnel"></i>
+        Filter Reports
+      </div>
+      
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>Report Period</label>
+          <select class="form-select" id="periodFilter">
+            <option value="today" selected>Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="year">This Year</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
+        
+        <div class="filter-group" id="customDateRange" style="display: none;">
+          <label>Start Date</label>
+          <input type="date" class="form-control" id="startDate">
+        </div>
+        
+        <div class="filter-group" id="customDateRangeEnd" style="display: none;">
+          <label>End Date</label>
+          <input type="date" class="form-control" id="endDate">
+        </div>
+
+        <div class="filter-group">
+          <label>Year</label>
+          <select class="form-select" id="yearFilter">
+            <% for(let year = new Date().getFullYear(); year >= 2025; year--) { %>
+              <option value="<%= year %>" <%= year === new Date().getFullYear() ? 'selected' : '' %>>
+                <%= year %>
+              </option>
+            <% } %>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>&nbsp;</label>
+          <button class="btn btn-primary w-100" id="applyFilters">
+            <i class="bi bi-filter"></i> Apply Filters
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Period Filters -->
+      <div class="quick-filters">
+        <div class="quick-filter-btn active" data-period="today">Today</div>
+        <div class="quick-filter-btn" data-period="week">This Week</div>
+        <div class="quick-filter-btn" data-period="month">This Month</div>
+        <div class="quick-filter-btn" data-period="year">This Year</div>
+      </div>
+    </div>
+
+    <!-- Overall Statistics -->
+    <div class="stats-grid" id="overallStats">
+      <div class="stat-card">
+        <h3>Total Orders</h3>
+        <div class="value">0</div>
+        <div class="comparison">Loading...</div>
+      </div>
+      <div class="stat-card">
+        <h3>Total Revenue</h3>
+        <div class="value">₹0</div>
+        <div class="comparison">Loading...</div>
+      </div>
+      <div class="stat-card">
+        <h3>Total Tax</h3>
+        <div class="value">₹0</div>
+        <div class="comparison">Loading...</div>
+      </div>
+    </div>
+
+    <!-- User-wise Sales Report -->
+    <div class="report-section">
+      <div class="section-header">
+        <h3>
+          <i class="bi bi-people-fill text-primary me-2"></i>
+          User Performance Report
+        </h3>
+        <div class="section-actions">
+          <span class="text-muted" id="reportSummary">Showing data for today</span>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover" id="userSalesTable">
+          <thead>
+            <tr>
+              <th>Sales Person</th>
+              <th>Total Orders</th>
+              <th>Total Revenue</th>
+              <th>Total Tax</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="userSalesBody">
+            <tr>
+              <td colspan="5" class="text-center py-5">
+                <div class="loading-spinner mx-auto mb-2"></div>
+                <div>Loading sales data...</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- User Details Modal -->
+<div class="modal fade" id="userDetailsModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="userModalTitle">
+          <i class="bi bi-person-badge me-2"></i>
+          User Order History
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-filters-info mb-3 p-3 bg-light rounded">
+          <small class="text-muted" id="modalPeriodInfo"></small>
+        </div>
+
+        <!-- User Performance Stats -->
+        <div class="user-stats-grid" id="userStats">
+          <!-- Stats will be loaded here -->
+        </div>
+
+        <!-- Orders Section -->
+        <div class="orders-section">
+          <div class="section-header">
+            <h5 class="section-title">
+              <i class="bi bi-list-ul me-2"></i>
+              Order History
+            </h5>
+            <div class="section-actions">
+              <div id="customerTypeFilters">
+                <!-- Customer type filters will be loaded here -->
+              </div>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-hover" id="userOrdersTable">
+              <thead>
+                <tr>
+                  <th>Order Details</th>
+                  <th>Customer</th>
+                  <th>Amount</th>
+                  <th>Tax</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Dates</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="userOrdersBody">
+                <tr>
+                  <td colspan="8" class="text-center py-4 text-muted">
+                    Loading orders...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="d-flex justify-content-between align-items-center mt-3" id="userPagination">
+            <!-- Pagination will be loaded here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  class SalesDashboard {
+    constructor() {
+      this.currentFilters = {
+        period: 'today',
+        year: new Date().getFullYear()
+      };
+      this.currentUserId = null;
+      this.currentUserName = null;
+      
+      this.init();
+    }
+
+    init() {
+      this.bindEvents();
+      this.loadReportsData();
+    }
+
+    bindEvents() {
+      // Quick filter buttons
+      document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => this.handleQuickFilter(e));
+      });
+
+      // Apply filters button
+      document.getElementById('applyFilters').addEventListener('click', () => this.applyFilters());
+
+      // Period filter change
+      document.getElementById('periodFilter').addEventListener('change', (e) => this.handlePeriodChange(e));
+
+      // Refresh data
+      // document.getElementById('refreshData').addEventListener('click', () => this.refreshData());
+
+      document.getElementById('stockManagement').addEventListener('click', () => {
+          window.location.href = '/products';
+      });
+
+      document.getElementById('inquiryManagement').addEventListener('click', () => {
+          window.location.href = '/inquiries';
+      });
+    }
+
+    handleQuickFilter(event) {
+      const period = event.currentTarget.dataset.period;
+      
+      // Update active state
+      document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      
+      // Update period filter
+      document.getElementById('periodFilter').value = period;
+      
+      // Apply filters
+      this.currentFilters.period = period;
+      this.loadReportsData();
+    }
+
+    handlePeriodChange(event) {
+      const isCustom = event.target.value === 'custom';
+      document.getElementById('customDateRange').style.display = isCustom ? 'block' : 'none';
+      document.getElementById('customDateRangeEnd').style.display = isCustom ? 'block' : 'none';
+    }
+
+    applyFilters() {
+      const period = document.getElementById('periodFilter').value;
+      const year = document.getElementById('yearFilter').value;
+      
+      this.currentFilters = { period, year };
+      
+      if (period === 'custom') {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        
+        if (!startDate || !endDate) {
+          this.showError('Please select both start and end dates');
+          return;
+        }
+        
+        this.currentFilters.startDate = startDate;
+        this.currentFilters.endDate = endDate;
+      }
+      
+      // Update quick filter active state
+      document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.period === period);
+      });
+      
+      this.loadReportsData();
+    }
+
+    async loadReportsData() {
+      try {
+        this.showLoading();
+        
+        const queryParams = new URLSearchParams(this.currentFilters).toString();
+        const response = await fetch(`/api/admin/reports/sales-overview?${queryParams}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        this.updateOverallStats(data.overallStats);
+        this.updateUserSalesTable(data.userSales);
+        this.updateReportSummary(this.currentFilters.period);
+        this.hideLoading();
+        
+      } catch (error) {
+        console.error('Error loading reports:', error);
+        this.hideLoading();
+        this.showError('Failed to load reports data');
+      }
+    }
+
+    updateOverallStats(stats) {
+      const container = document.getElementById('overallStats');
+      
+      container.innerHTML = `
+        <div class="stat-card">
+          <h3>Total Orders</h3>
+          <div class="value">${stats.totalOrders.toLocaleString()}</div>
+          <div class="comparison">All users combined</div>
+        </div>
+        <div class="stat-card">
+          <h3>Total Revenue</h3>
+          <div class="value">₹${stats.totalRevenue.toLocaleString()}</div>
+          <div class="comparison">Gross revenue</div>
+        </div>
+        <div class="stat-card">
+          <h3>Total Tax</h3>
+          <div class="value">₹${stats.totalTax.toLocaleString()}</div>
+          <div class="comparison">GST collected</div>
+        </div>
+      `;
+    }
+
+    updateUserSalesTable(userSales) {
+      const tbody = document.getElementById('userSalesBody');
+      
+      if (!userSales || userSales.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="text-center py-5">
+              <div class="empty-state">
+                <i class="bi bi-inbox display-4 text-muted"></i>
+                <h4 class="mt-3">No Data Available</h4>
+                <p class="text-muted">No sales data found for the selected period</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = userSales.map(user => `
+        <tr>
+          <td>
+            <div class="user-info">
+              <strong>${this.escapeHtml(user.userName || 'Unknown User')}</strong>
+              <small class="text-muted">${this.escapeHtml(user.userEmail || 'N/A')}</small>
+            </div>
+          </td>
+          <td>
+            <span class="fw-bold">${user.totalOrders.toLocaleString()}</span>
+          </td>
+          <td>
+            <strong class="text-success">₹${user.totalRevenue.toLocaleString()}</strong>
+          </td>
+          <td>₹${user.totalTax.toLocaleString()}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary view-user-orders" 
+                    data-user-id="${user.userId}"
+                    data-user-name="${this.escapeHtml(user.userName)}">
+              <i class="bi bi-list-ul"></i> View Orders
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+      // Add event listeners to view buttons
+      document.querySelectorAll('.view-user-orders').forEach(button => {
+        button.addEventListener('click', (e) => {
+          const userId = e.currentTarget.dataset.userId;
+          const userName = e.currentTarget.dataset.userName;
+          this.viewUserOrders(userId, userName);
+        });
+      });
+    }
+
+    async viewUserOrders(userId, userName) {
+      try {
+        this.showLoading();
+        
+        this.currentUserId = userId;
+        this.currentUserName = userName;
+        
+        // Include current filters in the request
+        const queryParams = new URLSearchParams({
+          ...this.currentFilters,
+          page: 1,
+          limit: 10
+        }).toString();
+        
+        const response = await fetch(`/api/admin/reports/user/${userId}?${queryParams}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        this.updateUserModal(data, userName);
+        
+        const modal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
+        modal.show();
+        this.hideLoading();
+        
+      } catch (error) {
+        console.error('Error loading user orders:', error);
+        this.hideLoading();
+        this.showError('Failed to load user orders');
+      }
+    }
+
+    updateUserModal(data, userName) {
+      // Update modal title
+      document.getElementById('userModalTitle').innerHTML = `
+        <i class="bi bi-person-badge me-2"></i>
+        Order History - ${this.escapeHtml(userName)}
+        <span class="badge bg-primary ms-2">${data.user.role}</span>
+      `;
+
+      // Update period info
+      document.getElementById('modalPeriodInfo').textContent = 
+        `Showing orders for: ${this.getPeriodDisplay(this.currentFilters.period)}`;
+
+      // Update user stats
+      document.getElementById('userStats').innerHTML = this.getUserStatsHTML(data.userStats);
+      
+      // Update orders table
+      this.updateUserOrdersTable(data.orders);
+      
+      // Update customer type filters
+      this.updateCustomerTypeFilters();
+      
+      // Update pagination
+      this.updatePagination(data.pagination);
+    }
+
+    getUserStatsHTML(userStats) {
+      const adminPercentage = userStats.lifetimeRevenue > 0
+        ? Math.round((userStats.adminCustomerRevenue / userStats.lifetimeRevenue) * 100) : 0;
+      const salesRepeatPercentage = userStats.lifetimeRevenue > 0
+        ? Math.round((userStats.salesPersonRepeatRevenue / userStats.lifetimeRevenue) * 100) : 0;
+      const salesNewPercentage = userStats.lifetimeRevenue > 0
+        ? Math.round((userStats.salesPersonNewRevenue / userStats.lifetimeRevenue) * 100) : 0;
+
+      return `
+        <div class="user-performance-grid">
+          <!-- Orders Card -->
+          <div class="performance-card overall">
+            <div class="performance-icon">
+              <i class="bi bi-cart-check"></i>
+            </div>
+            <div class="performance-content">
+              <div class="performance-value">${userStats.lifetimeOrders}</div>
+              <div class="performance-label">Total Orders</div>
+              <div class="performance-breakdown">
+                <span class="breakdown-item admin">
+                  <i class="bi bi-person-gear"></i> ${userStats.adminCustomerOrders} Admin
+                </span>
+                <span class="breakdown-item repeat">
+                  <i class="bi bi-arrow-repeat"></i> ${userStats.salesPersonRepeatOrders} Repeat
+                </span>
+                <span class="breakdown-item new-order">
+                  <i class="bi bi-cart-plus"></i> ${userStats.salesPersonNewOrders} New
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Revenue Card -->
+          <div class="performance-card overall">
+            <div class="performance-icon revenue">
+              <i class="bi bi-currency-rupee"></i>
+            </div>
+            <div class="performance-content">
+              <div class="performance-value">₹${userStats.lifetimeRevenue.toLocaleString()}</div>
+              <div class="performance-label">Total Revenue</div>
+              <div class="performance-breakdown">
+                <span class="breakdown-item admin">
+                  <i class="bi bi-person-gear"></i> ₹${userStats.adminCustomerRevenue.toLocaleString()}
+                </span>
+                <span class="breakdown-item repeat">
+                  <i class="bi bi-arrow-repeat"></i> ₹${userStats.salesPersonRepeatRevenue.toLocaleString()}
+                </span>
+                <span class="breakdown-item new-order">
+                  <i class="bi bi-cart-plus"></i> ₹${userStats.salesPersonNewRevenue.toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tax Card -->
+          <div class="performance-card">
+            <div class="performance-icon tax">
+              <i class="bi bi-receipt"></i>
+            </div>
+            <div class="performance-content">
+              <div class="performance-value">₹${userStats.lifetimeTax.toLocaleString()}</div>
+              <div class="performance-label">Total Tax</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Revenue Distribution with 3-way split -->
+        <div class="revenue-distribution">
+          <h6 class="distribution-title">
+            <i class="bi bi-pie-chart me-2"></i>
+            Revenue Distribution
+          </h6>
+
+          <div class="distribution-container">
+            <div class="chart-container">
+              <div class="circular-chart">
+                <svg viewBox="0 0 36 36">
+                  <defs>
+                    <linearGradient id="adminGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#667eea" />
+                      <stop offset="100%" stop-color="#764ba2" />
+                    </linearGradient>
+                    <linearGradient id="repeatGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#f59e0b" />
+                      <stop offset="100%" stop-color="#d97706" />
+                    </linearGradient>
+                    <linearGradient id="newGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#10b981" />
+                      <stop offset="100%" stop-color="#059669" />
+                    </linearGradient>
+                  </defs>
+                  <path class="circle-bg"
+                    d="M18 2.0845
+                    a 15.9155 15.9155 0 0 1 0 31.831
+                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  ${adminPercentage > 0 ? `
+                  <path class="circle progress-circle"
+                    d="M18 2.0845
+                    a 15.9155 15.9155 0 0 1 0 31.831
+                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                    stroke-dasharray="${adminPercentage} ${100 - adminPercentage}"
+                    stroke="url(#adminGradient)"
+                  />` : ''}
+                  ${salesRepeatPercentage > 0 ? `
+                  <path class="circle progress-circle"
+                    d="M18 2.0845
+                    a 15.9155 15.9155 0 0 1 0 31.831
+                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                    stroke-dasharray="${salesRepeatPercentage} ${100 - salesRepeatPercentage}"
+                    stroke-dashoffset="-${adminPercentage}"
+                    stroke="url(#repeatGradient)"
+                  />` : ''}
+                  ${salesNewPercentage > 0 ? `
+                  <path class="circle progress-circle"
+                    d="M18 2.0845
+                    a 15.9155 15.9155 0 0 1 0 31.831
+                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                    stroke-dasharray="${salesNewPercentage} ${100 - salesNewPercentage}"
+                    stroke-dashoffset="-${adminPercentage + salesRepeatPercentage}"
+                    stroke="url(#newGradient)"
+                  />` : ''}
+                </svg>
+                <div class="chart-center">
+                  <div class="total-revenue">₹${userStats.lifetimeRevenue.toLocaleString()}</div>
+                  <div class="total-label">Total Revenue</div>
+                </div>
+              </div>
+              <div class="chart-legend">
+                <div class="legend-item">
+                  <div class="legend-color admin-color"></div>
+                  <span>Admin</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color repeat-color"></div>
+                  <span>Repeat</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color new-color"></div>
+                  <span>New</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="distribution-chart">
+              <!-- Admin Bar -->
+              <div class="distribution-item admin-distribution">
+                <div class="distribution-bar-container">
+                  <div class="distribution-bar" style="width: ${adminPercentage}%"></div>
+                </div>
+                <div class="distribution-info">
+                  <span class="distribution-label">
+                    <i class="bi bi-person-gear"></i> Admin
+                  </span>
+                  <span class="distribution-value">
+                    ₹${userStats.adminCustomerRevenue.toLocaleString()} (${adminPercentage}%)
+                  </span>
+                </div>
+              </div>
+              <!-- Repeat Bar -->
+              <div class="distribution-item repeat-distribution">
+                <div class="distribution-bar-container">
+                  <div class="distribution-bar" style="width: ${salesRepeatPercentage}%"></div>
+                </div>
+                <div class="distribution-info">
+                  <span class="distribution-label">
+                    <i class="bi bi-arrow-repeat"></i> Repeat
+                  </span>
+                  <span class="distribution-value">
+                    ₹${userStats.salesPersonRepeatRevenue.toLocaleString()} (${salesRepeatPercentage}%)
+                  </span>
+                </div>
+              </div>
+              <!-- New Bar -->
+              <div class="distribution-item new-distribution">
+                <div class="distribution-bar-container">
+                  <div class="distribution-bar" style="width: ${salesNewPercentage}%"></div>
+                </div>
+                <div class="distribution-info">
+                  <span class="distribution-label">
+                    <i class="bi bi-cart-plus"></i> New
+                  </span>
+                  <span class="distribution-value">
+                    ₹${userStats.salesPersonNewRevenue.toLocaleString()} (${salesNewPercentage}%)
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    updateUserOrdersTable(orders) {
+      const tbody = document.getElementById('userOrdersBody');
+      
+      if (!orders || orders.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="text-center py-5">
+              <div class="empty-state">
+                <i class="bi bi-cart-x display-4 text-muted"></i>
+                <h4 class="mt-3">No Orders Found</h4>
+                <p class="text-muted">No orders found for the selected period and filters</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = orders.map(order => `
+        <tr>
+          <td>
+            <div class="order-id-container">
+              <strong>${this.escapeHtml(order.invoiceNo)}</strong>
+              <small class="text-muted d-block">${order.orderId}</small>
+            </div>
+          </td>
+          <td>
+            <div class="customer-info">
+              <strong>${this.escapeHtml(order.customerName)}</strong>
+              <div class="customer-type-badge ${order.customerType === 'Admin Customer' ? 'admin-customer' : 'sales-customer'}">
+                <i class="bi ${order.customerType === 'Admin Customer' ? 'bi-person-gear' : 'bi-person-badge'} me-1"></i>
+                ${order.customerType}
+              </div>
+            </div>
+          </td>
+          <td>
+            <strong class="text-success">₹${order.totalAmount.toLocaleString()}</strong>
+          </td>
+          <td>₹${order.gstAmount.toLocaleString()}</td>
+          <td>
+            <span class="badge type-${order.orderType}">
+              ${order.orderType.toUpperCase()}
+            </span>
+          </td>
+          <td>
+            <span class="badge status-${order.status}">
+              ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+            </span>
+          </td>
+          <td>
+            <div class="date-container">
+              <div class="order-date">${new Date(order.orderDate).toLocaleDateString()}</div>
+              <small class="text-muted">Due: ${new Date(order.dueDate).toLocaleDateString()}</small>
+            </div>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <a href="/admin/orders/${order.orderId}" class="btn btn-sm btn-outline-primary" title="View Order">
+                <i class="bi bi-eye"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    updateCustomerTypeFilters() {
+      document.getElementById('customerTypeFilters').innerHTML = `
+        <div class="btn-group btn-group-sm" role="group">
+          <input type="radio" class="btn-check" name="customerTypeFilter" id="filterAll" autocomplete="off" checked>
+          <label class="btn btn-outline-primary" for="filterAll">
+            <i class="bi bi-collection"></i> All Orders
+          </label>
+
+          <input type="radio" class="btn-check" name="customerTypeFilter" id="filterAdmin" autocomplete="off">
+          <label class="btn btn-outline-admin" for="filterAdmin">
+            <i class="bi bi-person-gear"></i> Admin Customers
+          </label>
+
+          <input type="radio" class="btn-check" name="customerTypeFilter" id="filterSales" autocomplete="off">
+          <label class="btn btn-outline-sales" for="filterSales">
+            <i class="bi bi-person-badge"></i> Sales Customers
+          </label>
+        </div>
+      `;
+
+      // Add event listeners
+      document.getElementById('filterAll').addEventListener('change', () => this.loadFilteredUserOrders('all'));
+      document.getElementById('filterAdmin').addEventListener('change', () => this.loadFilteredUserOrders('admin'));
+      document.getElementById('filterSales').addEventListener('change', () => this.loadFilteredUserOrders('sales'));
+    }
+
+    async loadFilteredUserOrders(customerType = 'all') {
+      if (!this.currentUserId) return;
+
+      try {
+        this.showLoading();
+        
+        const queryParams = new URLSearchParams({
+          ...this.currentFilters,
+          customerType,
+          page: 1,
+          limit: 10
+        }).toString();
+        
+        const response = await fetch(`/api/admin/reports/user/${this.currentUserId}?${queryParams}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        this.updateUserOrdersTable(data.orders);
+        this.updatePagination(data.pagination);
+        this.hideLoading();
+        
+      } catch (error) {
+        console.error('Error loading filtered orders:', error);
+        this.hideLoading();
+        this.showError('Failed to load filtered orders');
+      }
+    }
+
+    updatePagination(pagination) {
+      const container = document.getElementById('userPagination');
+      
+      if (!pagination || pagination.totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="pagination-info">
+          Showing page ${pagination.currentPage} of ${pagination.totalPages}
+        </div>
+        <nav>
+          <ul class="pagination pagination-sm">
+            <li class="page-item ${pagination.hasPrev ? '' : 'disabled'}">
+              <a class="page-link" href="#" data-page="${pagination.currentPage - 1}">Previous</a>
+            </li>
+            ${Array.from({length: pagination.totalPages}, (_, i) => i + 1).map(page => `
+              <li class="page-item ${page === pagination.currentPage ? 'active' : ''}">
+                <a class="page-link" href="#" data-page="${page}">${page}</a>
+              </li>
+            `).join('')}
+            <li class="page-item ${pagination.hasNext ? '' : 'disabled'}">
+              <a class="page-link" href="#" data-page="${pagination.currentPage + 1}">Next</a>
+            </li>
+          </ul>
+        </nav>
+      `;
+
+      // Add pagination event listeners
+      container.querySelectorAll('.page-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const page = e.target.dataset.page;
+          if (page) this.loadUserOrdersPage(parseInt(page));
+        });
+      });
+    }
+
+    async loadUserOrdersPage(page) {
+      if (!this.currentUserId) return;
+
+      try {
+        this.showLoading();
+        
+        const queryParams = new URLSearchParams({
+          ...this.currentFilters,
+          page,
+          limit: 10
+        }).toString();
+        
+        const response = await fetch(`/api/admin/reports/user/${this.currentUserId}?${queryParams}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        this.updateUserOrdersTable(data.orders);
+        this.updatePagination(data.pagination);
+        this.hideLoading();
+        
+      } catch (error) {
+        console.error('Error loading orders page:', error);
+        this.hideLoading();
+        this.showError('Failed to load orders');
+      }
+    }
+
+    refreshData() {
+      const refreshBtn = document.getElementById('refreshData');
+      const originalHTML = refreshBtn.innerHTML;
+      
+      refreshBtn.innerHTML = '<div class="loading-spinner"></div> Refreshing...';
+      refreshBtn.disabled = true;
+      
+      this.loadReportsData().finally(() => {
+        refreshBtn.innerHTML = originalHTML;
+        refreshBtn.disabled = false;
+      });
+    }
+
+    updateReportSummary(period) {
+      document.getElementById('reportSummary').textContent = 
+        `Showing data for ${this.getPeriodDisplay(period)}`;
+    }
+
+    getPeriodDisplay(period) {
+      const periods = {
+        'today': 'Today',
+        'yesterday': 'Yesterday',
+        'week': 'This Week',
+        'month': 'This Month',
+        'year': 'This Year',
+        'custom': 'Custom Range'
+      };
+      return periods[period] || period;
+    }
+
+    escapeHtml(unsafe) {
+      if (!unsafe) return '';
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    showLoading() {
+      document.body.classList.add('loading');
+    }
+
+    hideLoading() {
+      document.body.classList.remove('loading');
+    }
+
+    showError(message) {
+      // You can replace this with a better notification system
+      const alertDiv = document.createElement('div');
+      alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+      alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      
+      document.querySelector('.reports-container').prepend(alertDiv);
+      
+      // Auto remove after 5 seconds
+      setTimeout(() => {
+        if (alertDiv.parentNode) {
+          alertDiv.remove();
+        }
+      }, 5000);
+    }
+  }
+
+  // Initialize dashboard when DOM is loaded
+  document.addEventListener('DOMContentLoaded', function() {
+    // Set default dates for custom range
+    const today = new Date().toISOString().split('T')[0];
+    const lastMonth = new Date();
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+    const lastMonthStr = lastMonth.toISOString().split('T')[0];
+    
+    document.getElementById('startDate').value = lastMonthStr;
+    document.getElementById('endDate').value = today;
+    
+    // Initialize dashboard
+    new SalesDashboard();
+  });
+</script>

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - StockMaster</title>
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-boxes text-blue-600 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold text-gray-800">StockMaster</span>
+                    </div>
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <a href="/products" class="nav-link border-transparent text-gray-500 hover:border-gray-300">Products</a>
+                        <a href="/products/transactions" class="nav-link border-transparent text-gray-500 hover:border-gray-300">Transactions</a>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-gray-700 mr-4"><%= user.name || 'Admin' %></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div class="bg-white shadow rounded-lg p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Edit Product</h2>
+                    <p class="text-gray-600 mt-1">Item Code: <%= product.itemCode %></p>
+                </div>
+                <div class="flex space-x-3">
+                    <a href="/products/view/<%= product._id %>" 
+                       class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-eye mr-2"></i>View
+                    </a>
+                    <a href="/products" 
+                       class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-arrow-left mr-2"></i>Back
+                    </a>
+                </div>
+            </div>
+
+            <!-- Current Stock Info -->
+            <div class="mb-6 p-4 bg-blue-50 rounded-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-medium text-blue-800">Current Stock Information</h3>
+                        <p class="text-blue-600 mt-1">
+                            Stock Quantity: <span class="font-bold"><%= product.stockQuantity.toLocaleString() %> <%= product.unit %></span>
+                        </p>
+                    </div>
+                    <a href="/products/stock-adjustment/<%= product._id %>" 
+                       class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        <i class="fas fa-exchange-alt mr-2"></i>Adjust Stock
+                    </a>
+                </div>
+            </div>
+
+            <form id="edit-product-form" class="space-y-6">
+                <input type="hidden" id="product-id" value="<%= product._id %>">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Item Code (Read-only) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Item Code
+                        </label>
+                        <input type="text" value="<%= product.itemCode %>" readonly
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50">
+                    </div>
+
+                    <!-- Item Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Item Name *
+                        </label>
+                        <input type="text" id="itemName" value="<%= product.itemName %>" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <!-- Category -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Category *
+                        </label>
+                        <select id="category" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <option value="Components" <%= product.category === 'Components' ? 'selected' : '' %>>Components</option>
+                            <option value="Display" <%= product.category === 'Display' ? 'selected' : '' %>>Display</option>
+                            <option value="TFT Display" <%= product.category === 'TFT Display' ? 'selected' : '' %>>TFT Display</option>
+                            <option value="POS" <%= product.category === 'POS' ? 'selected' : '' %>>POS</option>
+                            <option value="Printer" <%= product.category === 'Printer' ? 'selected' : '' %>>Printer</option>
+                        </select>
+                    </div>
+
+                    <!-- Location -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Location *
+                        </label>
+                        <input type="text" id="location" value="<%= product.location %>" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <!-- Unit -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Unit *
+                        </label>
+                        <input type="text" id="unit" value="<%= product.unit %>" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <!-- Minimum Stock -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Minimum Stock (Alert Level)
+                        </label>
+                        <input type="number" id="minimumStock" value="<%= product.minimumStock %>" min="0"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <!-- Maximum Stock -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Maximum Stock (Optional)
+                        </label>
+                        <input type="number" id="maximumStock" value="<%= product.maximumStock || '' %>" min="0"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <!-- Is Active -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Status
+                        </label>
+                        <div class="mt-2">
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" id="isActive" <%= product.isActive ? 'checked' : '' %>
+                                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="ml-2">Active Product</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Description
+                    </label>
+                    <textarea id="description" rows="3"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"><%= product.description || '' %></textarea>
+                </div>
+
+                <!-- Notes -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Notes
+                    </label>
+                    <textarea id="notes" rows="2"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"><%= product.notes || '' %></textarea>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex justify-between pt-6 border-t">
+                    <div>
+                        <!-- <button type="button" onclick="deleteProduct()" 
+                                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                            <i class="fas fa-trash mr-2"></i>Delete Product
+                        </button> -->
+                    </div>
+                    <div class="flex space-x-3">
+                        <a href="/products" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                            Cancel
+                        </a>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                            <i class="fas fa-save mr-2"></i>Save Changes
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('edit-product-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const productData = {
+                itemName: document.getElementById('itemName').value,
+                category: document.getElementById('category').value,
+                location: document.getElementById('location').value,
+                unit: document.getElementById('unit').value,
+                description: document.getElementById('description').value,
+                minimumStock: parseInt(document.getElementById('minimumStock').value) || 0,
+                maximumStock: document.getElementById('maximumStock').value ? parseInt(document.getElementById('maximumStock').value) : null,
+                notes: document.getElementById('notes').value,
+                isActive: document.getElementById('isActive').checked
+            };
+            
+            try {
+                const response = await fetch(`/products/api/products/${document.getElementById('product-id').value}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(productData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'Product updated successfully',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.href = `/products/view/<%= product._id %>`;
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: result.message || 'Failed to update product'
+                    });
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error updating product: ' + error.message
+                });
+            }
+        });
+
+        async function deleteProduct() {
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: `Do you want to deactivate <%= product.itemCode %>?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, deactivate it!'
+            });
+            
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch(`/products/api/products/${document.getElementById('product-id').value}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deactivated!',
+                            text: 'Product has been deactivated',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.href = '/products';
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message || 'Failed to deactivate product'
+                        });
+                    }
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Error deactivating product'
+                    });
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .nav-link {
+            border-bottom-width: 2px;
+            padding: 8px 0;
+            margin-right: 24px;
+        }
+        
+        .nav-link:hover {
+            border-bottom-color: #d1d5db;
+            color: #374151;
+        }
+    </style>
+</body>
+</html>

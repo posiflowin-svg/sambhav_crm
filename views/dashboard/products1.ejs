@@ -1,0 +1,1022 @@
+<!-- views/dashboard/admin/products.ejs -->
+<%- include('../partials/header') %>
+
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Bootstrap Bundle JS (includes Popper.js) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<style>
+  :root {
+    --primary: #4361ee;
+    --primary-light: #3a86ff;
+    --secondary: #3f37c9;
+    --success: #4cc9f0;
+    --danger: #f72585;
+    --warning: #f8961e;
+    --info: #4895ef;
+    --dark: #212529;
+    --light: #f8f9fa;
+    --gray: #6c757d;
+    --white: #ffffff;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+    --card-shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
+
+.company-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .company-status-card {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+    border-left: 3px solid var(--primary);
+  }
+
+  .status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .status-name {
+    font-weight: 600;
+    color: var(--dark);
+    font-size: 14px;
+  }
+
+  .status-value {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 8px 0;
+    color: var(--dark);
+  }
+
+  .sales-persons-table table, 
+  .products-table table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .sales-persons-table th,
+  .products-table th {
+    text-align: left;
+    padding: 12px 16px;
+    background: #f8fafc;
+    font-weight: 600;
+    color: var(--dark);
+  }
+
+  .sales-persons-table td,
+  .products-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #edf2f7;
+  }
+
+  .sales-persons-table tr:last-child td,
+  .products-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .sales-persons-table .item-info,
+  .products-table .item-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  body {
+    background-color: #f5f7fb;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    color: #4a5568;
+  }
+
+  .tab-nav {
+    display: flex;
+    gap: 8px;
+    background-color: var(--white);
+    padding: 12px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  .tab-nav a {
+    text-decoration: none;
+    color: var(--gray);
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+
+  .tab-nav a.active,
+  .tab-nav a:hover {
+    background-color: var(--primary);
+    color: var(--white);
+  }
+
+  .admin-content {
+    padding: 24px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .dashboard-title h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--dark);
+    margin: 0;
+  }
+
+  .dashboard-title p {
+    color: var(--gray);
+    margin: 4px 0 0;
+    font-size: 14px;
+  }
+
+  .stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .stat-card {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    padding: 20px;
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--primary);
+  }
+
+  .stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--card-shadow-hover);
+  }
+
+  .stat-card h3 {
+    margin: 0 0 8px;
+    color: var(--gray);
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .stat-card .value {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 8px 0;
+    color: var(--dark);
+  }
+
+  .stat-card .trend {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    margin-top: 8px;
+  }
+
+  .trend.up {
+    color: #10b981;
+  }
+
+  .trend.down {
+    color: #ef4444;
+  }
+
+  .trend svg {
+    margin-right: 4px;
+  }
+
+  .stat-card .comparison {
+    color: var(--gray);
+    font-size: 12px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+    margin-right: 6px;
+    margin-bottom: 6px;
+  }
+
+  .chart-container {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .chart-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--dark);
+    margin: 0;
+  }
+
+  .chart-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .chart-actions button {
+    background: none;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: var(--gray);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .chart-actions button:hover {
+    background: #f8fafc;
+    color: var(--primary);
+  }
+
+  .chart-actions button.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  .top-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .top-list li {
+    padding: 12px 0;
+    border-bottom: 1px solid #edf2f7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .top-list li:last-child {
+    border-bottom: none;
+  }
+
+  .top-list .item-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .top-list .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  .top-list .product-image {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    background-color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray);
+    font-size: 12px;
+  }
+
+  .top-list .item-name {
+    font-weight: 500;
+  }
+
+  .top-list .item-meta {
+    font-size: 12px;
+    color: var(--gray);
+    margin-top: 2px;
+  }
+
+  .top-list .item-value {
+    font-weight: 600;
+    color: var(--dark);
+  }
+
+  .date-filter {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    align-items: center;
+    background: var(--white);
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+  }
+
+  .date-filter label {
+    font-size: 13px;
+    color: var(--gray);
+    font-weight: 500;
+  }
+
+  .date-filter input {
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 13px;
+    background: #f8fafc;
+  }
+
+  .date-filter button {
+    padding: 8px 16px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background 0.2s ease;
+  }
+
+  .date-filter button:hover {
+    background: var(--secondary);
+  }
+
+  .date-filter button.secondary {
+    background: var(--white);
+    color: var(--gray);
+    border: 1px solid #e2e8f0;
+  }
+
+  .date-filter button.secondary:hover {
+    background: #f8fafc;
+    color: var(--primary);
+  }
+
+  #teamMemberModal .avatar-xxl {
+    width: 100px;
+    height: 100px;
+    font-size: 2.5rem;
+  }
+
+  #teamMemberModal .performer-card {
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+
+  #teamMemberModal .performer-card:hover {
+    transform: translateY(-2px);
+  }
+
+  #teamMemberModal .modal-lg {
+    max-width: 800px;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  /* Sales Teams Grid */
+  .sales-teams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .sales-team-card {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border-left: 3px solid var(--primary);
+  }
+
+  .sales-team-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow-hover);
+  }
+
+  .team-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .team-name {
+    font-weight: 600;
+    color: var(--dark);
+    font-size: 14px;
+  }
+
+  .team-orders {
+    font-size: 12px;
+    color: var(--gray);
+    background: #f1f5f9;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+
+  .team-value {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 8px 0;
+    color: var(--dark);
+  }
+
+  .team-value small {
+    font-size: 12px;
+    color: var(--gray);
+    font-weight: 400;
+  }
+
+  .progress {
+    height: 6px;
+    background-color: #e2e8f0;
+    border-radius: 3px;
+    margin: 4px 0;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background-color: var(--primary);
+    transition: width 0.6s ease;
+  }
+
+  .team-members {
+    margin-top: 12px;
+    display: none;
+  }
+
+  .team-member {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dashed #e2e8f0;
+  }
+
+  .team-member:last-child {
+    border-bottom: none;
+  }
+
+  .member-name {
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .member-value {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  /* Orders Modal Styles */
+  #ordersModal .modal-xl {
+    max-width: 1200px;
+  }
+
+  #ordersModal .table-responsive {
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  #ordersModal .table thead th {
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 10;
+  }
+
+  #ordersModal .badge {
+    font-size: 0.85em;
+    padding: 0.35em 0.65em;
+  }
+
+  #ordersModal .bg-company-created { background-color: #6c757d; }
+  #ordersModal .bg-company-accountant_review { background-color: #ffc107; color: #000; }
+  #ordersModal .bg-company-accountant_approved { background-color: #17a2b8; }
+  #ordersModal .bg-company-dispatch_packed { background-color: #fd7e14; }
+  #ordersModal .bg-company-dispatched { background-color: #20c997; }
+  #ordersModal .bg-company-delivered { background-color: #28a745; }
+  #ordersModal .bg-company-cancelled { background-color: #dc3545; }
+
+  /* Products display styles */
+  .products-container {
+    max-height: 150px;
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+
+  .products-container::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .products-container::-webkit-scrollbar-thumb {
+    background-color: #dee2e6;
+    border-radius: 4px;
+  }
+
+  .product-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .product-item:last-child {
+    border-bottom: none;
+  }
+
+  .product-name {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .product-details {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .product-details .badge {
+    font-size: 0.75rem;
+    padding: 0.25em 0.5em;
+  }
+
+  .products-cell {
+    min-width: 250px;
+  }
+
+  /* Status colors */
+  .status-created { background-color: #3b82f6; }
+  .status-processing { background-color: #f59e0b; }
+  .status-shipped { background-color: #8b5cf6; }
+  .status-delivered { background-color: #10b981; }
+  .status-cancelled { background-color: #ef4444; }
+  .status-returned { background-color: #f97316; }
+  .status-accountant_review { background-color: #3b82f6; }
+  .status-accountant_approved { background-color: #10b981; }
+  .status-dispatch_packed { background-color: #f59e0b; }
+  .status-dispatched { background-color: #8b5cf6; }
+
+  /* Role colors */
+  .role-sales { background-color: #3b82f6; }
+  .role-accountant { background-color: #10b981; }
+  .role-dispatch { background-color: #8b5cf6; }
+  .role-admin { background-color: #6366f1; }
+
+  /* Type colors */
+  .type-cod { background-color: #3b82f6; }
+  .type-prepaid { background-color: #10b981; }
+
+  /* Time period tabs */
+  .period-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .period-tab {
+    padding: 8px 16px;
+    background: #f1f5f9;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .period-tab.active {
+    background: var(--primary);
+    color: white;
+  }
+
+  @media (max-width: 1200px) {
+    .grid-2 {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+
+<div class="tab-nav">
+  <a href="/dashboard/admin">
+    <i class="bi bi-speedometer2"></i> Dashboard
+  </a>
+  <a href="/dashboard/admin/users">
+    <i class="bi bi-people-fill"></i> Users
+  </a>
+  <a href="/dashboard/admin/products">
+    <i class="bi bi-box-seam"></i> Products
+  </a>
+  <a href="/dashboard/admin/orders">
+    <i class="bi bi-cart-fill"></i> Orders
+  </a>
+    <a href="/dashboard/admin/products1" class="active">
+    <i class="bi bi-box-seam"></i> Inventory
+  </a>
+</div>
+
+<div class="container-fluid mt-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">Product Inventory</h2>
+      <p class="text-muted mb-0">Manage and monitor product stock levels</p>
+    </div>
+    <div class="d-flex gap-2">
+      <form class="d-flex" method="GET">
+        <input type="hidden" name="category" value="<%= selectedCategory %>">
+        <div class="input-group">
+          <input type="text" 
+                 name="search" 
+                 class="form-control" 
+                 placeholder="Search products..." 
+                 value="<%= search %>">
+          <button class="btn btn-outline-primary" type="submit">
+            <i class="bi bi-search"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Category Tabs -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex flex-wrap gap-2">
+            <a href="?category=all&search=<%= search %>" 
+               class="btn <%= selectedCategory === 'all' ? 'btn-primary' : 'btn-outline-primary' %>">
+              All Products <span class="badge bg-light text-dark ms-1"><%= Object.values(categoryCounts).reduce((a, b) => a + b, 0) %></span>
+            </a>
+            <% categories.forEach(cat => { %>
+              <a href="?category=<%= cat %>&search=<%= search %>" 
+                 class="btn <%= selectedCategory === cat ? 'btn-primary' : 'btn-outline-primary' %>">
+                <%= cat %> <span class="badge bg-light text-dark ms-1"><%= categoryCounts[cat] || 0 %></span>
+              </a>
+            <% }) %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Products Grid -->
+  <div class="row">
+    <% Object.keys(productsByCategory).forEach(category => { %>
+      <div class="col-12 mb-4">
+        <div class="card">
+          <div class="card-header bg-light">
+            <h5 class="card-title mb-0">
+              <%= category %>
+              <span class="badge bg-primary ms-2"><%= productsByCategory[category].length %> products</span>
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Product</th>
+                    <th>Current Stock</th>
+                    <th>Min Stock Level</th>
+                    <th>Status</th>
+                    <th>Last Updated</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% productsByCategory[category].forEach(product => { %>
+                    <tr>
+                      <td>
+                        <div>
+                          <strong class="d-block"><%= product.name %></strong>
+                          <small class="text-muted"><%= product.description || 'No description' %></small>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="fw-bold <%= product.currentStock <= product.minimumStockLevel ? 'text-danger' : 'text-success' %>">
+                          <%= product.currentStock %>
+                        </span>
+                      </td>
+                      <td><%= product.minimumStockLevel %></td>
+                      <td>
+                        <% if (product.currentStock <= product.minimumStockLevel) { %>
+                          <span class="badge bg-danger">Low Stock</span>
+                        <% } else if (product.currentStock === 0) { %>
+                          <span class="badge bg-dark">Out of Stock</span>
+                        <% } else { %>
+                          <span class="badge bg-success">In Stock</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <small class="text-muted">
+                          <%= new Date(product.lastUpdated).toLocaleDateString() %>
+                        </small>
+                      </td>
+                      <td>
+                        <button class="btn btn-sm btn-outline-primary view-raw-materials" 
+                                data-product-id="<%= product._id %>"
+                                data-product-name="<%= product.name %>">
+                          <i class="bi bi-list-check"></i> Raw Materials
+                        </button>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+
+    <% if (Object.keys(productsByCategory).length === 0) { %>
+      <div class="col-12">
+        <div class="text-center py-5">
+          <i class="bi bi-inbox display-1 text-muted"></i>
+          <h4 class="text-muted mt-3">No products found</h4>
+          <p class="text-muted">Try changing your search criteria or category filter.</p>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Raw Materials Modal -->
+<div class="modal fade" id="rawMaterialsModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="rawMaterialsModalLabel">Raw Materials</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="rawMaterialsContent">
+          <!-- Content will be loaded dynamically -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Raw Materials Modal Handler
+  const viewButtons = document.querySelectorAll('.view-raw-materials');
+  const modal = new bootstrap.Modal(document.getElementById('rawMaterialsModal'));
+  
+  viewButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const productId = this.getAttribute('data-product-id');
+      const productName = this.getAttribute('data-product-name');
+      
+      loadRawMaterials(productId, productName);
+    });
+  });
+
+  function loadRawMaterials(productId, productName) {
+    const contentDiv = document.getElementById('rawMaterialsContent');
+    const modalLabel = document.getElementById('rawMaterialsModalLabel');
+    
+    // Set loading state
+    modalLabel.textContent = `Loading Raw Materials - ${productName}`;
+    contentDiv.innerHTML = `
+      <div class="text-center py-4">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-muted">Loading raw materials...</p>
+      </div>
+    `;
+    
+    modal.show();
+
+    // Fetch raw materials
+    fetch(`/dashboard/admin/products1/${productId}/raw-materials`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          modalLabel.textContent = `Raw Materials - ${productName}`;
+          
+          if (data.rawMaterials.length > 0) {
+            // Calculate maximum possible products
+            const maxProducts = calculateMaxPossibleProducts(data.rawMaterials);
+            
+            contentDiv.innerHTML = `
+              <!-- Production Calculator -->
+              <div class="card mb-4 border-primary">
+                <div class="card-header bg-primary text-white">
+                  <h6 class="mb-0"><i class="bi bi-calculator"></i> Production Calculator</h6>
+                </div>
+                <div class="card-body">
+                  <div class="row text-center">
+                    <div class="col-md-6">
+                      <h3 class="text-primary mb-1">${maxProducts}</h3>
+                      <p class="text-muted mb-0">Maximum Possible Products</p>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="mb-2">
+                        <span class="badge ${maxProducts > 0 ? 'bg-success' : 'bg-danger'} fs-6">
+                          ${maxProducts > 0 ? 'Can Produce' : 'Cannot Produce'}
+                        </span>
+                      </div>
+                      <small class="text-muted">Based on current raw material stock</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Raw Materials Table -->
+              <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Material</th>
+                      <th>Required Qty</th>
+                      <th>Current Stock</th>
+                      <th>Min Stock Level</th>
+                      <th>Status</th>
+                      <th>Max Products</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${data.rawMaterials.map(material => {
+                      const maxFromThisMaterial = Math.floor(material.currentStock / material.requiredQuantity);
+                      const isLowStock = material.currentStock <= material.minimumStockLevel;
+                      const stockStatus = getStockStatus(material.currentStock, material.minimumStockLevel);
+                      
+                      return `
+                        <tr>
+                          <td>
+                            <div>
+                              <strong>${material.name}</strong>
+                              ${isLowStock ? '<i class="bi bi-exclamation-triangle text-warning ms-1" title="Low Stock"></i>' : ''}
+                            </div>
+                          </td>
+                          <td>${material.requiredQuantity} ${material.unit}</td>
+                          <td class="${stockStatus.colorClass} fw-bold">
+                            ${material.currentStock} ${material.unit}
+                          </td>
+                          <td>
+                            <small class="text-muted">${material.minimumStockLevel} ${material.unit}</small>
+                          </td>
+                          <td>
+                            <span class="badge ${stockStatus.badgeClass}">
+                              ${stockStatus.text}
+                            </span>
+                          </td>
+                          <td>
+                            <span class="fw-bold ${maxFromThisMaterial === 0 ? 'text-danger' : 'text-success'}">
+                              ${maxFromThisMaterial}
+                            </span>
+                          </td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Stock Summary -->
+              <div class="row mt-3">
+                <div class="col-md-6">
+                  <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Production Capacity:</strong> You can produce <strong>${maxProducts}</strong> complete products with current stock.
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="alert ${maxProducts > 0 ? 'alert-success' : 'alert-warning'}">
+                    <i class="bi ${maxProducts > 0 ? 'bi-check-circle' : 'bi-exclamation-triangle'}"></i>
+                    <strong>Status:</strong> ${maxProducts > 0 ? 
+                      'Ready for production' : 
+                      'Insufficient raw materials for production'}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Legend -->
+              <div class="alert alert-light border mt-3">
+                <div class="row">
+                  <div class="col-md-4">
+                    <small><span class="badge bg-success me-1"></span> Sufficient Stock</small>
+                  </div>
+                  <div class="col-md-4">
+                    <small><span class="badge bg-warning me-1"></span> Low Stock</small>
+                  </div>
+                  <div class="col-md-4">
+                    <small><span class="badge bg-danger me-1"></span> Critical/Out of Stock</small>
+                  </div>
+                </div>
+              </div>
+            `;
+          } else {
+            contentDiv.innerHTML = `
+              <div class="text-center py-4">
+                <i class="bi bi-inbox display-4 text-muted"></i>
+                <h5 class="text-muted mt-3">No Raw Materials</h5>
+                <p class="text-muted">No raw materials defined for this product.</p>
+              </div>
+            `;
+          }
+        } else {
+          contentDiv.innerHTML = `
+            <div class="alert alert-danger">
+              <i class="bi bi-exclamation-triangle"></i>
+              Error loading raw materials: ${data.message}
+            </div>
+          `;
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        contentDiv.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i>
+            Error loading raw materials. Please try again.
+          </div>
+        `;
+      });
+  }
+
+  // Calculate maximum possible products based on raw material constraints
+  function calculateMaxPossibleProducts(rawMaterials) {
+    if (!rawMaterials || rawMaterials.length === 0) return 0;
+    
+    const maxProductsPerMaterial = rawMaterials.map(material => {
+      return Math.floor(material.currentStock / material.requiredQuantity);
+    });
+    
+    return Math.min(...maxProductsPerMaterial);
+  }
+
+  // Get stock status based on current stock and minimum level
+  function getStockStatus(currentStock, minimumStockLevel) {
+    if (currentStock === 0) {
+      return {
+        text: 'Out of Stock',
+        badgeClass: 'bg-danger',
+        colorClass: 'text-danger'
+      };
+    } else if (currentStock <= minimumStockLevel) {
+      return {
+        text: 'Low Stock',
+        badgeClass: 'bg-warning',
+        colorClass: 'text-warning'
+      };
+    } else {
+      return {
+        text: 'In Stock',
+        badgeClass: 'bg-success',
+        colorClass: 'text-success'
+      };
+    }
+  }
+});
+</script>
+
+<%- include('../partials/footer') %>

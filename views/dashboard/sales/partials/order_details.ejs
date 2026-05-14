@@ -1,0 +1,476 @@
+<div class="order-details-container">
+  <!-- Compact Order Header - Improved Responsive Layout -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+    <div class="flex-grow-1">
+      <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center mb-2 gap-2">
+        <h4 class="mb-0 me-3">Order #<%= order.orderReference || order._id.toString().slice(-6).toUpperCase() %></h4>
+        <span class="badge rounded-pill bg-<%= getStatusBadgeColor(order.companyStatus) %>">
+          <i class="bi <%= getStatusIcon(order.companyStatus) %> me-1"></i>
+          <%= order.companyStatus.replace('_', ' ') %>
+        </span>
+        <% if (order.isBillOnHold) { %>
+        <span class="badge rounded-pill bg-warning text-dark ms-2" 
+              title="<%= order.holdReason || 'Bill is on hold' %>">
+          <i class="bi bi-pause-circle-fill me-1"></i>
+          Bill on Hold
+        </span>
+      <% } %>
+      </div>
+      <% if (order.isBillOnHold) { %>
+        <div class="alert alert-warning py-2 mb-3" role="alert">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+            <div>
+              <strong class="d-block">This bill is currently on hold</strong>
+              <% if (order.holdReason) { %>
+                <span class="d-block mt-1"><%= order.holdReason %></span>
+              <% } else { %>
+                <span class="d-block mt-1 text-muted">No reason provided for hold</span>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% } %>
+      <div class="text-muted small d-flex flex-wrap gap-2">
+        <span><i class="bi bi-calendar me-1"></i><%= formatDate(order.createdAt) %></span>
+        <% if (order.orderType) { %>
+          <span><i class="bi bi-credit-card me-1"></i><%= order.orderType.toUpperCase() %></span>
+        <% } %>
+        <% if (order.paymentMode) { %>
+          <span><i class="bi bi-cash me-1"></i><%= order.paymentMode %>
+            <% if (order.paymentMode === 'Cash' && order.cashSubOption) { %>
+              (<%= order.cashSubOption %>)
+            <% } %>
+          </span>
+        <% } %>
+        <% if (order.companyName) { %>
+          <span><i class="bi bi-building me-1"></i><%= order.companyName %></span>
+        <% } %>
+      </div>
+    </div>
+    <div class="d-flex flex-column align-items-end">
+      <div class="fw-bold fs-5 text-nowrap">₹<%= order.total.toLocaleString('en-IN') %></div>
+    </div>
+  </div>
+
+  <!-- Tracking Alert for Dispatched/Delivered Orders -->
+  <% if (['dispatched', 'delivered'].includes(order.companyStatus) && order.trackingId) { %>
+    <div class="alert alert-info d-flex flex-column flex-md-row align-items-center justify-content-between mb-4 py-2">
+      <div class="d-flex align-items-center mb-2 mb-md-0">
+        <i class="bi bi-truck fs-4 me-3"></i>
+        <div>
+          <h6 class="mb-1">Order <%= order.companyStatus === 'delivered' ? 'Delivered' : 'Shipped' %></h6>
+          <div class="small">
+            <% if (order.shippingType) { %>
+              <span class="me-2">Courier: <%= order.shippingType %></span>
+            <% } %>
+            <span>Tracking ID: <strong><%= order.trackingId %></strong></span>
+          </div>
+        </div>
+      </div>
+      <% if (order.trackingUrl) { %>
+        <a href="<%= order.trackingUrl %>" target="_blank" class="btn btn-sm btn-info text-nowrap">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Track Package
+        </a>
+      <% } %>
+    </div>
+  <% } %>
+
+  <!-- Two Column Layout -->
+  <div class="row g-3">
+    <!-- Left Column -->
+    <div class="col-lg-6">
+      <!-- Customer Card -->
+      <div class="card h-100">
+        <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+          <h6 class="mb-0"><i class="bi bi-person me-2"></i>Customer Details</h6>
+          <% if (order.customerGSTIN) { %>
+            <span class="badge bg-primary bg-opacity-10 text-primary">GSTIN: <%= order.customerGSTIN %></span>
+          <% } %>
+        </div>
+        <div class="card-body p-3">
+          <div class="mb-2">
+            <div class="fw-bold"><%= order.customerName %></div>
+            <% if (order.customerContact) { %>
+              <div class="text-muted small">
+                <i class="bi bi-telephone me-1"></i><%= order.customerContact %>
+              </div>
+            <% } %>
+          </div>
+          <% if (order.customerEmail) { %>
+            <div class="mb-2">
+              <div class="fw-bold">Email</div>
+              <div class="text-muted small"><%= order.customerEmail %></div>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-lg-6">
+      <!-- Shipping Card -->
+      <div class="card h-100">
+        <div class="card-header bg-light py-2">
+          <h6 class="mb-0"><i class="bi bi-truck me-2"></i>Shipping & Billing</h6>
+        </div>
+        <div class="card-body p-3">
+          <!-- Shipping Address -->
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="fw-bold">Shipping Address</span>
+              <% if (JSON.stringify(order.shippingAddress) === JSON.stringify(order.billingAddress)) { %>
+                <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 py-1 px-2 fs-xxsmall">Same as billing</span>
+              <% } %>
+            </div>
+            <div class="text-muted small"><%= formatAddress(order.shippingAddress) %></div>
+          </div>
+          
+          <!-- Billing Address -->
+          <div class="mb-3">
+            <div class="fw-bold mb-1">Billing Address</div>
+            <div class="text-muted small"><%= formatAddress(order.billingAddress) %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Items Table -->
+  <div class="card mt-3">
+    <div class="card-header bg-light py-2 d-flex flex-column flex-md-row justify-content-between align-items-center">
+      <h6 class="mb-2 mb-md-0"><i class="bi bi-cart me-2"></i>Order Items (<%= order.items.length %>)</h6>
+      <div class="d-flex gap-2">
+        <div class="text-muted small text-nowrap">Subtotal: ₹<%= order.subtotal.toLocaleString('en-IN') %></div>
+        <div class="fw-bold text-nowrap">Total: ₹<%= order.total.toLocaleString('en-IN') %></div>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 45%">Product</th>
+              <th class="text-end" style="width: 15%">Price</th>
+              <th class="text-center" style="width: 15%">Qty</th>
+              <th class="text-end" style="width: 15%">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% order.items.forEach(item => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <% if (item.product && item.product.image) { %>
+                      <img src="<%= item.product.image %>" alt="<%= item.product.name %>" 
+                          class="rounded me-2" width="40" height="40">
+                    <% } else { %>
+                      <div class="bg-light rounded me-2 d-flex align-items-center justify-content-center" 
+                          style="width: 40px; height: 40px;">
+                        <i class="bi bi-image text-muted"></i>
+                      </div>
+                    <% } %>
+                    <div>
+                      <div class="fw-bold"><%= item.productName || (item.product ? item.product.name : 'Product not found') %></div>
+                      <% if (item.product && item.product.sku) { %>
+                        <div class="text-muted small">SKU: <%= item.product.sku %></div>
+                      <% } %>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-end">₹<%= item.price.toLocaleString('en-IN') %></td>
+                <td class="text-center"><%= item.quantity %></td>
+                <td class="text-end">₹<%= (item.price * item.quantity).toLocaleString('en-IN') %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Summary and Notes -->
+  <div class="row mt-3">
+    <!-- In the Notes section (col-lg-6) -->
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header bg-light py-2">
+          <h6 class="mb-0"><i class="bi bi-pencil me-2"></i>Notes</h6>
+        </div>
+        <div class="card-body p-3">
+          <!-- Order Notes -->
+          <% if (order.notes) { %>
+            <div class="mb-3">
+              <div class="fw-bold small mb-1">Order Notes:</div>
+              <div><%= order.notes %></div>
+            </div>
+          <% } %>
+          
+          <!-- Accountant Notes -->
+          <% if (typeof order.accountantDescription === 'string' && order.accountantDescription.trim() !== '') { %>
+            <div>
+              <div class="fw-bold small mb-1">Accountant Notes:</div>
+              <div class="text-muted"><%= order.accountantDescription %></div>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header bg-light py-2">
+          <h6 class="mb-0"><i class="bi bi-receipt me-2"></i>Order Summary</h6>
+        </div>
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted">Subtotal:</span>
+            <span>₹<%= order.subtotal.toLocaleString('en-IN') %></span>
+          </div>
+          <% if (order.tax > 0) { %>
+            <div class="d-flex justify-content-between mb-1">
+              <span class="text-muted">Tax (<%= order.taxRate %>%):</span>
+              <span>₹<%= order.tax.toLocaleString('en-IN') %></span>
+            </div>
+          <% } %>
+          <!-- Add Advance Payment Row (only for COD orders) -->
+          <% if (order.orderType === 'cod' && order.advancePayment > 0) { %>
+            <div class="d-flex justify-content-between mb-1">
+              <span class="text-muted">Advance Paid:</span>
+              <span class="text-success">- ₹<%= order.advancePayment.toLocaleString('en-IN') %></span>
+            </div>
+          <% } %>
+          <div class="d-flex justify-content-between mt-2 fw-bold border-top pt-2">
+            <span>Total Amount:</span>
+            <span>₹<%= order.total.toLocaleString('en-IN') %></span>
+          </div>
+          <!-- Add Balance Due for COD orders with advance -->
+          <% if (order.orderType === 'cod' && order.advancePayment > 0) { %>
+            <div class="d-flex justify-content-between mt-2 fw-bold border-top pt-2">
+              <span>Balance Due:</span>
+              <span>₹<%= (order.total - order.advancePayment).toLocaleString('en-IN') %></span>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status History -->
+  <% if (order.statusHistory && order.statusHistory.length > 0) { %>
+    <div class="card mt-3">
+      <div class="card-header bg-light py-2">
+        <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Status History</h6>
+      </div>
+      <div class="card-body p-3">
+        <div class="timeline">
+          <% order.statusHistory.forEach(history => { %>
+            <div class="timeline-item">
+              <div class="timeline-badge bg-<%= getStatusBadgeColor(history.status) %>"></div>
+              <div class="timeline-content">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="fw-bold"><%= history.status.replace('_', ' ') %></span>
+                  <small class="text-muted">
+                    <%= new Date(history.changedAt || history.date).toLocaleString('en-US', {
+                      timeZone: 'Asia/Kolkata',
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true
+                    }) %>
+                  </small>
+                </div>
+                <% if (history.changedBy) { %>
+                  <div class="text-muted small">By <%= history.changedBy.name %></div>
+                <% } %>
+                <% if (history.notes) { %>
+                  <div class="mt-1 small text-muted"><%= history.notes %></div>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<!-- Payment Proofs Section -->
+<% if (order.paymentProofs && order.paymentProofs.length > 0) { %>
+  <div class="card mt-3">
+    <div class="card-header bg-light py-2">
+      <h6 class="mb-0"><i class="bi bi-receipt me-2"></i>Payment Proofs</h6>
+    </div>
+    <div class="card-body p-3">
+      <div class="d-flex flex-wrap gap-3">
+        <% order.paymentProofs.forEach(proof => { %>
+          <div class="payment-proof-thumbnail" style="width: 120px;">
+            <a href="/api/file/files/<%= proof.filename %>?bucket=paymentProofs" 
+               target="_blank" 
+               class="d-block text-decoration-none"
+               title="Click to view full size">
+              <img src="/api/file/files/<%= proof.filename %>?bucket=paymentProofs" 
+                   alt="Payment proof" 
+                   class="img-thumbnail w-100 h-auto"
+                   style="max-height: 120px; object-fit: contain;">
+              <div class="text-center small mt-1 text-truncate">
+                <%= proof.originalName || proof.filename %>
+              </div>
+            </a>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+<% } %>
+
+<!-- Boxes Section -->
+<% if (order.boxes && order.boxes.length > 0) { %>
+  <div class="card mt-3">
+    <div class="card-header bg-light py-2">
+      <h6 class="mb-0"><i class="bi bi-box-seam me-2"></i>Boxes</h6>
+    </div>
+    <div class="card-body p-3">
+      <div class="row g-3">
+        <% order.boxes.forEach((box, index) => { %>
+          <div class="col-md-6">
+            <div class="border rounded p-3 h-100">
+              <h6 class="fw-bold mb-2">Box <%= index + 1 %></h6>
+              
+              <!-- Box Details -->
+              <p class="mb-1"><strong>Tracking ID:</strong> <%= box.trackingId %></p>
+              <p class="mb-1"><strong>Weight:</strong> <%= box.weight %> kg</p>
+              <% if (box.dimensions && (box.dimensions.length || box.dimensions.width || box.dimensions.height)) { %>
+                <p class="mb-1">
+                  <strong>Dimensions:</strong> 
+                  <%= box.dimensions.length || '-' %> × 
+                  <%= box.dimensions.width || '-' %> × 
+                  <%= box.dimensions.height || '-' %> cm
+                </p>
+              <% } %>
+              <% if (box.description) { %>
+                <p class="mb-2"><strong>Description:</strong> <%= box.description %></p>
+              <% } %>
+
+              <!-- Box Photos -->
+              <% if (box.photos && box.photos.length > 0) { %>
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                  <% box.photos.forEach(photo => { %>
+                    <div style="width: 100px;">
+                      <a href="/api/file/files/<%= photo.filename %>?bucket=boxPhotos" 
+                         target="_blank" 
+                         class="d-block text-decoration-none"
+                         title="Click to view full size">
+                        <img src="/api/file/files/<%= photo.filename %>?bucket=boxPhotos" 
+                             alt="Box photo" 
+                             class="img-thumbnail w-100 h-auto"
+                             style="max-height: 100px; object-fit: contain;">
+                        <div class="text-center small mt-1 text-truncate">
+                          <%= photo.originalName || photo.filename %>
+                        </div>
+                      </a>
+                    </div>
+                  <% }); %>
+                </div>
+              <% } else { %>
+                <p class="text-muted small">No photos uploaded</p>
+              <% } %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+<% } %>
+
+<style>
+  /* Payment Proofs Thumbnail Styles */
+  .payment-proof-thumbnail {
+    transition: transform 0.2s;
+  }
+
+  .payment-proof-thumbnail:hover {
+    transform: scale(1.05);
+  }
+
+  .payment-proof-thumbnail img {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    padding: 4px;
+  }
+
+  .payment-proof-thumbnail a:hover img {
+    border-color: #0d6efd;
+  }
+  .order-details-container {
+    font-size: 0.875rem;
+  }
+  
+  .card-header {
+    font-size: 0.875rem;
+  }
+  
+  .timeline {
+    position: relative;
+    padding-left: 1.25rem;
+  }
+  
+  .timeline-item {
+    position: relative;
+    padding-bottom: 1rem;
+    padding-left: 1.25rem;
+    border-left: 1px solid #dee2e6;
+  }
+  
+  .timeline-item:last-child {
+    padding-bottom: 0;
+    border-left-color: transparent;
+  }
+  
+  .timeline-badge {
+    position: absolute;
+    left: -0.4375rem;
+    top: 0.25rem;
+    width: 0.875rem;
+    height: 0.875rem;
+    border-radius: 50%;
+    border: 2px solid white;
+  }
+  
+  .timeline-content {
+    padding-left: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .fs-xxsmall {
+    font-size: 0.65rem;
+  }
+  
+  .table th {
+    font-weight: 500;
+    background-color: #f8f9fa;
+    font-size: 0.8125rem;
+  }
+  
+  .table td {
+    vertical-align: middle;
+    padding: 0.5rem;
+  }
+
+  @media (max-width: 767.98px) {
+    .order-details-container {
+      font-size: 0.8125rem;
+    }
+    
+    .table th, .table td {
+      padding: 0.375rem;
+    }
+    
+    .card-header h6 {
+      font-size: 0.875rem;
+    }
+  }
+</style>

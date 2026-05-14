@@ -1,0 +1,1638 @@
+<%- include('../../partials/header') %>
+
+<style>
+  .admin-content {
+    padding: 20px;
+  }
+  
+  .filters-card {
+    margin-bottom: 20px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+  }
+  
+  .filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+  }
+  
+  .filter-group {
+    flex: 1;
+    min-width: 200px;
+  }
+  
+  .filter-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #495057;
+  }
+  
+  .form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  .search-group {
+    flex: 2;
+    min-width: 300px;
+  }
+  
+  .search-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    color: #6c757d;
+    z-index: 2;
+  }
+  
+  .search-input {
+    padding-left: 40px !important;
+    padding-right: 40px !important;
+  }
+  
+  .clear-search {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    z-index: 2;
+  }
+  
+  .clear-search:hover {
+    color: #dc3545;
+  }
+  
+  .search-hint {
+    font-size: 0.8em;
+    color: #6c757d;
+    margin-top: 4px;
+  }
+  
+  .filter-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 15px;
+  }
+  
+  .btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+  
+  .btn-primary { background: #007bff; color: white; }
+  .btn-secondary { background: #6c757d; color: white; }
+  .btn-success { background: #28a745; color: white; }
+  .btn-outline { background: transparent; border: 1px solid #007bff; color: #007bff; }
+  
+  .btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+  
+  .btn-outline:hover {
+    background: #007bff;
+    color: white;
+  }
+  
+  .table-responsive {
+    overflow-x: auto;
+    max-width: 100%;
+    margin-top: 20px;
+  }
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+    background: white;
+  }
+  
+  .table th {
+    background: #f1f3f4;
+    padding: 12px 8px;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+    text-align: left;
+  }
+  
+  .table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #dee2e6;
+    vertical-align: middle;
+  }
+  
+  .badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: 500;
+    display: inline-block;
+  }
+  
+  .badge-warning { background: #ffc107; color: #000; }
+  .badge-success { background: #28a745; color: #fff; }
+  .badge-secondary { background: #6c757d; color: #fff; }
+  .badge-danger { background: #dc3545; color: #fff; }
+  .badge-primary { background: #007bff; color: #fff; }
+  
+  .table-warning { background: #fff3cd !important; }
+  
+  .search-highlight {
+    background-color: #fff3cd;
+    padding: 2px 4px;
+    border-radius: 2px;
+    font-weight: 600;
+  }
+  
+  .pagination-container {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .pagination-list {
+    display: flex;
+    list-style: none;
+    gap: 5px;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .pagination-list a {
+    padding: 8px 12px;
+    border: 1px solid #dee2e6;
+    text-decoration: none;
+    color: #007bff;
+    border-radius: 4px;
+    transition: all 0.3s;
+  }
+  
+  .pagination-list a.active {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+  }
+  
+  .pagination-list a:hover {
+    background: #e9ecef;
+  }
+  
+  .loading-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.8);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .btn-view {
+    padding: 6px 12px;
+    background: #17a2b8;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.8em;
+    display: inline-block;
+  }
+  
+  .btn-view:hover {
+    background: #138496;
+    color: white;
+    text-decoration: none;
+  }
+  
+  .error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border: 1px solid #f5c6cb;
+  }
+  
+  .no-results {
+    text-align: center;
+    padding: 40px;
+    color: #6c757d;
+    font-style: italic;
+  }
+  
+  .results-info {
+    background: #e7f3ff;
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    border-left: 4px solid #007bff;
+  }
+  
+  /* Additional styles for modal */
+  #excelUploadModal .modal-lg {
+    max-width: 600px;
+  }
+
+  #uploadProgress {
+    margin: 20px 0;
+  }
+
+  .progress {
+    height: 20px;
+  }
+
+  #uploadResults details {
+    margin-top: 10px;
+  }
+
+  #uploadResults ul {
+    margin-bottom: 0;
+    padding-left: 20px;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+
+  .form-text strong {
+    color: #495057;
+  }
+
+  .btn-info {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: white;
+  }
+
+  .btn-info:hover {
+    background-color: #138496;
+    border-color: #117a8b;
+    color: white;
+  }
+
+  /* Fallback modal styles if Bootstrap not available */
+  .modal.fallback {
+    display: none;
+    position: fixed;
+    z-index: 1050;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+  }
+
+  .modal.fallback.show {
+    display: block;
+  }
+
+  .modal-content.fallback {
+    background-color: #fefefe;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 5px;
+  }
+
+  @media (max-width: 768px) {
+    .filter-row {
+      flex-direction: column;
+    }
+    
+    .filter-group, .search-group {
+      min-width: 100%;
+    }
+    
+    .table {
+      font-size: 0.8em;
+    }
+    
+    .table th, .table td {
+      padding: 8px 4px;
+    }
+    
+    .filter-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .btn {
+      width: 100%;
+      margin-bottom: 5px;
+    }
+    
+    .search-group {
+      order: -1; /* Move search to top on mobile */
+    }
+  }
+</style>
+
+<div class="admin-content">
+  <!-- Loading Indicator -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div style="text-align: center;">
+      <div style="font-size: 24px; margin-bottom: 10px;">⏳</div>
+      <div>Loading orders...</div>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <% if (typeof error !== 'undefined') { %>
+    <div class="error-message">
+      <strong>Error:</strong> <%= error %>
+    </div>
+  <% } %>
+
+  <!-- Filters Section -->
+  <div class="card filters-card">
+    <form id="orderFilters" method="GET" action="/dashboard/order_manager">
+      <!-- NEW: Global Search Row -->
+      <div class="filter-row">
+        <div class="search-group">
+          <label for="search">Global Search:</label>
+          <div class="search-input-container">
+            <span class="search-icon">🔍</span>
+            <input 
+              type="text" 
+              id="search" 
+              name="search" 
+              class="form-control search-input" 
+              placeholder="Search by Order ID or Customer Name..."
+              value="<%= selected.search || '' %>"
+            >
+            <% if (selected.search) { %>
+              <button type="button" class="clear-search" title="Clear search">✕</button>
+            <% } %>
+          </div>
+          <div class="search-hint">Searches in Order Reference and Customer Name fields</div>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="timeRange">Time Range:</label>
+          <select id="timeRange" name="timeRange" class="form-control">
+            <option value="all" <%= selected.timeRange === 'all' ? 'selected' : '' %>>All Time</option>
+            <option value="today" <%= selected.timeRange === 'today' ? 'selected' : '' %>>Today</option>
+            <option value="week" <%= selected.timeRange === 'week' ? 'selected' : '' %>>This Week</option>
+            <option value="month" <%= selected.timeRange === 'month' ? 'selected' : '' %>>This Month</option>
+            <option value="custom" <%= selected.timeRange === 'custom' ? 'selected' : '' %>>Custom Range</option>
+          </select>
+        </div>
+
+        <div class="filter-group custom-date-range" style="display:<%= selected.timeRange === 'custom' ? 'block' : 'none' %>;">
+          <label for="fromDate">From:</label>
+          <input type="date" id="fromDate" name="fromDate" class="form-control" value="<%= selected.fromDate %>">
+          
+          <label for="toDate">To:</label>
+          <input type="date" id="toDate" name="toDate" class="form-control" value="<%= selected.toDate %>">
+        </div>
+
+        <div class="filter-group">
+          <label for="orderType">Order Type:</label>
+          <select id="orderType" name="orderType" class="form-control">
+            <option value="">All Types</option>
+            <option value="cod" <%= selected.orderType === 'cod' ? 'selected' : '' %>>COD</option>
+            <option value="prepaid" <%= selected.orderType === 'prepaid' ? 'selected' : '' %>>Prepaid</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="status">Status:</label>
+          <select id="status" name="status" class="form-control">
+            <option value="">All Statuses</option>
+            <option value="created" <%= selected.status === 'created' ? 'selected' : '' %>>Created</option>
+            <option value="processing" <%= selected.status === 'processing' ? 'selected' : '' %>>Processing</option>
+            <option value="shipped" <%= selected.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+            <option value="delivered" <%= selected.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+            <option value="cancelled" <%= selected.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+            <option value="returned" <%= selected.status === 'returned' ? 'selected' : '' %>>Returned</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="companyStatus">Company Status:</label>
+          <select id="companyStatus" name="companyStatus" class="form-control">
+            <option value="">All Statuses</option>
+            <option value="created" <%= selected.companyStatus === 'created' ? 'selected' : '' %>>Created</option>
+            <option value="accountant_review" <%= selected.companyStatus === 'accountant_review' ? 'selected' : '' %>>Accountant Review</option>
+            <option value="accountant_approved" <%= selected.companyStatus === 'accountant_approved' ? 'selected' : '' %>>Accountant Approved</option>
+            <option value="dispatch_packed" <%= selected.companyStatus === 'dispatch_packed' ? 'selected' : '' %>>Dispatch Packed</option>
+            <option value="dispatched" <%= selected.companyStatus === 'dispatched' ? 'selected' : '' %>>Dispatched</option>
+            <option value="delivered" <%= selected.companyStatus === 'delivered' ? 'selected' : '' %>>Delivered</option>
+            <option value="cancelled" <%= selected.companyStatus === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="companyName">Company:</label>
+          <select id="companyName" name="companyName" class="form-control">
+            <option value="">All Companies</option>
+            <option value="POSIFLOW" <%= selected.companyName === 'POSIFLOW' ? 'selected' : '' %>>POSIFLOW</option>
+            <option value="Shreyans" <%= selected.companyName === 'Shreyans' ? 'selected' : '' %>>Shreyans</option>
+            <option value="SR GOLD" <%= selected.companyName === 'SR GOLD' ? 'selected' : '' %>>SR GOLD</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label for="salesPersonId">Sales Person:</label>
+        <select id="salesPersonId" name="salesPersonId" class="form-control">
+          <option value="">All Sales Persons</option>
+          <% salesPersons.forEach(salesPerson => { %>
+            <option value="<%= salesPerson._id %>" 
+              <%= selectedSalesPersonId === salesPerson._id.toString() ? 'selected' : '' %>>
+              <%= salesPerson.name %>
+            </option>
+          <% }); %>
+        </select>
+      </div>
+      
+      <div class="filter-actions">
+        <button type="submit" class="btn btn-primary">Apply Filters</button>
+        <button type="button" id="resetFilters" class="btn btn-secondary">Reset</button>
+        <button type="button" id="exportExcel" class="btn btn-success">Export to Excel</button>
+            <!-- NEW: Update Tracking by Excel Button -->
+        <button type="button" id="updateTrackingExcel" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#excelUploadModal">
+          📤 Update Tracking by Excel
+        </button>
+        <div style="margin-left: auto;">
+          <label for="limit" style="margin-right: 10px;">Items per page:</label>
+          <select id="limit" name="limit" class="form-control" style="width: auto; display: inline-block;">
+            <option value="20" <%= limit == 20 ? 'selected' : '' %>>20</option>
+            <option value="50" <%= limit == 50 ? 'selected' : '' %>>50</option>
+            <option value="100" <%= limit == 100 ? 'selected' : '' %>>100</option>
+          </select>
+        </div>
+      </div>
+    </form>
+  </div>
+
+    <!-- NEW: Excel Upload Modal -->
+  <div class="modal fade" id="excelUploadModal" tabindex="-1" aria-labelledby="excelUploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="excelUploadModalLabel">Update Tracking by Excel</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="excelUploadForm" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label for="excelFile" class="form-label">Select Excel File</label>
+              <input type="file" class="form-control" id="excelFile" name="excelFile" accept=".xlsx,.xls" required>
+              <div class="form-text">Supported formats: .xlsx, .xls (Max 5MB)</div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="sheetFormat" class="form-label">Excel Format</label>
+              <select class="form-control" id="sheetFormat" name="sheetFormat" required>
+                <option value="">Select Format</option>
+                <option value="bluedart">Bluedart Format</option>
+                <option value="shiprocket">ShipRocket Format</option>
+                <option value="custom">Custom Format (Future)</option>
+              </select>
+              <div class="form-text">
+                <strong>Format Details:</strong><br>
+                • <strong>Bluedart:</strong> Starts from A3, columns: Tracking ID, Amount, Skip, Delivery Date, Order ID<br>
+                • <strong>ShipRocket:</strong> Starts from A2, columns: Tracking ID, Delivery Date+Time, Order ID, Courier, Order Value
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="defaultTime" class="form-label">Default Time (if time not in sheet)</label>
+              <input type="time" class="form-control" id="defaultTime" name="defaultTime" value="12:00">
+            </div>
+          </form>
+          
+          <div id="uploadProgress" class="mt-3" style="display: none;">
+            <div class="progress">
+              <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+            </div>
+            <div id="progressText" class="text-center mt-2"></div>
+          </div>
+          
+          <div id="uploadResults" class="mt-3" style="display: none;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" id="submitExcel" class="btn btn-primary">Process Excel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Results Info -->
+  <% if (selected.search) { %>
+    <div class="results-info">
+      <strong>Search Results:</strong> Showing orders matching "<%= selected.search %>" 
+      <% if (orders.length > 0) { %>
+        - Found <%= orders.length %> order(s)
+      <% } %>
+    </div>
+  <% } %>
+
+  <!-- Orders Table -->
+  <div class="card">
+    <% if (orders.length === 0) { %>
+      <p class="no-results">
+        <% if (selected.search) { %>
+          No orders found matching "<%= selected.search %>". Try a different search term.
+        <% } else { %>
+          No orders found matching your criteria.
+        <% } %>
+      </p>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Order ID/Ref</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Type</th>
+              <th>Total (₹)</th>
+              <th>Payment</th>
+              <th>Courier</th>
+              <th>Company Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% orders.forEach(order => { %>
+              <tr class="<%= order.isBillOnHold ? 'table-warning' : '' %>">
+                <td>
+                  <strong>
+                    <% if (selected.search && order.orderReference && order.orderReference.toLowerCase().includes(selected.search.toLowerCase())) { %>
+                      <span class="search-highlight"><%= order.orderReference || order._id.toString().slice(-6).toUpperCase() %></span>
+                    <% } else { %>
+                      <%= order.orderReference || order._id.toString().slice(-6).toUpperCase() %>
+                    <% } %>
+                  </strong>
+                </td>
+                <td><%= new Date(order.createdAt).toLocaleDateString('en-IN') %></td>
+                <td>
+                  <% if (selected.search && order.customerName && order.customerName.toLowerCase().includes(selected.search.toLowerCase())) { %>
+                    <span class="search-highlight"><%= order.customerName %></span>
+                  <% } else { %>
+                    <%= order.customerName %>
+                  <% } %>
+                </td>
+                <td>
+                  <span class="badge <%= order.orderType === 'cod' ? 'badge-warning' : 'badge-success' %>">
+                    <%= order.orderType.toUpperCase() %>
+                  </span>
+                </td>
+                <td>₹<%= order.total.toFixed(2) %></td>
+                <td>
+                  <span class="badge <%= order.paymentStatus === 'verified' ? 'badge-success' : 'badge-secondary' %>">
+                    <%= order.paymentStatus ? order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) : 'Pending' %>
+                  </span>
+                </td>
+                <td>
+                  <% if (order.shippingType) { %>
+                    <span class="badge 
+                      <%= order.shippingType === 'Critica' ? 'bg-danger' : '' %>
+                      <%= order.shippingType === 'Blue Dart' ? 'bg-primary' : '' %>
+                      <%= order.shippingType === 'ShipRocket' ? 'bg-success' : '' %>
+                      <%= order.shippingType === 'Other' ? 'bg-secondary' : '' %>
+                      <%= order.shippingType === 'PORTER' ? 'bg-warning text-dark' : '' %>">
+                      <%= order.shippingType %>
+                    </span>
+                  <% } else { %>
+                    <span class="text-muted">-</span>
+                  <% } %>
+                </td>
+                <td>
+                  <span class="badge badge-secondary">
+                    <%= order.companyStatus ? order.companyStatus.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'N/A' %>
+                  </span>
+                </td>
+                <td class="actions">
+                  <a href="/dashboard/order_manager/orders/<%= order._id %>/details" class="btn-view" title="View Details">
+                    👁️ View
+                  </a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Optimized Pagination -->
+      <% if (totalPages > 1) { %>
+        <div class="pagination-container">
+          <ul class="pagination-list">
+            <% if (currentPage > 1) { %>
+              <li><a href="<%= typeof buildPaginationUrl === 'function' ? buildPaginationUrl(currentPage - 1) : `?page=${currentPage - 1}` %>">&laquo; Prev</a></li>
+            <% } %>
+
+            <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+              <li>
+                <a href="<%= typeof buildPaginationUrl === 'function' ? buildPaginationUrl(i) : `?page=${i}` %>" class="<%= i === currentPage ? 'active' : '' %>"><%= i %></a>
+              </li>
+            <% } %>
+
+            <% if (currentPage < totalPages) { %>
+              <li><a href="<%= typeof buildPaginationUrl === 'function' ? buildPaginationUrl(currentPage + 1) : `?page=${currentPage + 1}` %>">Next &raquo;</a></li>
+            <% } %>
+          </ul>
+        </div>
+      <% } %>
+    <% } %>
+  </div>
+</div>
+
+<script>
+  // Show/hide custom date range
+  document.getElementById('timeRange').addEventListener('change', function() {
+    const customDateRange = document.querySelector('.custom-date-range');
+    customDateRange.style.display = this.value === 'custom' ? 'block' : 'none';
+  });
+
+  // Loading indicator
+  function showLoading() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+  }
+
+  // Form submission handler
+  document.getElementById('orderFilters').addEventListener('submit', function(e) {
+    showLoading();
+  });
+
+  // Clear search functionality
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('clear-search')) {
+      document.getElementById('search').value = '';
+      showLoading();
+      document.getElementById('orderFilters').submit();
+    }
+  });
+
+  // Quick search on Enter key
+  document.getElementById('search').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      showLoading();
+      document.getElementById('orderFilters').submit();
+    }
+  });
+
+  // Reset filters
+  document.getElementById('resetFilters').addEventListener('click', function() {
+    window.location.href = '/dashboard/order_manager';
+  });
+
+  // Export to Excel
+  document.getElementById('exportExcel').addEventListener('click', function() {
+    showLoading();
+    const form = document.getElementById('orderFilters');
+    const formData = new FormData(form);
+    const params = new URLSearchParams(formData).toString();
+    window.location.href = `/dashboard/order_manager/orders/export?${params}`;
+  });
+
+  // Excel Upload Functionality - Fixed version
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Excel upload functionality
+    initExcelUpload();
+    
+    setupFilterHandlers();
+    checkBootstrap();
+    
+    // Hide loading indicator when page is fully loaded
+    document.getElementById('loadingOverlay').style.display = 'none';
+
+    // Auto-submit form on filter change for better UX
+    const autoSubmitFilters = ['timeRange', 'orderType', 'status', 'companyStatus', 'companyName', 'salesPersonId', 'limit'];
+    autoSubmitFilters.forEach(filterId => {
+      const element = document.getElementById(filterId);
+      if (element) {
+        element.addEventListener('change', function() {
+          showLoading();
+          document.getElementById('orderFilters').submit();
+        });
+      }
+    });
+
+    // Focus search input when page loads if there's a search term
+    const searchInput = document.getElementById('search');
+    if (searchInput && searchInput.value) {
+      searchInput.focus();
+    }
+  });
+
+  // You'll also need to define the setupFilterHandlers function
+  function setupFilterHandlers() {
+    // Show/hide custom date range
+    const timeRangeSelect = document.getElementById('timeRange');
+    if (timeRangeSelect) {
+      timeRangeSelect.addEventListener('change', function() {
+        const customDateRange = document.querySelector('.custom-date-range');
+        if (customDateRange) {
+          customDateRange.style.display = this.value === 'custom' ? 'block' : 'none';
+        }
+      });
+    }
+// Form submission handler
+    const orderFiltersForm = document.getElementById('orderFilters');
+    if (orderFiltersForm) {
+      orderFiltersForm.addEventListener('submit', function(e) {
+        showLoading();
+      });
+    }
+
+    // Clear search functionality
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('clear-search')) {
+        const searchInput = document.getElementById('search');
+        if (searchInput) {
+          searchInput.value = '';
+          showLoading();
+          document.getElementById('orderFilters').submit();
+        }
+      }
+    });
+
+    // Quick search on Enter key
+    const searchInput = document.getElementById('search');
+    if (searchInput) {
+      searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          showLoading();
+          document.getElementById('orderFilters').submit();
+        }
+      });
+    }
+
+    // Reset filters
+    const resetFiltersBtn = document.getElementById('resetFilters');
+    if (resetFiltersBtn) {
+      resetFiltersBtn.addEventListener('click', function() {
+        window.location.href = '/dashboard/order_manager';
+      });
+    }
+
+    // Export to Excel
+    const exportExcelBtn = document.getElementById('exportExcel');
+    if (exportExcelBtn) {
+      exportExcelBtn.addEventListener('click', function() {
+        showLoading();
+        const form = document.getElementById('orderFilters');
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData).toString();
+        window.location.href = `/dashboard/order_manager/orders/export?${params}`;
+      });
+    }
+
+    // Auto-submit form on filter change
+    const autoSubmitFilters = ['timeRange', 'orderType', 'status', 'companyStatus', 'companyName', 'salesPersonId', 'limit'];
+    autoSubmitFilters.forEach(filterId => {
+      const element = document.getElementById(filterId);
+      if (element) {
+        element.addEventListener('change', function() {
+          showLoading();
+          document.getElementById('orderFilters').submit();
+        });
+      }
+    });
+
+    // Focus search input when page loads if there's a search term
+    if (searchInput && searchInput.value) {
+      searchInput.focus();
+    }
+  }
+
+  // Loading indicator function
+  function showLoading() {
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) {
+      loadingOverlay.style.display = 'flex';
+    }
+  }
+  // Hide loading when page fully loads
+  window.addEventListener('load', function() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+  });
+
+  // Excel upload functionality
+  function initExcelUpload() {
+    const submitExcelBtn = document.getElementById('submitExcel');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const progressBar = uploadProgress ? uploadProgress.querySelector('.progress-bar') : null;
+    const progressText = document.getElementById('progressText');
+    const uploadResults = document.getElementById('uploadResults');
+    const excelModal = document.getElementById('excelUploadModal');
+
+    if (!submitExcelBtn) {
+      console.error('Submit Excel button not found');
+      return;
+    }
+
+    submitExcelBtn.addEventListener('click', async function() {
+      const fileInput = document.getElementById('excelFile');
+      const sheetFormat = document.getElementById('sheetFormat');
+      const defaultTime = document.getElementById('defaultTime');
+      
+      if (!fileInput || !fileInput.files.length) {
+        alert('Please select an Excel file');
+        return;
+      }
+      
+      if (!sheetFormat || !sheetFormat.value) {
+        alert('Please select a sheet format');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (fileInput.files[0].size > 5 * 1024 * 1024) {
+        alert('File size too large. Maximum allowed size is 5MB.');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('excelFile', fileInput.files[0]);
+      formData.append('sheetFormat', sheetFormat.value);
+      formData.append('defaultTime', defaultTime ? defaultTime.value : '12:00');
+
+      // Show progress
+      if (uploadProgress) uploadProgress.style.display = 'block';
+      if (uploadResults) uploadResults.style.display = 'none';
+      if (progressBar) progressBar.style.width = '0%';
+      if (progressText) progressText.textContent = 'Processing...';
+      submitExcelBtn.disabled = true;
+
+      try {
+        const response = await fetch('/dashboard/order_manager/orders/bulk-update-tracking', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          if (progressBar) {
+            progressBar.style.width = '100%';
+            progressBar.classList.add('bg-success');
+          }
+          if (progressText) progressText.textContent = 'Completed!';
+          
+          // Show results
+          if (uploadResults) {
+            uploadResults.style.display = 'block';
+            uploadResults.innerHTML = `
+              <div class="alert alert-success">
+                <h6>📊 Processing Results:</h6>
+                <p><strong>✅ Successfully Updated:</strong> ${result.successCount} orders</p>
+                <p><strong>❌ Failed:</strong> ${result.failedCount} orders</p>
+                ${result.failedOrders && result.failedOrders.length > 0 ? `
+                  <details class="mt-2">
+                    <summary><strong>Failed Orders Details:</strong></summary>
+                    <ul class="mt-2 small">
+                      ${result.failedOrders.map(order => `<li>Order ID: ${order.orderId} - Error: ${order.error}</li>`).join('')}
+                    </ul>
+                  </details>
+                ` : ''}
+                ${result.successCount > 0 ? `
+                  <div class="mt-2">
+                    <small class="text-muted">Page will refresh in 3 seconds to show updated data...</small>
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          }
+
+          // Refresh the page after 3 seconds if there were successful updates
+          if (result.successCount > 0) {
+            setTimeout(() => {
+              window.location.reload();
+            }, 3000);
+          }
+        } else {
+          throw new Error(result.message || 'Upload failed');
+        }
+      } catch (error) {
+        console.error('Excel upload error:', error);
+        if (progressBar) {
+          progressBar.style.width = '100%';
+          progressBar.classList.add('bg-danger');
+        }
+        if (progressText) progressText.textContent = 'Error!';
+        
+        if (uploadResults) {
+          uploadResults.style.display = 'block';
+          uploadResults.innerHTML = `
+            <div class="alert alert-danger">
+              <strong>❌ Error:</strong> ${error.message}
+            </div>
+          `;
+        }
+      } finally {
+        submitExcelBtn.disabled = false;
+      }
+    });
+
+    // Reset modal when closed
+    if (excelModal) {
+      excelModal.addEventListener('hidden.bs.modal', function() {
+        const excelUploadForm = document.getElementById('excelUploadForm');
+        if (excelUploadForm) excelUploadForm.reset();
+        
+        if (uploadProgress) uploadProgress.style.display = 'none';
+        if (uploadResults) uploadResults.style.display = 'none';
+        if (progressBar) {
+          progressBar.classList.remove('bg-success', 'bg-danger');
+          progressBar.style.width = '0%';
+        }
+        if (submitExcelBtn) submitExcelBtn.disabled = false;
+      });
+    }
+  }
+
+  // Test if Bootstrap is available
+  function checkBootstrap() {
+    if (typeof bootstrap === 'undefined') {
+      console.warn('Bootstrap not loaded. Loading fallback modal functionality.');
+      loadFallbackModal();
+    }
+  }
+
+  // Fallback modal functionality if Bootstrap is not available
+  function loadFallbackModal() {
+    const modal = document.getElementById('excelUploadModal');
+    const openBtn = document.getElementById('updateTrackingExcel');
+    const closeBtns = modal.querySelectorAll('[data-bs-dismiss="modal"], .btn-close, .btn-secondary');
+    
+    if (openBtn && modal) {
+      openBtn.addEventListener('click', function() {
+        modal.style.display = 'block';
+        modal.classList.add('show');
+      });
+      
+      closeBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          modal.style.display = 'none';
+          modal.classList.remove('show');
+        });
+      });
+      
+      // Close modal when clicking outside
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+          modal.style.display = 'none';
+          modal.classList.remove('show');
+        }
+      });
+    }
+  }
+
+  // Check Bootstrap on load
+  document.addEventListener('DOMContentLoaded', checkBootstrap);
+</script>
+
+<style>
+    :root {
+    --primary: #4361ee;
+    --primary-light: #e6f0fd;
+    --secondary: #3f37c9;
+    --success: #4cc9f0;
+    --danger: #f72585;
+    --warning: #f8961e;
+    --info: #4895ef;
+    --light: #f8f9fa;
+    --dark: #212529;
+    --gray: #6c757d;
+    --white: #ffffff;
+    --border-radius: 8px;
+    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+  }
+
+  /* Additional styles for the Excel upload modal */
+  #excelUploadModal .modal-lg {
+    max-width: 600px;
+  }
+
+  #uploadProgress {
+    margin: 20px 0;
+  }
+
+  .progress {
+    height: 20px;
+  }
+
+  #uploadResults details {
+    margin-top: 10px;
+  }
+
+  #uploadResults ul {
+    margin-bottom: 0;
+    padding-left: 20px;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+
+  .form-text strong {
+    color: #495057;
+  }
+
+  .btn-info {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+  }
+
+  .btn-info:hover {
+    background-color: #138496;
+    border-color: #117a8b;
+  }
+
+  .filter-group {
+    margin-right: 15px;
+    margin-bottom: 10px;
+  }
+
+  .filter-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  .tab-nav {
+    display: flex;
+    gap: 10px;
+    background-color: var(--white);
+    padding: 15px 30px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: var(--box-shadow);
+  }
+  .tab-nav a {
+    text-decoration: none;
+    color: var(--gray);
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    font-size: 14px;
+  }
+  .tab-nav a.active,
+  .tab-nav a:hover {
+    background-color: var(--primary);
+    color: var(--white);
+  }
+  
+  .admin-content {
+    padding: 30px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+  
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    animation: fadeIn 0.5s ease;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .page-header h2 {
+    color: var(--dark);
+    font-size: 24px;
+    margin: 0;
+  }
+  
+  .pagination-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    overflow-x: auto;
+  }
+
+  .pagination-list {
+    list-style: none;
+    display: flex;
+    gap: 6px;
+    padding: 0;
+    margin: 0;
+  }
+
+  .pagination-list li a,
+  .pagination-list li span {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #333;
+    background-color: #fff;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    min-width: 36px;
+    text-align: center;
+    display: inline-block;
+  }
+
+  .pagination-list li a:hover {
+    background-color: #f0f0f0;
+  }
+
+  .pagination-list li a.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+    font-weight: bold;
+  }
+
+  .ellipsis {
+    padding: 8px 12px;
+    color: #888;
+    pointer-events: none;
+    font-size: 16px;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: var(--border-radius);
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+  }
+  
+  .btn-primary {
+    background-color: var(--primary);
+    color: var(--white);
+  }
+  
+  .btn-primary:hover {
+    background-color: var(--secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(67, 97, 238, 0.2);
+  }
+  
+  .btn-danger {
+    background-color: var(--danger);
+    color: var(--white);
+  }
+  
+  .btn-danger:hover {
+    background-color: #d1146b;
+    transform: translateY(-2px);
+  }
+  
+  .btn-warning {
+    background-color: var(--warning);
+    color: var(--white);
+  }
+  
+  .btn-warning:hover {
+    background-color: #e08715;
+    transform: translateY(-2px);
+  }
+  
+  .card {
+    background: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    transition: var(--transition);
+    overflow: hidden;
+  }
+  
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .card-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+  
+  .card-body {
+    padding: 20px;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--dark);
+    font-size: 14px;
+  }
+  
+  .form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    transition: var(--transition);
+    background-color: var(--light);
+  }
+  
+  .form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    background-color: var(--white);
+  }
+  
+  .search-container {
+    margin-bottom: 30px;
+    animation: slideUp 0.4s ease;
+  }
+  
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .search-card {
+    padding: 20px;
+    background-color: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+  }
+  
+  .search-form {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .search-form .form-control {
+    flex: 1;
+  }
+  
+  .user-form-card {
+    margin-bottom: 30px;
+    animation: slideUp 0.5s ease;
+  }
+  
+  .user-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    animation: fadeIn 0.6s ease;
+  }
+  
+  .user-card {
+    position: relative;
+  }
+  
+  .user-card .card-body {
+    padding-bottom: 60px;
+  }
+  
+  .user-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-weight: bold;
+    font-size: 24px;
+    margin-bottom: 15px;
+  }
+  
+  .user-name {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 5px;
+    color: var(--dark);
+  }
+  
+  .user-detail {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: var(--gray);
+  }
+  
+  .user-detail i {
+    margin-right: 10px;
+    color: var(--primary);
+    width: 20px;
+    text-align: center;
+  }
+  
+  .user-status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .status-active {
+    background-color: rgba(76, 201, 240, 0.1);
+    color: var(--success);
+  }
+  
+  .status-inactive {
+    background-color: rgba(247, 37, 133, 0.1);
+    color: var(--danger);
+  }
+  
+  .user-actions {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 15px 20px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    gap: 10px;
+  }
+  
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    animation: fadeIn 0.5s ease;
+  }
+  
+  .empty-state i {
+    font-size: 60px;
+    color: var(--gray);
+    opacity: 0.3;
+    margin-bottom: 20px;
+  }
+  
+  .empty-state h3 {
+    color: var(--dark);
+    margin-bottom: 10px;
+  }
+  
+  .empty-state p {
+    color: var(--gray);
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  
+  /* Modal */
+  .modal {
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .modal.show {
+    opacity: 1;
+    display: flex;
+  }
+  
+  .modal-content {
+    background-color: var(--white);
+    padding: 30px;
+    border-radius: var(--border-radius);
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    position: relative;
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+  }
+  
+  .modal.show .modal-content {
+    transform: translateY(0);
+  }
+  
+  .modal-header {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .modal-title {
+    margin: 0;
+    font-size: 20px;
+    color: var(--dark);
+  }
+  
+  .btn-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--gray);
+    cursor: pointer;
+    transition: var(--transition);
+    padding: 0;
+    line-height: 1;
+  }
+  
+  .btn-close:hover {
+    color: var(--danger);
+    transform: rotate(90deg);
+  }
+  
+  .modal-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  
+  @media (max-width: 768px) {
+    .admin-content {
+      padding: 20px;
+    }
+    
+    .search-form {
+      flex-direction: column;
+    }
+    
+    .user-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .tab-nav {
+      overflow-x: auto;
+      padding: 15px;
+    }
+    
+    .tab-nav a {
+      white-space: nowrap;
+    }
+  }
+
+  .filters-card {
+    margin-bottom: 20px;
+    padding: 20px;
+  }
+  
+  .filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+  }
+  
+  .filter-group {
+    flex: 1;
+    min-width: 200px;
+  }
+  
+  .filter-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+  
+  .filter-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  
+  .custom-date-range {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+  }
+  
+  .badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+  }
+  
+  .badge-success {
+    background-color: #28a745;
+    color: white;
+  }
+  
+  .badge-status-created { background-color: #6c757d; color: white; }
+  .badge-status-processing { background-color: #17a2b8; color: white; }
+  .badge-status-shipped { background-color: #007bff; color: white; }
+  .badge-status-delivered { background-color: #28a745; color: white; }
+  .badge-status-cancelled { background-color: #dc3545; color: white; }
+  .badge-status-returned { background-color: #fd7e14; color: white; }
+  
+  .badge-company-created { background-color: #6c757d; color: white; }
+  .badge-company-accountant_review { background-color: #17a2b8; color: white; }
+  .badge-company-accountant_approved { background-color: #6610f2; color: white; }
+  .badge-company-dispatch_packed { background-color: #20c997; color: white; }
+  .badge-company-dispatched { background-color: #007bff; color: white; }
+  .badge-company-delivered { background-color: #28a745; color: white; }
+  .badge-company-cancelled { background-color: #dc3545; color: white; }
+  
+  .actions {
+    white-space: nowrap;
+  }
+  
+  .inline-form {
+    display: inline-block;
+    margin-left: 5px;
+  }
+  
+  .btn-view, .btn-edit, .btn-delete {
+    padding: 5px 8px;
+    border-radius: 4px;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .btn-view { background-color: #17a2b8; }
+  .btn-edit { background-color: #ffc107; }
+  .btn-delete { background-color: #dc3545; }
+  
+  .no-results {
+    text-align: center;
+    padding: 20px;
+    color: #6c757d;
+  }
+  
+  .pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    gap: 5px;
+  }
+  
+  .pagination a {
+    padding: 8px 16px;
+    text-decoration: none;
+    border: 1px solid #ddd;
+    color: #007bff;
+  }
+  
+  .pagination a.active {
+    background-color: #007bff;
+    color: white;
+    border: 1px solid #007bff;
+  }
+  
+  .pagination a:hover:not(.active) {
+    background-color: #ddd;
+  }
+</style>
+
+<%- include('../../partials/footer') %>

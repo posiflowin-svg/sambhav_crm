@@ -1,0 +1,1145 @@
+<!-- views/sales/create-order.ejs -->
+<header>
+  <head>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <!-- jQuery (required for Select2) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Select2 CSS & JS (loaded after jQuery) -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  </head>
+
+  <nav style="background: #007BFF; padding: 10px; color: white;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <a href="/" style="color: white; text-decoration: none; font-size: 20px;">
+          Sambhav Electronics Dashboard
+        </a>
+      </div>
+      <div>
+        <% if (user) { %>
+          <span style="margin-right: 15px;">Welcome, <%= user.name %> (<%= user.role %>)</span>
+          <a href="/auth/logout" style="color: white; text-decoration: underline;">Logout</a>
+        <% } else { %>
+          <a href="/auth/login" style="color: white; text-decoration: underline;">Login</a>
+        <% } %>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<!-- Bootstrap Bundle JS (placed after jQuery, but not required for Select2) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<style>
+  :root {
+    --primary: #4361ee;
+    --primary-light: #3a86ff;
+    --secondary: #3f37c9;
+    --success: #4cc9f0;
+    --danger: #f72585;
+    --warning: #f8961e;
+    --info: #4895ef;
+    --dark: #212529;
+    --light: #f8f9fa;
+    --gray: #6c757d;
+    --white: #ffffff;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+    --card-shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  body {
+    background-color: #f5f7fb;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    color: #4a5568;
+  }
+
+  /* Improve product row layout */
+.product-row {
+  display: grid;
+  grid-template-columns: minmax(200px, 2fr) minmax(80px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* Ensure select2 dropdown doesn't overflow */
+.product-select {
+  width: 100% !important;
+}
+
+/* Style the selected value in Select2 */
+.select2-selection__rendered {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Custom styling for dropdown results */
+.select2-results__option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+}
+
+.product-option-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 10px;
+}
+
+.product-stock-badge {
+  background-color: #e9ecef;
+  color: #495057;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+/* Low stock warning */
+.product-stock-badge.low {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .product-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .product-row > div {
+    width: 100%;
+  }
+
+  .btn-remove {
+    width: 100%;
+    margin-top: 5px;
+  }
+
+  /* Adjust labels to be more compact */
+  .form-label {
+    margin-bottom: 4px;
+    font-size: 0.9rem;
+  }
+}
+
+  .tab-nav {
+    display: flex;
+    gap: 8px;
+    background-color: var(--white);
+    padding: 12px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  .tab-nav a {
+    text-decoration: none;
+    color: var(--gray);
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+
+  .tab-nav a.active,
+  .tab-nav a:hover {
+    background-color: var(--primary);
+    color: var(--white);
+  }
+
+  .sales-content {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .page-header h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--dark);
+    margin: 0;
+  }
+
+  .form-container {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    padding: 30px;
+  }
+
+  .form-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--primary);
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--dark);
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+
+  .form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+
+  .product-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr auto;
+    gap: 10px;
+    align-items: end;
+    margin-bottom: 15px;
+  }
+
+  .product-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+
+  .product-table th {
+    background: #f8fafc;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--gray);
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .product-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .amount-summary {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+  }
+
+  .amount-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .amount-row:last-child {
+    border-bottom: none;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--dark);
+  }
+
+  .alert-container {
+    margin-bottom: 24px;
+  }
+
+  .alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    animation: slideInDown 0.3s ease-out;
+  }
+
+  .alert-success {
+    background-color: #d1fae5;
+    border-color: #a7f3d0;
+    color: #065f46;
+  }
+
+  .alert-danger {
+    background-color: #fee2e2;
+    border-color: #fecaca;
+    color: #991b1b;
+  }
+
+  @keyframes slideInDown {
+    from {
+      transform: translateY(-20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .btn-remove {
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-remove:hover {
+    background: #dc2626;
+  }
+
+  .btn-add {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-add:hover {
+    background: var(--secondary);
+  }
+
+  /* GST Toggle Styles */
+  .gst-toggle-container {
+    margin-bottom: 1rem;
+  }
+
+  .toggle-switch {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .toggle-switch input[type="checkbox"] {
+    display: none;
+  }
+
+  .toggle-slider {
+    position: relative;
+    display: inline-block;
+    width: 120px;
+    height: 40px;
+    background: #e9ecef;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid #dee2e6;
+  }
+
+  .toggle-slider:before {
+    content: '';
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: white;
+    top: 2px;
+    left: 4px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .toggle-switch input:checked + .toggle-slider {
+    background: #198754;
+    border-color: #198754;
+  }
+
+  .toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(80px);
+  }
+
+  .toggle-slider .toggle-on,
+  .toggle-slider .toggle-off {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    transition: all 0.3s ease;
+  }
+
+  .toggle-slider .toggle-on {
+    left: 12px;
+    opacity: 0;
+  }
+
+  .toggle-slider .toggle-off {
+    right: 8px;
+    opacity: 1;
+    color: #6c757d;
+  }
+
+  .toggle-switch input:checked + .toggle-slider .toggle-on {
+    opacity: 1;
+  }
+
+  .toggle-switch input:checked + .toggle-slider .toggle-off {
+    opacity: 0;
+  }
+
+  /* Amount Summary Styles */
+  .gst-section {
+    border-left: 3px solid #198754;
+    padding-left: 1rem;
+    margin: 0.5rem 0;
+    transition: all 0.3s ease;
+  }
+
+  .gst-section.without-gst {
+    border-left-color: #6c757d;
+    opacity: 0.6;
+  }
+
+  .amount-row.total-row {
+    border-top: 2px solid #e9ecef;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #2d3748;
+  }
+
+  @media (max-width: 768px) {
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+    
+    .product-row {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+  }
+</style>
+
+<div class="tab-nav">
+  <!-- <a href="/sales/dashboard">
+    <i class="bi bi-speedometer2"></i> Dashboard
+  </a> -->
+  <a href="/sales/orders">
+    <i class="bi bi-cart-fill"></i> Dashboard
+  </a>
+  <a href="/sales/orders/create" class="active">
+    <i class="bi bi-plus-circle"></i> Create Order
+  </a>
+  <a href="/sales/customers">
+    <i class="bi bi-people-fill"></i> Customers
+  </a>
+  <a href="/sales/companies">
+    <i class="bi bi-building"></i> Companies
+  </a>
+</div>
+
+<div class="sales-content">
+  <div class="page-header">
+    <h2>Create New Order</h2>
+    <a href="/sales/orders" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Back to Orders
+    </a>
+  </div>
+
+  <form id="createOrderForm" enctype="multipart/form-data">
+    <div class="form-container">
+      <!-- Customer Selection -->
+      <div class="form-section">
+        <h3 class="section-title">Customer Information</h3>
+        <div class="form-group">
+          <label class="form-label">Select Customer *</label>
+          <select name="customer" id="customerSelect" class="form-control select2-customer" required>
+            <option value="">Select a customer</option>
+            <!-- Customers will be loaded via JavaScript -->
+          </select>
+        </div>
+        
+        <div id="customerDetails" style="display: none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Customer Name</label>
+              <input type="text" id="customerName" class="form-control" readonly>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mobile Number</label>
+              <input type="text" id="customerMobile" class="form-control" readonly>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Billing Address</label>
+            <textarea id="customerAddress" class="form-control" rows="2" readonly></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Shipping Address</label>
+            <textarea id="customerShippingAddress" class="form-control" rows="2" readonly></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Details -->
+      <div class="form-section">
+        <h3 class="section-title">Order Details</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Invoice Number *</label>
+            <input type="text" name="invoiceNo" class="form-control" placeholder="Enter invoice number" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Order Date</label>
+            <input type="date" name="orderDate" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Due Date *</label>
+            <input type="date" name="dueDate" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Order Type *</label>
+            <select name="orderType" class="form-control" required onchange="toggleCreditAmount()">
+              <option value="">Select order type</option>
+              <option value="cod">COD</option>
+              <option value="prepaid">Prepaid</option>
+              <option value="credit">Credit</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">PO Number</label>
+            <input type="text" name="poNumber" class="form-control" placeholder="Purchase order number">
+          </div>
+          <div class="form-group">
+            <label class="form-label">PO Date</label>
+            <input type="date" name="poDate" class="form-control">
+          </div>
+        </div>
+
+        <!-- GST Toggle -->
+        <div class="form-group">
+          <div class="gst-toggle-container">
+            <label class="form-label">GST Calculation</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="gstToggle" name="includeGst" checked onchange="toggleGSTCalculation()">
+              <label for="gstToggle" class="toggle-slider">
+                <span class="toggle-on">With GST</span>
+                <span class="toggle-off">Without GST</span>
+              </label>
+            </div>
+            <small class="form-text text-muted">Toggle to include or exclude GST from order calculation</small>
+          </div>
+        </div>
+
+        <div class="form-group" id="creditAmountGroup" style="display: none;">
+          <label class="form-label">Credit Amount *</label>
+          <input type="number" name="creditAmount" class="form-control" placeholder="Enter credit amount" min="0" step="0.01">
+        </div>
+      </div>
+
+      <!-- Products -->
+      <div class="form-section">
+        <h3 class="section-title">Products</h3>
+        <div id="productsContainer">
+          <!-- Product rows will be added dynamically by JavaScript -->
+        </div>
+        
+        <button type="button" class="btn-add" onclick="addProduct()">
+          <i class="bi bi-plus"></i> Add Product
+        </button>
+      </div>
+
+      <!-- Amount Summary -->
+      <div class="form-section">
+        <h3 class="section-title">Amount Summary</h3>
+        <div class="amount-summary">
+          <div class="amount-row">
+            <span>Subtotal:</span>
+            <span>₹<span id="subtotal">0.00</span></span>
+          </div>
+          <div class="gst-section" id="gstSection">
+            <div class="amount-row">
+              <span>GST (18%):</span>
+              <span>₹<span id="gstAmount">0.00</span></span>
+            </div>
+            <div class="amount-row">
+              <span>CGST (9%):</span>
+              <span>₹<span id="cgst">0.00</span></span>
+            </div>
+            <div class="amount-row">
+              <span>SGST (9%):</span>
+              <span>₹<span id="sgst">0.00</span></span>
+            </div>
+          </div>
+          <div class="amount-row">
+            <span>Round Off:</span>
+            <span>₹<span id="roundOff">0.00</span></span>
+          </div>
+          <div class="amount-row total-row">
+            <span>Total Amount:</span>
+            <span>₹<span id="totalAmount">0.00</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Document Upload -->
+      <div class="form-section">
+        <h3 class="section-title">Document Upload</h3>
+        <div class="form-group">
+          <label class="form-label">PI Document </label>
+          <input type="file" name="piDocument" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+          <small class="form-text text-muted">Upload Proforma Invoice document (PDF, Word, or Image)</small>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="form-section">
+        <button type="submit" class="btn btn-primary btn-lg">
+          <i class="bi bi-check-circle"></i> Create Order
+        </button>
+        <button type="button" class="btn btn-secondary btn-lg" onclick="window.history.back()">
+          <i class="bi bi-x-circle"></i> Cancel
+        </button>
+      </div>
+    </div>
+  </form>
+  
+  <div id="lottieContainer" style="
+    display:none;
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background:rgba(255,255,255,0.9);
+    z-index:9999;
+    justify-content:center;
+    align-items:center;
+  ">
+  </div>
+</div>
+
+<!-- Lottie Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.0/lottie.min.js"></script>
+
+<script>
+  let nextProductIndex = 0;
+  let customersLoaded = false;
+  let includeGST = true;
+
+  // Load customers on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    // Set minimum date for due date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.querySelector('input[name="dueDate"]').min = today;
+    
+    // Load customers and then pre-select if needed
+    loadCustomers().then(() => {
+      calculateTotals();
+      <% if (customerData) { %>
+        preSelectCustomer(<%- JSON.stringify(customerData) %>);
+      <% } %>
+      // Add first product row
+      addProduct();
+    });
+  });
+
+  // Toggle GST calculation
+  function toggleGSTCalculation() {
+    const gstToggle = document.getElementById('gstToggle');
+    const gstSection = document.getElementById('gstSection');
+    
+    includeGST = gstToggle.checked;
+    
+    if (includeGST) {
+      gstSection.classList.remove('without-gst');
+    } else {
+      gstSection.classList.add('without-gst');
+    }
+    
+    calculateTotals();
+  }
+
+  // Function to pre-select customer
+  function preSelectCustomer(customer) {
+    console.log('Pre-selecting customer:', customer);
+    
+    const select = document.getElementById('customerSelect');
+    const detailsDiv = document.getElementById('customerDetails');
+    
+    if (select && customer) {
+      // Set the select value
+      select.value = customer.id;
+      
+      // Update customer details
+      document.getElementById('customerName').value = customer.name;
+      document.getElementById('customerMobile').value = customer.mobileNumber;
+      
+      // Build address string
+      const addressParts = [];
+      if (customer.billingAddress.street) addressParts.push(customer.billingAddress.street);
+      if (customer.billingAddress.city) addressParts.push(customer.billingAddress.city);
+      if (customer.billingAddress.state) addressParts.push(customer.billingAddress.state);
+      if (customer.billingAddress.pincode) addressParts.push(`- ${customer.billingAddress.pincode}`);
+      
+      document.getElementById('customerAddress').value = addressParts.join(', ');
+
+      // Build Shipping address string
+      const shippingAddressParts = [];
+      if (customer.shippingAddress.street) shippingAddressParts.push(customer.shippingAddress.street);
+      if (customer.shippingAddress.city) shippingAddressParts.push(customer.shippingAddress.city);
+      if (customer.shippingAddress.state) shippingAddressParts.push(customer.shippingAddress.state);
+      if (customer.shippingAddress.pincode) shippingAddressParts.push(`- ${customer.shippingAddress.pincode}`);
+      
+      document.getElementById('customerShippingAddress').value = shippingAddressParts.join(', ');
+      
+      detailsDiv.style.display = 'block';
+    }
+  }
+
+  // Load customers without Select2 (simple searchable dropdown) with alphabetical sorting
+  async function loadCustomers() {
+    try {
+      const response = await fetch('/api/customers');
+      const customers = await response.json();
+      
+      const select = document.getElementById('customerSelect');
+      
+      // Store current selected value if any
+      const currentSelectedValue = select.value;
+      
+      // Clear existing options but keep the first empty option
+      const emptyOption = select.querySelector('option[value=""]');
+      select.innerHTML = '';
+      if (emptyOption) {
+        select.appendChild(emptyOption);
+      } else {
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select a customer';
+        select.appendChild(defaultOption);
+      }
+      
+      // Sort customers alphabetically by name (A to Z)
+      const sortedCustomers = customers.sort((a, b) => {
+        const nameA = (a.name || '').toUpperCase();
+        const nameB = (b.name || '').toUpperCase();
+        
+        if (nameA < nameB) return -1;
+        if (nameA > nameB) return 1;
+        return 0;
+      });
+      
+      // Add customer options with searchable text in alphabetical order
+      sortedCustomers.forEach(customer => {
+        const option = document.createElement('option');
+        option.value = customer._id;
+        
+        // Create a formatted display text
+        const city = customer.billingAddress?.city || customer.shippingAddress?.city || '';
+        const displayText = `${customer.name} - ${customer.mobileNumber} - ${city}`;
+        option.textContent = displayText;
+        
+        // Store additional data for quick access
+        option.dataset.name = customer.name || '';
+        option.dataset.mobile = customer.mobileNumber || '';
+        option.dataset.address = customer.billingAddress ? 
+          `${customer.billingAddress.street || ''}, ${customer.billingAddress.city || ''}, ${customer.billingAddress.state || ''} - ${customer.billingAddress.pincode || ''}` : '';
+        option.dataset.shippingaddress = customer.shippingAddress ? 
+          `${customer.shippingAddress.street || ''}, ${customer.shippingAddress.city || ''}, ${customer.shippingAddress.state || ''} - ${customer.shippingAddress.pincode || ''}` : '';
+        
+        select.appendChild(option);
+      });
+      
+      // Re-select previous value if it exists
+      if (currentSelectedValue) {
+        select.value = currentSelectedValue;
+        // Trigger change event to update details
+        select.dispatchEvent(new Event('change'));
+      }
+      
+      customersLoaded = true;
+      
+    } catch (error) {
+      console.error('Error loading customers:', error);
+    }
+  }
+
+  // Show customer details when selected
+  document.getElementById('customerSelect').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const detailsDiv = document.getElementById('customerDetails');
+    
+    if (this.value && selectedOption) {
+      document.getElementById('customerName').value = selectedOption.dataset.name || '';
+      document.getElementById('customerMobile').value = selectedOption.dataset.mobile || '';
+      document.getElementById('customerAddress').value = selectedOption.dataset.address || '';
+      document.getElementById('customerShippingAddress').value = selectedOption.dataset.shippingaddress || '';
+      detailsDiv.style.display = 'block';
+    } else {
+      detailsDiv.style.display = 'none';
+    }
+  });
+
+  function toggleCreditAmount() {
+    const orderType = document.querySelector('select[name="orderType"]').value;
+    const creditGroup = document.getElementById('creditAmountGroup');
+    
+    if (orderType === 'credit') {
+      creditGroup.style.display = 'block';
+    } else {
+      creditGroup.style.display = 'none';
+      document.querySelector('input[name="creditAmount"]').value = '';
+    }
+  }
+
+  function initSelect2($select, index) {
+    $select.select2({
+      ajax: {
+        url: '/products/api/products',
+        dataType: 'json',
+        delay: 250,
+        data: function(params) {
+          return {
+            search: params.term || '',
+            limit: 1000
+          };
+        },
+        processResults: function(data) {
+          const products = data.data.filter(p => p.stockQuantity > 0);
+          const results = products.map(p => {
+            // Determine if stock is low (optional)
+            const lowStock = p.minimumStock > 0 && p.stockQuantity <= p.minimumStock;
+            // html: `<span class="product-option-text">${p.itemCode} - ${p.itemName}</span>
+            //         <span class="product-stock-badge ${lowStock ? 'low' : ''}">Stock: ${p.stockQuantity}</span>`,
+            return {
+              id: p._id,
+              text: p.itemName, // fallback text
+              html: `<span class="product-option-text">${p.itemName}</span>
+                    <span class="product-stock-badge ${lowStock ? 'low' : ''}">Stock: ${p.stockQuantity}</span>`,
+              stock: p.stockQuantity,
+              name: p.itemName
+            };
+          });
+          return { results };
+        },
+        cache: true
+      },
+      placeholder: 'Search product...',
+      minimumInputLength: 1,
+      allowClear: true,
+      templateResult: function(data) {
+        if (data.loading) return data.text;
+        return $(data.html);
+      },
+      templateSelection: function(data) {
+        if (data.id) {
+          // Show item code and name when selected, truncate if needed
+          return data.text || data.name;
+        }
+        return data.text;
+      }
+    });
+
+    $select.on('select2:select', function(e) {
+      const data = e.params.data;
+      const row = $(this).closest('.product-row');
+      row.find('.product-id').val(data.id);
+      row.find('.product-name').val(data.name);
+      const qtyInput = row.find('.product-qty');
+      qtyInput.attr('data-max-qty', data.stock).val(1);
+      validateQuantity(qtyInput[0]);
+      updateRowTotal(qtyInput[0]);
+      calculateTotals();
+    });
+
+    $select.on('select2:clear', function() {
+      const row = $(this).closest('.product-row');
+      row.find('.product-id').val('');
+      row.find('.product-name').val('');
+      row.find('.product-qty').attr('data-max-qty', 0).val(1);
+      updateRowTotal(row.find('.product-qty')[0]);
+      calculateTotals();
+    });
+  }
+      
+  function validateQuantity(input) {
+    const max = parseInt(input.getAttribute('data-max-qty')) || 0;
+    let val = parseInt(input.value) || 0;
+    if (max > 0 && val > max) {
+      alert(`Only ${max} units available in stock.`);
+      val = max;
+    }
+    if (val < 1) val = 1;
+    input.value = val;
+  }
+
+  function updateRowTotal(element) {
+    const row = element.closest('.product-row');
+    const qty = parseFloat(row.querySelector('.product-qty').value) || 0;
+    const rate = parseFloat(row.querySelector('.product-rate').value) || 0;
+    row.querySelector('.product-total').value = (qty * rate).toFixed(2);
+  }
+
+  function calculateTotals() {
+    let subtotal = 0;
+    document.querySelectorAll('.product-row').forEach(row => {
+      subtotal += parseFloat(row.querySelector('.product-total').value) || 0;
+    });
+
+    let gstAmount = 0, cgst = 0, sgst = 0, roundOff = 0, totalAmount = 0;
+
+    if (includeGST) {
+      gstAmount = subtotal * 0.18;
+      cgst = gstAmount / 2;
+      sgst = gstAmount / 2;
+      totalAmount = subtotal + gstAmount;
+    } else {
+      totalAmount = subtotal;
+    }
+
+    roundOff = Math.round(totalAmount) - totalAmount;
+    totalAmount = Math.round(totalAmount);
+
+    document.getElementById('subtotal').textContent = subtotal.toFixed(2);
+    document.getElementById('gstAmount').textContent = gstAmount.toFixed(2);
+    document.getElementById('cgst').textContent = cgst.toFixed(2);
+    document.getElementById('sgst').textContent = sgst.toFixed(2);
+    document.getElementById('roundOff').textContent = roundOff.toFixed(2);
+    document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
+  }
+
+  function addProduct() {
+    const container = document.getElementById('productsContainer');
+    const index = nextProductIndex++;
+    const row = document.createElement('div');
+    row.className = 'product-row';
+    row.innerHTML = `
+      <div>
+        <label class="form-label">Product</label>
+        <select class="form-control product-select" data-index="${index}" style="width: 100%;">
+          <option value="">Search product...</option>
+        </select>
+        <input type="hidden" name="products[${index}][productId]" class="product-id">
+        <input type="hidden" name="products[${index}][name]" class="product-name">
+      </div>
+      <div>
+        <label class="form-label">Quantity</label>
+        <input type="number" name="products[${index}][quantity]" class="form-control product-qty"
+               placeholder="Qty" min="1" value="1" required data-max-qty="0">
+      </div>
+      <div>
+        <label class="form-label">Rate (₹)</label>
+        <input type="number" name="products[${index}][rate]" class="form-control product-rate"
+               placeholder="Rate" min="0" step="0.01" required>
+      </div>
+      <div>
+        <label class="form-label">Total (₹)</label>
+        <input type="number" name="products[${index}][total]" class="form-control product-total"
+               placeholder="Total" readonly>
+      </div>
+      <div>
+        <button type="button" class="btn-remove" onclick="removeProduct(this)">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    `;
+    container.appendChild(row);
+
+    // Attach event listeners
+    const qtyInput = row.querySelector('.product-qty');
+    const rateInput = row.querySelector('.product-rate');
+    qtyInput.addEventListener('input', function() {
+      validateQuantity(this);
+      updateRowTotal(this);
+      calculateTotals();
+    });
+    rateInput.addEventListener('input', function() {
+      updateRowTotal(this);
+      calculateTotals();
+    });
+
+    // Initialize Select2
+    initSelect2($(row).find('.product-select'), index);
+  }
+
+  function removeProduct(btn) {
+    const row = btn.closest('.product-row');
+    row.remove();
+    calculateTotals();
+  }
+
+  // Form submission
+  document.getElementById('createOrderForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // Disable submit button and show loading state
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Creating Order...';
+    submitBtn.disabled = true;
+    
+    // Initialize Lottie animation
+    const lottieContainer = document.getElementById('lottieContainer');
+    const animation = lottie.loadAnimation({
+      container: lottieContainer,
+      renderer: 'svg',
+      loop: true,
+      autoplay: false,
+      path: '/assets/animations/loading.json' // your lottie JSON file path
+    });
+
+    // Show animation
+    lottieContainer.style.display = 'flex';
+    animation.play();
+
+    try {
+      const formData = new FormData(this);
+      const jsonData = {};
+      const piDocumentFile = formData.get('piDocument');
+      
+      // Handle regular fields
+      for (const [key, value] of formData.entries()) {
+        if (key === 'piDocument') continue; // Skip file field for now
+        
+        if (key.startsWith('products')) {
+          const match = key.match(/products\[(\d+)\]\[(\w+)\]/);
+          if (match) {
+            const index = match[1];
+            const field = match[2];
+            if (!jsonData.products) jsonData.products = [];
+            if (!jsonData.products[index]) jsonData.products[index] = {};
+            jsonData.products[index][field] = value;
+          }
+        } else if (key === 'includeGst') {
+          // Handle GST toggle
+          jsonData[key] = value === 'on';
+        } else {
+          jsonData[key] = value;
+        }
+      }
+      
+      // Convert products array and numeric fields
+      if (jsonData.products) {
+        jsonData.products = Object.values(jsonData.products).map(product => ({
+          ...product,
+          quantity: parseFloat(product.quantity),
+          rate: parseFloat(product.rate),
+          total: parseFloat(product.total)
+        }));
+      }
+
+      // Step 1: Create the order first
+      const orderResponse = await fetch('/sales/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(jsonData)
+      });
+
+      if (!orderResponse.ok) {
+        const error = await orderResponse.json();
+        throw new Error(error.error || 'Failed to create order');
+      }
+
+      const result = await orderResponse.json();
+      const orderId = result.order._id;
+
+      // Step 2: Upload PI document if provided
+      if (piDocumentFile && piDocumentFile.size > 0) {
+        const fileFormData = new FormData();
+        fileFormData.append('piDocument', piDocumentFile);
+
+        const fileResponse = await fetch(`/api/file/orders/${orderId}/pi-document`, {
+          method: 'POST',
+          body: fileFormData
+        });
+
+        if (!fileResponse.ok) {
+          const error = await fileResponse.json();
+          console.warn('PI document upload failed:', error.error);
+          alert('Order created successfully, but PI document upload failed. You can upload it later.');
+        }
+      }
+
+      // Redirect to order page
+      animation.destroy();
+      lottieContainer.style.display = 'none';
+      window.location.href = `/sales/orders`;
+      
+    } catch (error) {
+      console.error('Error creating order:', error);
+      alert('Error: ' + error.message);
+      
+      // Re-enable button on error
+      submitBtn.innerHTML = originalText;
+      submitBtn.disabled = false;
+    }
+  });
+
+  // Auto-hide alerts after 5 seconds
+  document.addEventListener('DOMContentLoaded', function() {
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+      setTimeout(() => {
+        const bsAlert = new bootstrap.Alert(alert);
+        bsAlert.close();
+      }, 5000);
+    });
+  });
+</script>
+
+<%- include('../partials/footer') %>

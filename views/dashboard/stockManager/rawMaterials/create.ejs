@@ -1,0 +1,123 @@
+<!-- views/dashboard/stockManager/rawMaterials/create.ejs -->
+<%- include('../../../partials/header', { title: 'Add New Raw Material' }) %>
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mt-4">Add New Raw Material</h1>
+        <a href="/dashboard/stock_manager/raw-materials" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <!-- Error Messages -->
+    <% if (errors && errors.length > 0) { %>
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                <% errors.forEach(error => { %>
+                    <li><%= error %></li>
+                <% }) %>
+            </ul>
+        </div>
+    <% } %>
+
+    <!-- Create Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-plus me-1"></i>
+            Raw Material Details
+        </div>
+        <div class="card-body">
+            <form method="POST" action="/dashboard/stock_manager/raw-materials">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   value="<%= material ? material.name : '' %>" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="sku" class="form-label">SKU *</label>
+                            <input type="text" class="form-control" id="sku" name="sku" 
+                                   value="<%= material ? material.sku : '' %>" required>
+                            <div class="form-text">Unique stock keeping unit</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="3"><%= material ? material.description : '' %></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="unit" class="form-label">Unit *</label>
+                            <select class="form-select" id="unit" name="unit" required>
+                                <option value="">Select Unit</option>
+                                <option value="pcs" <%= material && material.unit === 'pcs' ? 'selected' : '' %>>Pieces</option>
+                                <option value="kg" <%= material && material.unit === 'kg' ? 'selected' : '' %>>Kilograms</option>
+                                <option value="meter" <%= material && material.unit === 'meter' ? 'selected' : '' %>>Meters</option>
+                                <option value="liter" <%= material && material.unit === 'liter' ? 'selected' : '' %>>Liters</option>
+                                <option value="box" <%= material && material.unit === 'box' ? 'selected' : '' %>>Boxes</option>
+                                <option value="pack" <%= material && material.unit === 'pack' ? 'selected' : '' %>>Packs</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="currentStock" class="form-label">Initial Stock</label>
+                            <input type="number" class="form-control" id="currentStock" name="currentStock" 
+                                   value="<%= material ? material.currentStock : 0 %>" min="0">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="minimumStockLevel" class="form-label">Minimum Stock Level</label>
+                            <input type="number" class="form-control" id="minimumStockLevel" name="minimumStockLevel" 
+                                   value="<%= material ? material.minimumStockLevel : 0 %>" min="0">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="cost" class="form-label">Cost (₹)</label>
+                            <input type="number" step="0.01" class="form-control" id="cost" name="cost" 
+                                   value="<%= material ? material.cost : 0 %>" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">Supplier Information (Optional)</div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="supplierName" class="form-label">Supplier Name</label>
+                                    <input type="text" class="form-control" id="supplierName" name="supplierName" 
+                                           value="<%= material && material.supplier ? material.supplier.name : '' %>">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="supplierContact" class="form-label">Supplier Contact</label>
+                                    <input type="text" class="form-control" id="supplierContact" name="supplierContact" 
+                                           value="<%= material && material.supplier ? material.supplier.contact : '' %>">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="/dashboard/stock_manager/raw-materials" class="btn btn-secondary me-md-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Create Raw Material</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<%- include('../../../partials/footer') %>

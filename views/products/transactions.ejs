@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - StockMaster</title>
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        <style>
+        .nav-link {
+            color: #4a5568;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link:hover {
+            background-color: #f7fafc;
+            color: #2d3748;
+            transform: translateY(-1px);
+        }
+
+        .nav-link.logout:hover {
+            background-color: #fff5f5;
+            color: #c53030;
+        }
+
+        .nav-link.login:hover {
+            background-color: #e6f7ff;
+            color: #2563eb;
+        }
+
+        .nav-link i {
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-boxes text-blue-600 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold text-gray-800">StockMaster</span>
+                    </div>
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <a href="/products" class="nav-link border-transparent text-gray-500 hover:border-gray-300">Products</a>
+                        <a href="/products/transactions" class="nav-link border-blue-500 text-gray-900">Transactions</a>
+                        <a href="/api/po" class="nav-link border-transparent text-gray-500 hover:border-gray-300">Purchase Orders</a>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <% if (user.role === 'admin') { %>
+                    <a href="/admin/reports" class="nav-link logout">
+                        <i class="bi bi-box-arrow-right"></i>
+                        Back To Admin
+                    </a>
+                    <% } %>
+                    <a href="/dispatcher/dashboard" class="nav-link">
+                        <i class="bi bi-arrow-left"></i>
+                        Dispatcher
+                    </a>
+                    <% if (user) { %>
+                    <a href="/auth/logout" class="nav-link logout">
+                        <i class="bi bi-box-arrow-right"></i>
+                        Logout
+                    </a>
+                    <% } else { %>
+                    <a href="/auth/login" class="nav-link login">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        Login
+                    </a>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Stock Transactions</h1>
+            <p class="text-gray-600 mt-2">Track all stock movements and adjustments</p>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <form id="filter-form" class="space-y-4">
+                <!-- Hidden date inputs for actual values -->
+                <input type="hidden" id="start-date" name="startDate">
+                <input type="hidden" id="end-date" name="endDate">
+                <input type="hidden" id="category" name="category" value="">
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Date Range -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+                        <input type="text" id="date-range" placeholder="Select date range"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <!-- Transaction Type -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Transaction Type</label>
+                        <select id="type" name="type" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">All Types</option>
+                            <option value="stock_in">Stock In</option>
+                            <option value="stock_out">Stock Out</option>
+                            <option value="adjustment">Adjustment</option>
+                            <option value="damage">Damage</option>
+                        </select>
+                    </div>
+
+                    <!-- Item Code -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Item Code</label>
+                        <input type="text" id="itemCode" name="itemCode" placeholder="Search item code"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+
+                <!-- Category Tabs -->
+                <div class="pt-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Category</label>
+                    <div class="flex flex-wrap gap-2" id="category-tabs">
+                        <button type="button" 
+                            data-category="" 
+                            class="category-tab px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 bg-blue-100 text-blue-700 border border-blue-300">
+                            All Categories
+                        </button>
+                        <button type="button" 
+                            data-category="Components" 
+                            class="category-tab px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200">
+                            Components
+                        </button>
+                        <button type="button" 
+                            data-category="Display" 
+                            class="category-tab px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200">
+                            Display
+                        </button>
+                        <button type="button" 
+                            data-category="TFT Display" 
+                            class="category-tab px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200">
+                            TFT Display
+                        </button>
+                        <button type="button" 
+                            data-category="POS" 
+                            class="category-tab px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200">
+                            POS
+                        </button>
+                        <button type="button" 
+                            data-category="Printer" 
+                            class="category-tab px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200">
+                            Printer
+                        </button>
+                        <!-- <button type="button" 
+                            data-category="Tools" 
+                            class="category-tab px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200">
+                            Tools
+                        </button>
+                        <button type="button" 
+                            data-category="Accessories" 
+                            class="category-tab px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200">
+                            Accessories
+                        </button> -->
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-between pt-4 border-t">
+                    <div class="text-sm text-gray-500" id="summary-text">
+                        <!-- Summary will be loaded here -->
+                    </div>
+                    <div class="flex space-x-3">
+                        <button type="button" onclick="resetFilters()" 
+                                class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                            Reset Filters
+                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                            <i class="fas fa-filter mr-2"></i>Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Transactions Table -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock Before</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock After</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performed By</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactions-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Transactions will be loaded here -->
+                        <tr>
+                            <td colspan="8" class="px-6 py-8 text-center">
+                                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                                <p class="mt-4 text-gray-600">Loading transactions...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div id="pagination-container" class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+                <!-- Pagination will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+    // Update your JavaScript code in the transactions.ejs file
+    let currentPage = 1;
+    const limit = 20;
+    let filters = {};
+
+    // Initialize flatpickr for date range
+    flatpickr("#date-range", {
+        mode: "range",
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "F j, Y",
+        onChange: function(selectedDates, dateStr, instance) {
+            if (selectedDates.length === 2) {
+                document.getElementById('start-date').value = selectedDates[0].toISOString().split('T')[0];
+                document.getElementById('end-date').value = selectedDates[1].toISOString().split('T')[0];
+            } else {
+                document.getElementById('start-date').value = '';
+                document.getElementById('end-date').value = '';
+            }
+        }
+    });
+
+    // Load transactions on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        setupCategoryTabs();
+        loadTransactions();
+    });
+
+    // Setup category tabs functionality
+    function setupCategoryTabs() {
+        const categoryTabs = document.querySelectorAll('.category-tab');
+        const categoryInput = document.getElementById('category');
+        
+        // Function to update active tab
+        function setActiveTab(category) {
+            categoryTabs.forEach(tab => {
+                const tabCategory = tab.getAttribute('data-category');
+                if (tabCategory === category) {
+                    tab.classList.remove('bg-gray-100', 'text-gray-700', 'border-gray-300', 'hover:bg-gray-200');
+                    tab.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-300');
+                } else {
+                    tab.classList.remove('bg-blue-100', 'text-blue-700', 'border-blue-300');
+                    tab.classList.add('bg-gray-100', 'text-gray-700', 'border-gray-300', 'hover:bg-gray-200');
+                }
+            });
+        }
+        
+        // Initialize with "All Categories" selected
+        setActiveTab('');
+        
+        // Add click event to each tab
+        categoryTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const category = this.getAttribute('data-category');
+                categoryInput.value = category;
+                setActiveTab(category);
+            });
+        });
+    }
+
+    // Filter form submission
+    document.getElementById('filter-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        currentPage = 1;
+        updateFiltersFromForm();
+        loadTransactions();
+    });
+
+    function updateFiltersFromForm() {
+        // Get form values
+        const type = document.getElementById('type').value;
+        const itemCode = document.getElementById('itemCode').value;
+        const category = document.getElementById('category').value;
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        
+        // Build filters object (only include if value is not empty)
+        filters = {};
+        
+        if (type) filters.type = type;
+        if (itemCode) filters.itemCode = itemCode;
+        if (category) filters.category = category;
+        if (startDate) filters.startDate = startDate;
+        if (endDate) filters.endDate = endDate;
+    }
+
+    function resetFilters() {
+        // Reset form inputs
+        document.getElementById('filter-form').reset();
+        document.getElementById('start-date').value = '';
+        document.getElementById('end-date').value = '';
+        
+        // Clear flatpickr
+        flatpickr("#date-range").clear();
+        
+        // Reset category tab
+        const categoryInput = document.getElementById('category');
+        categoryInput.value = '';
+        setupCategoryTabs();
+        
+        // Reset filters and reload
+        filters = {};
+        currentPage = 1;
+        loadTransactions();
+    }
+
+    async function loadTransactions() {
+        try {
+            // Show loading state
+            document.getElementById('transactions-body').innerHTML = `
+                <tr>
+                    <td colspan="8" class="px-6 py-8 text-center">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                        <p class="mt-4 text-gray-600">Loading transactions...</p>
+                    </td>
+                </tr>
+            `;
+
+            // Build query string - only include filters that have values
+            const queryParams = new URLSearchParams({
+                page: currentPage,
+                limit: limit
+            });
+            
+            // Add filters to query params
+            Object.keys(filters).forEach(key => {
+                if (filters[key] !== undefined && filters[key] !== '') {
+                    queryParams.append(key, filters[key]);
+                }
+            });
+
+            const response = await fetch(`/products/api/transactions?${queryParams}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+
+            if (data.success) {
+                renderTransactions(data.data);
+                renderPagination(data.pagination);
+                updateSummary(data.summary);
+            } else {
+                throw new Error(data.message || 'Failed to load transactions');
+            }
+        } catch (error) {
+            console.error('Error loading transactions:', error);
+            document.getElementById('transactions-body').innerHTML = `
+                <tr>
+                    <td colspan="8" class="px-6 py-8 text-center text-red-600">
+                        <i class="fas fa-exclamation-triangle text-2xl mb-3"></i>
+                        <p>Error loading transactions</p>
+                        <p class="text-sm mt-2">${error.message}</p>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    function renderTransactions(transactions) {
+        if (transactions.length === 0) {
+            document.getElementById('transactions-body').innerHTML = `
+                <tr>
+                    <td colspan="8" class="px-6 py-8 text-center text-gray-500">
+                        <i class="fas fa-search text-3xl mb-3 text-gray-300"></i>
+                        <p>No transactions found</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        const tbody = document.getElementById('transactions-body');
+        let html = '';
+
+        transactions.forEach(transaction => {
+            const typeColors = {
+                'stock_in': 'bg-green-100 text-green-800',
+                'stock_out': 'bg-red-100 text-red-800',
+                'adjustment': 'bg-yellow-100 text-yellow-800',
+                'damage': 'bg-gray-100 text-gray-800'
+            };
+
+            const typeLabels = {
+                'stock_in': 'Stock In',
+                'stock_out': 'Stock Out',
+                'adjustment': 'Adjustment',
+                'damage': 'Damage'
+            };
+
+            const quantityClass = transaction.quantity > 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold';
+            const quantitySign = transaction.quantity > 0 ? '+' : '';
+            const performedByName = transaction.performedBy?.name || 'System';
+
+            html += `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${new Date(transaction.transactionDate).toLocaleString()}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-gray-900">${transaction.itemCode}</div>
+                        <div class="text-sm text-gray-500">${transaction.itemName}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${typeColors[transaction.type]}">
+                            ${typeLabels[transaction.type]}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${quantityClass}">
+                        ${quantitySign}${transaction.quantity} ${transaction.unit}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${transaction.previousStock.toLocaleString()}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${transaction.newStock.toLocaleString()}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-500">
+                        ${transaction.description || '-'}
+                        ${transaction.reference ? `<div class="text-xs text-gray-400">Ref: ${transaction.reference}</div>` : ''}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${performedByName}
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
+    }
+
+    function renderPagination(pagination) {
+        if (pagination.pages <= 1) {
+            document.getElementById('pagination-container').innerHTML = '';
+            return;
+        }
+
+        let html = `
+            <div class="flex-1 flex justify-between sm:hidden">
+                ${pagination.page > 1 ? `
+                    <button onclick="changePage(${pagination.page - 1})" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Previous
+                    </button>
+                ` : ''}
+                ${pagination.page < pagination.pages ? `
+                    <button onclick="changePage(${pagination.page + 1})" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Next
+                    </button>
+                ` : ''}
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Showing <span class="font-medium">${(pagination.page - 1) * pagination.limit + 1}</span>
+                        to <span class="font-medium">${Math.min(pagination.page * pagination.limit, pagination.total)}</span>
+                        of <span class="font-medium">${pagination.total.toLocaleString()}</span> results
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+        `;
+
+        for (let i = 1; i <= pagination.pages; i++) {
+            if (i === pagination.page) {
+                html += `
+                    <span class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                        ${i}
+                    </span>
+                `;
+            } else if (
+                i === 1 ||
+                i === pagination.pages ||
+                (i >= pagination.page - 2 && i <= pagination.page + 2)
+            ) {
+                html += `
+                    <button onclick="changePage(${i})" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                        ${i}
+                    </button>
+                `;
+            } else if (i === pagination.page - 3 || i === pagination.page + 3) {
+                html += `
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                        ...
+                    </span>
+                `;
+            }
+        }
+
+        html += `
+                    </nav>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('pagination-container').innerHTML = html;
+    }
+
+    function changePage(page) {
+        currentPage = page;
+        loadTransactions();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateSummary(summary) {
+        const summaryText = document.getElementById('summary-text');
+        
+        if (!summary || summary.length === 0) {
+            summaryText.textContent = 'No transactions found';
+            return;
+        }
+
+        let summaryHtml = 'Summary: ';
+        const summaryParts = [];
+
+        summary.forEach(item => {
+            const typeLabels = {
+                'stock_in': 'Stock In',
+                'stock_out': 'Stock Out',
+                'adjustment': 'Adjustment',
+                'damage': 'Damage'
+            };
+
+            const quantitySign = item._id === 'stock_in' || item._id === 'adjustment' ? '+' : '';
+            summaryParts.push(`${typeLabels[item._id]}: ${quantitySign}${item.totalQuantity}`);
+        });
+
+        summaryText.textContent = summaryHtml + summaryParts.join(', ');
+    }
+
+    function exportTransactions() {
+        // Build query string for export
+        const queryParams = new URLSearchParams(filters);
+        window.open(`/products/api/transactions/export?${queryParams}`, '_blank');
+    }
+</script>
+
+    <style>
+        .nav-link {
+            border-bottom-width: 2px;
+            padding: 8px 0;
+            margin-right: 24px;
+        }
+        
+        .nav-link:hover {
+            border-bottom-color: #d1d5db;
+            color: #374151;
+        }
+        
+        tr:hover {
+            background-color: #f9fafb;
+        }
+        
+        .flatpickr-input {
+            background-color: white !important;
+        }
+    </style>
+</body>
+</html>

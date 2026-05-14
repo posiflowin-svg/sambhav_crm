@@ -1,0 +1,1921 @@
+<%- include('../partials/header') %>
+
+<!-- Google Fonts - Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<!-- Flatpickr for date range -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  :root {
+    --primary-50: #eef2ff;
+    --primary-100: #e0e7ff;
+    --primary-200: #c7d2fe;
+    --primary-300: #a5b4fc;
+    --primary-400: #818cf8;
+    --primary-500: #6366f1;
+    --primary-600: #4f46e5;
+    --primary-700: #4338ca;
+    --primary-800: #3730a3;
+    --primary-900: #312e81;
+    
+    --success-50: #ecfdf5;
+    --success-500: #10b981;
+    --success-700: #047857;
+    
+    --warning-50: #fffbeb;
+    --warning-500: #f59e0b;
+    --warning-700: #b45309;
+    
+    --danger-50: #fef2f2;
+    --danger-500: #ef4444;
+    --danger-700: #b91c1c;
+    
+    --info-50: #eff6ff;
+    --info-500: #3b82f6;
+    --info-700: #1d4ed8;
+    
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+    
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #edeef5 0%, #edecef 100%);
+    min-height: 100vh;
+  }
+
+  /* Modern Navigation */
+  .modern-nav {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 1rem 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .nav-container {
+    max-width: 1440px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: var(--gray-600);
+    transition: all 0.2s ease;
+    text-decoration: none;
+    background: transparent;
+    border: 1px solid transparent;
+  }
+
+  .nav-link i {
+    font-size: 1.1rem;
+  }
+
+  .nav-link:hover {
+    background: var(--gray-100);
+    color: var(--gray-900);
+    border-color: var(--gray-200);
+    transform: translateY(-1px);
+  }
+
+  .nav-link.active {
+    background: var(--primary-600);
+    color: white;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+  }
+
+  /* Main Content */
+  .main-wrapper {
+    max-width: 1440px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+  }
+
+  .content-card {
+    background: white;
+    border-radius: 24px;
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .content-header {
+    padding: 2rem;
+    border-bottom: 1px solid var(--gray-200);
+    background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
+  }
+
+  .header-title {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+  }
+
+  .header-subtitle {
+    color: var(--gray-600);
+    font-size: 1rem;
+    font-weight: 400;
+  }
+
+  /* Stats Cards */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: 20px;
+    padding: 1.5rem;
+    border: 1px solid var(--gray-200);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-400), var(--primary-600));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-200);
+  }
+
+  .stat-card:hover::before {
+    opacity: 1;
+  }
+
+  .stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-label {
+    color: var(--gray-600);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .stat-icon {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 2rem;
+    opacity: 0.1;
+    color: var(--gray-900);
+  }
+
+  /* Search Bar */
+  .search-wrapper {
+    margin-bottom: 1.5rem;
+  }
+
+  .search-container {
+    position: relative;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-400);
+    font-size: 1.25rem;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 1rem 1rem 1rem 3rem;
+    border: 2px solid var(--gray-200);
+    border-radius: 16px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--primary-400);
+    box-shadow: 0 0 0 4px var(--primary-100);
+  }
+
+  /* Filter Section */
+  .filter-section {
+    background: var(--gray-50);
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid var(--gray-200);
+  }
+
+  .filter-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .filter-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--gray-700);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .filter-label i {
+    color: var(--primary-500);
+    font-size: 1rem;
+  }
+
+  .date-filter-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .date-filter-btn {
+    padding: 0.625rem 1.25rem;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    border: 1px solid var(--gray-200);
+    background: white;
+    color: var(--gray-700);
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .date-filter-btn:hover {
+    background: var(--gray-100);
+    border-color: var(--gray-300);
+  }
+
+  .date-filter-btn.active {
+    background: var(--primary-600);
+    color: white;
+    border-color: var(--primary-600);
+  }
+
+  .status-filter-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .status-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    border: 1px solid var(--gray-200);
+    background: white;
+    color: var(--gray-700);
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .status-checkbox input {
+    display: none;
+  }
+
+  .status-checkbox.active-new {
+    background: var(--info-50);
+    border-color: var(--info-500);
+    color: var(--info-700);
+  }
+
+  .status-checkbox.active-contacted {
+    background: var(--warning-50);
+    border-color: var(--warning-500);
+    color: var(--warning-700);
+  }
+
+  .status-checkbox.active-interested {
+    background: var(--success-50);
+    border-color: var(--success-500);
+    color: var(--success-700);
+  }
+
+  .status-checkbox.active-not-interested {
+    background: var(--danger-50);
+    border-color: var(--danger-500);
+    color: var(--danger-700);
+  }
+
+  .status-checkbox.active-follow-up {
+    background: var(--primary-50);
+    border-color: var(--primary-500);
+    color: var(--primary-700);
+  }
+
+  .active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--gray-200);
+  }
+
+  .filter-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--gray-700);
+  }
+
+  .filter-tag i {
+    color: var(--primary-500);
+    font-size: 0.75rem;
+  }
+
+  .clear-filters-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    background: transparent;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .clear-filters-btn:hover {
+    background: var(--gray-200);
+    color: var(--gray-900);
+  }
+
+  .apply-filters-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: white;
+    background: var(--primary-600);
+    border: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+  }
+
+  .apply-filters-btn:hover {
+    background: var(--primary-700);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(79, 70, 229, 0.4);
+  }
+
+  /* Company Cards */
+  .companies-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0 2rem 2rem;
+  }
+
+  .company-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 20px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .company-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(135deg, var(--primary-400), var(--primary-600));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .company-card:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-200);
+  }
+
+  .company-card:hover::before {
+    opacity: 1;
+  }
+
+  .company-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+
+  .company-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .company-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gray-900);
+  }
+
+  .status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    letter-spacing: 0.3px;
+  }
+
+  .status-badge.status-new {
+    background: var(--info-50);
+    color: var(--info-700);
+    border: 1px solid var(--info-200);
+  }
+
+  .status-badge.status-contacted {
+    background: var(--warning-50);
+    color: var(--warning-700);
+    border: 1px solid var(--warning-200);
+  }
+
+  .status-badge.status-interested {
+    background: var(--success-50);
+    color: var(--success-700);
+    border: 1px solid var(--success-200);
+  }
+
+  .status-badge.status-not-interested {
+    background: var(--danger-50);
+    color: var(--danger-700);
+    border: 1px solid var(--danger-200);
+  }
+
+  .status-badge.status-follow-up {
+    background: var(--primary-50);
+    color: var(--primary-700);
+    border: 1px solid var(--primary-200);
+  }
+
+  .company-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .action-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    border: 1px solid var(--gray-200);
+    background: white;
+    color: var(--gray-600);
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .action-btn:hover {
+    background: var(--gray-100);
+    color: var(--gray-900);
+    border-color: var(--gray-300);
+    transform: translateY(-2px);
+  }
+
+  .action-btn.edit:hover {
+    background: var(--primary-50);
+    color: var(--primary-700);
+    border-color: var(--primary-300);
+  }
+
+  .action-btn.delete:hover {
+    background: var(--danger-50);
+    color: var(--danger-700);
+    border-color: var(--danger-300);
+  }
+
+  .company-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--gray-600);
+    font-size: 0.95rem;
+  }
+
+  .detail-item i {
+    color: var(--primary-500);
+    font-size: 1rem;
+  }
+
+  .company-notes {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: 12px;
+    font-size: 0.95rem;
+    color: var(--gray-700);
+    border: 1px solid var(--gray-200);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .company-notes i {
+    color: var(--primary-500);
+    font-size: 1rem;
+    margin-top: 0.2rem;
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    color: var(--gray-300);
+    margin-bottom: 1rem;
+  }
+
+  .empty-state h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-state p {
+    color: var(--gray-600);
+    margin-bottom: 2rem;
+  }
+
+  .empty-state-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 2rem;
+    background: var(--primary-600);
+    color: white;
+    border-radius: 12px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+  }
+
+  .empty-state-btn:hover {
+    background: var(--primary-700);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(79, 70, 229, 0.4);
+  }
+
+  /* Pagination */
+  .pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem;
+    border-top: 1px solid var(--gray-200);
+  }
+
+  .pagination-info {
+    color: var(--gray-600);
+    font-size: 0.95rem;
+  }
+
+  .pagination-controls {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .page-btn {
+    min-width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    border: 1px solid var(--gray-200);
+    background: white;
+    color: var(--gray-700);
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .page-btn:hover:not(:disabled) {
+    background: var(--gray-100);
+    border-color: var(--gray-300);
+    transform: translateY(-2px);
+  }
+
+  .page-btn.active {
+    background: var(--primary-600);
+    color: white;
+    border-color: var(--primary-600);
+  }
+
+  .page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+
+  .modal-container {
+    width: 90%;
+    max-width: 500px;
+    background: white;
+    border-radius: 24px;
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+    animation: modalSlideIn 0.3s ease;
+  }
+
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gray-900);
+  }
+
+  .modal-close {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    border: none;
+    background: var(--gray-100);
+    color: var(--gray-600);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .modal-close:hover {
+    background: var(--gray-200);
+    color: var(--gray-900);
+  }
+
+  .modal-body {
+    padding: 1.5rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 0.5rem;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--gray-200);
+    border-radius: 12px;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: var(--primary-400);
+    box-shadow: 0 0 0 4px var(--primary-100);
+  }
+
+  .form-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--gray-200);
+    border-radius: 12px;
+    font-size: 0.95rem;
+    background: white;
+    cursor: pointer;
+  }
+
+  .form-select:focus {
+    outline: none;
+    border-color: var(--primary-400);
+    box-shadow: 0 0 0 4px var(--primary-100);
+  }
+
+  .form-textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--gray-200);
+    border-radius: 12px;
+    font-size: 0.95rem;
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  .form-textarea:focus {
+    outline: none;
+    border-color: var(--primary-400);
+    box-shadow: 0 0 0 4px var(--primary-100);
+  }
+
+  .error-message {
+    color: var(--danger-500);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+  }
+
+  .modal-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--gray-200);
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+
+  .btn-secondary {
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    background: var(--gray-100);
+    color: var(--gray-700);
+    border: 1px solid var(--gray-200);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-secondary:hover {
+    background: var(--gray-200);
+  }
+
+  .btn-primary {
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    background: var(--primary-600);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+  }
+
+  .btn-primary:hover {
+    background: var(--primary-700);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(79, 70, 229, 0.4);
+  }
+
+  /* Custom Date Range */
+  .custom-date-range {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 16px;
+    border: 1px solid var(--gray-200);
+  }
+
+  .date-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .date-input-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .date-actions {
+    grid-column: span 2;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  /* Notification */
+  .notification {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    background: white;
+    box-shadow: var(--shadow-xl);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+    border-left: 4px solid;
+  }
+
+  .notification.success {
+    border-left-color: var(--success-500);
+  }
+
+  .notification.error {
+    border-left-color: var(--danger-500);
+  }
+
+  .notification i {
+    font-size: 1.25rem;
+  }
+
+  .notification.success i {
+    color: var(--success-500);
+  }
+
+  .notification.error i {
+    color: var(--danger-500);
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .main-wrapper {
+      padding: 0 1rem;
+    }
+
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .company-details {
+      grid-template-columns: 1fr;
+    }
+
+    .pagination-container {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .nav-container {
+      justify-content: center;
+    }
+  }
+
+  /* Loading Skeleton */
+  .skeleton {
+    background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+  }
+
+  @keyframes loading {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+</style>
+
+<!-- Modern Navigation -->
+<nav class="modern-nav">
+  <div class="nav-container">
+    <!-- <a href="/sales/dashboard" class="nav-link">
+      <i class="bi bi-speedometer2"></i>
+      <span>Dashboard</span>
+    </a> -->
+    <a href="/sales/orders" class="nav-link">
+      <i class="bi bi-cart-fill"></i>
+      <span>Orders</span>
+    </a>
+    <a href="/sales/orders/create" class="nav-link">
+      <i class="bi bi-plus-circle"></i>
+      <span>Create Order</span>
+    </a>
+    <a href="/sales/customers" class="nav-link">
+      <i class="bi bi-people-fill"></i>
+      <span>Customers</span>
+    </a>
+    <a href="/sales/companies" class="nav-link active">
+      <i class="bi bi-building"></i>
+      <span>Companies</span>
+    </a>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<div class="main-wrapper">
+  <div class="content-card">
+    <!-- Header -->
+    <!-- <div class="content-header">
+      <h1 class="header-title">Companies</h1>
+      <p class="header-subtitle">Track and manage your business prospects effectively</p>
+    </div> -->
+
+    <!-- Stats Grid -->
+    <div style="padding: 2rem 2rem 0;">
+      <div class="stats-grid">
+        <div class="stat-card" onclick="filterByStatus('all')">
+          <div class="stat-value" id="totalCompanies">0</div>
+          <div class="stat-label">Total Companies</div>
+          <i class="bi bi-building stat-icon"></i>
+        </div>
+        <div class="stat-card" onclick="filterByStatus('new')">
+          <div class="stat-value" style="color: var(--info-600);" id="newCompanies">0</div>
+          <div class="stat-label">New</div>
+          <i class="bi bi-star stat-icon"></i>
+        </div>
+        <div class="stat-card" onclick="filterByStatus('contacted')">
+          <div class="stat-value" style="color: var(--warning-600);" id="contactedCompanies">0</div>
+          <div class="stat-label">Contacted</div>
+          <i class="bi bi-telephone stat-icon"></i>
+        </div>
+        <div class="stat-card" onclick="filterByStatus('interested')">
+          <div class="stat-value" style="color: var(--success-600);" id="interestedCompanies">0</div>
+          <div class="stat-label">Interested</div>
+          <i class="bi bi-emoji-smile stat-icon"></i>
+        </div>
+        <div class="stat-card" onclick="filterByStatus('not-interested')">
+          <div class="stat-value" style="color: var(--danger-600);" id="notInterestedCompanies">0</div>
+          <div class="stat-label">Not Interested</div>
+          <i class="bi bi-emoji-frown stat-icon"></i>
+        </div>
+        <div class="stat-card" onclick="filterByStatus('follow-up')">
+          <div class="stat-value" style="color: var(--primary-600);" id="followUpCompanies">0</div>
+          <div class="stat-label">Follow-up</div>
+          <i class="bi bi-clock-history stat-icon"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div style="padding: 0 2rem;">
+      <!-- Search Bar -->
+      <div class="search-wrapper">
+        <div class="search-container">
+          <i class="bi bi-search search-icon"></i>
+          <input type="text" 
+                 id="searchInput"
+                 placeholder="Search by company name, phone number, or location..." 
+                 class="search-input">
+        </div>
+      </div>
+
+      <!-- Filter Section -->
+      <div class="filter-section">
+        <!-- Date Filters -->
+        <div class="filter-group">
+          <div class="filter-label">
+            <i class="bi bi-calendar"></i>
+            <span>Date Added</span>
+          </div>
+          <div class="date-filter-grid">
+            <button onclick="setDateFilter('today')" id="dateToday" class="date-filter-btn">Today</button>
+            <button onclick="setDateFilter('yesterday')" id="dateYesterday" class="date-filter-btn">Yesterday</button>
+            <button onclick="setDateFilter('thisWeek')" id="dateThisWeek" class="date-filter-btn">This Week</button>
+            <button onclick="setDateFilter('thisMonth')" id="dateThisMonth" class="date-filter-btn">This Month</button>
+            <button onclick="setDateFilter('thisYear')" id="dateThisYear" class="date-filter-btn">This Year</button>
+            <button onclick="toggleCustomDateRange()" id="customDateBtn" class="date-filter-btn">Custom Range</button>
+          </div>
+          
+          <!-- Custom Date Range -->
+          <div id="customDateRange" class="custom-date-range" style="display: none;">
+            <div class="date-input-group">
+              <span class="date-input-label">From</span>
+              <input type="text" id="dateFrom" class="form-input" placeholder="Select date">
+            </div>
+            <div class="date-input-group">
+              <span class="date-input-label">To</span>
+              <input type="text" id="dateTo" class="form-input" placeholder="Select date">
+            </div>
+            <div class="date-actions">
+              <button onclick="applyCustomDateRange()" class="btn-primary" style="padding: 0.5rem 1rem;">Apply</button>
+              <button onclick="cancelCustomDateRange()" class="btn-secondary" style="padding: 0.5rem 1rem;">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Filters -->
+        <div class="filter-group">
+          <div class="filter-label">
+            <i class="bi bi-tags"></i>
+            <span>Status</span>
+          </div>
+          <div class="status-filter-grid">
+            <label class="status-checkbox" onclick="toggleStatusFilter('new', this)">
+              <input type="checkbox" id="statusNew" value="new" class="status-filter">
+              <span>New</span>
+            </label>
+            <label class="status-checkbox" onclick="toggleStatusFilter('contacted', this)">
+              <input type="checkbox" id="statusContacted" value="contacted" class="status-filter">
+              <span>Contacted</span>
+            </label>
+            <label class="status-checkbox" onclick="toggleStatusFilter('interested', this)">
+              <input type="checkbox" id="statusInterested" value="interested" class="status-filter">
+              <span>Interested</span>
+            </label>
+            <label class="status-checkbox" onclick="toggleStatusFilter('not-interested', this)">
+              <input type="checkbox" id="statusNotInterested" value="not-interested" class="status-filter">
+              <span>Not Interested</span>
+            </label>
+            <label class="status-checkbox" onclick="toggleStatusFilter('follow-up', this)">
+              <input type="checkbox" id="statusFollowUp" value="follow-up" class="status-filter">
+              <span>Follow-up</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Active Filters & Actions -->
+        <div class="active-filters">
+          <div class="filter-label" style="margin-bottom: 0;">
+            <i class="bi bi-funnel"></i>
+            <span>Active Filters:</span>
+          </div>
+          <div id="activeFiltersContainer" style="display: flex; flex-wrap: wrap; gap: 0.5rem; flex: 1;">
+            <!-- Active filters will be displayed here -->
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button onclick="applyFilters()" class="apply-filters-btn">
+              <i class="bi bi-funnel"></i>
+              Apply Filters
+            </button>
+            <button onclick="clearAllFilters()" class="clear-filters-btn">
+              <i class="bi bi-x-circle"></i>
+              Clear All
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Company Button -->
+    <div style="padding: 0 2rem 1.5rem;">
+      <button onclick="openCompanyModal()" class="btn-primary" style="width: auto;">
+        <i class="bi bi-plus-lg"></i>
+        Add New Company
+      </button>
+    </div>
+
+    <!-- Companies List -->
+    <div id="companiesContainer" class="companies-grid">
+      <!-- Companies will be loaded here -->
+    </div>
+
+    <!-- Pagination -->
+    <div id="pagination" class="pagination-container">
+      <!-- Pagination will be loaded here -->
+    </div>
+  </div>
+</div>
+
+<!-- Company Modal -->
+<div id="companyModal" class="modal-overlay">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalTitle">Add New Company</h3>
+      <button onclick="closeCompanyModal()" class="modal-close">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    
+    <form id="companyForm" onsubmit="saveCompany(event)">
+      <input type="hidden" id="companyId">
+      
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Company Name *</label>
+          <input type="text" 
+                 id="companyName"
+                 required
+                 class="form-input"
+                 onchange="checkDuplicate()">
+          <p id="companyNameError" class="error-message hidden"></p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Phone Number *</label>
+          <input type="tel" 
+                 id="phoneNumber"
+                 required
+                 class="form-input"
+                 onchange="checkDuplicate()">
+          <p id="phoneError" class="error-message hidden"></p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Location (Optional)</label>
+          <input type="text" 
+                 id="location"
+                 class="form-input">
+        </div>
+
+        <div class="form-group" id="statusField" style="display: none;">
+          <label class="form-label">Status</label>
+          <select id="status" class="form-select">
+            <option value="new">New</option>
+            <option value="contacted">Contacted</option>
+            <option value="interested">Interested</option>
+            <option value="not-interested">Not Interested</option>
+            <option value="follow-up">Follow-up</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="notesField" style="display: none;">
+          <label class="form-label">Notes</label>
+          <textarea id="notes" rows="3" class="form-textarea"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" onclick="closeCompanyModal()" class="btn-secondary">
+          Cancel
+        </button>
+        <button type="submit" class="btn-primary">
+          Save Company
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+  let currentPage = 1;
+  let currentSearch = '';
+  let debounceTimer;
+  
+  // Filter variables
+  let currentDateFilter = '';
+  let customDateFrom = '';
+  let customDateTo = '';
+  let selectedStatuses = [];
+  
+  // Initialize date pickers
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize flatpickr for date range
+    flatpickr("#dateFrom", {
+      dateFormat: "Y-m-d",
+      onChange: function(selectedDates, dateStr, instance) {
+        document.getElementById('dateTo')._flatpickr.set('minDate', dateStr);
+      }
+    });
+    
+    flatpickr("#dateTo", {
+      dateFormat: "Y-m-d"
+    });
+    
+    // Load initial data
+    loadCompanies();
+    loadStats();
+  });
+
+  // Load companies with filters
+  async function loadCompanies(page = 1) {
+    // Show loading skeleton
+    const container = document.getElementById('companiesContainer');
+    container.innerHTML = Array(5).fill().map(() => `
+      <div class="company-card skeleton" style="height: 120px;"></div>
+    `).join('');
+
+    currentPage = page;
+    
+    const params = new URLSearchParams({
+      page,
+      limit: 20
+    });
+    
+    // Add search
+    if (currentSearch) {
+      params.append('search', currentSearch);
+    }
+    
+    // Add date filter
+    if (currentDateFilter) {
+      params.append('dateFilter', currentDateFilter);
+    }
+    
+    // Add custom date range
+    if (customDateFrom && customDateTo) {
+      params.append('dateFrom', customDateFrom);
+      params.append('dateTo', customDateTo);
+    }
+    
+    // Add status filters
+    if (selectedStatuses.length > 0) {
+      params.append('statuses', selectedStatuses.join(','));
+    }
+
+    try {
+      const response = await fetch(`/api/companies?${params}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        updateCompaniesList(data.data);
+        updatePagination(data.pagination);
+        updateActiveFiltersDisplay();
+      }
+    } catch (error) {
+      console.error('Error loading companies:', error);
+      showNotification('Error loading companies', 'error');
+    }
+  }
+
+  // Update companies list
+  function updateCompaniesList(companies) {
+      const container = document.getElementById('companiesContainer');
+      
+      if (companies.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="bi bi-building"></i>
+            <h3>No companies found</h3>
+            <p>Get started by adding your first company</p>
+            <button onclick="openCompanyModal()" class="empty-state-btn">
+              <i class="bi bi-plus-lg"></i>
+              Add New Company
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = companies.map(company => {
+        // Format date safely
+        const addedDate = company.createdAt ? new Date(company.createdAt).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        }) : 'N/A';
+        
+        return `
+        <div class="company-card" onclick="viewCompany('${company._id}')">
+          <div class="company-header">
+            <div class="company-title">
+              <h3 class="company-name">${escapeHtml(company.companyName)}</h3>
+              <span class="status-badge status-${company.status}">${company.status.replace('-', ' ')}</span>
+            </div>
+            <div class="company-actions">
+              <!-- View Button -->
+              <a href="/sales/companies/${company._id}" class="action-btn view" title="View Company Details">
+                <i class="bi bi-eye"></i>
+              </a>
+              <button onclick="event.stopPropagation(); editCompany('${company._id}')" 
+                      class="action-btn edit" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </button>
+
+              <button onclick="event.stopPropagation(); deleteCompany('${company._id}')" 
+                      class="action-btn delete" title="Delete">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="company-details">
+            <div class="detail-item">
+              <i class="bi bi-telephone"></i>
+              <span>${escapeHtml(company.phoneNumber)}</span>
+            </div>
+            ${company.location ? `
+              <div class="detail-item">
+                <i class="bi bi-geo-alt"></i>
+                <span>${escapeHtml(company.location)}</span>
+              </div>
+            ` : ''}
+            <div class="detail-item">
+              <i class="bi bi-calendar"></i>
+              <span>Added: ${addedDate}</span>
+            </div>
+          </div>
+          
+          ${company.notes ? `
+            <div class="company-notes">
+              <i class="bi bi-chat"></i>
+              <span>${escapeHtml(company.notes)}</span>
+            </div>
+          ` : ''}
+          
+          <!-- Quick Stats for Inquiries (Optional) -->
+          <div class="company-footer">
+            <div class="inquiry-stats">
+              <span class="stat-item" title="Total Inquiries">
+                <i class="bi bi-chat"></i>
+                <span>${company.inquiryCount || 0} inquiries</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      `}).join('');
+  }
+
+  function viewCompany(id) {
+    window.location.href = `/sales/companies/${id}`;
+  }
+  // Date Filter Functions
+  function setDateFilter(filter) {
+    // Remove active class from all date buttons
+    document.querySelectorAll('.date-filter-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    
+    // Add active class to clicked button
+    const btnId = `date${filter.charAt(0).toUpperCase() + filter.slice(1)}`;
+    const btn = document.getElementById(btnId);
+    if (btn) btn.classList.add('active');
+    
+    // Hide custom date range
+    document.getElementById('customDateRange').style.display = 'none';
+    
+    // Set current date filter
+    currentDateFilter = filter;
+    customDateFrom = '';
+    customDateTo = '';
+    
+    // Apply filters
+    applyFilters();
+  }
+
+  function toggleCustomDateRange() {
+    const customRange = document.getElementById('customDateRange');
+    customRange.style.display = customRange.style.display === 'none' ? 'grid' : 'none';
+    
+    // Remove active class from other date buttons
+    document.querySelectorAll('.date-filter-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    
+    // Add active class to custom button
+    document.getElementById('customDateBtn').classList.add('active');
+    
+    // Clear current date filter
+    currentDateFilter = '';
+  }
+
+  function applyCustomDateRange() {
+    const fromDate = document.getElementById('dateFrom').value;
+    const toDate = document.getElementById('dateTo').value;
+    
+    if (!fromDate || !toDate) {
+      showNotification('Please select both from and to dates', 'error');
+      return;
+    }
+    
+    customDateFrom = fromDate;
+    customDateTo = toDate;
+    currentDateFilter = '';
+    
+    document.getElementById('customDateRange').style.display = 'none';
+    applyFilters();
+  }
+
+  function cancelCustomDateRange() {
+    document.getElementById('customDateRange').style.display = 'none';
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    
+    // Remove active class from custom button
+    document.getElementById('customDateBtn').classList.remove('active');
+    
+    // Clear custom dates
+    customDateFrom = '';
+    customDateTo = '';
+    
+    // If no other date filter is active, clear date filter
+    if (!currentDateFilter) {
+      currentDateFilter = '';
+    }
+  }
+
+  // Status Filter Functions
+  function toggleStatusFilter(status, element) {
+    const checkbox = document.getElementById(`status${status.charAt(0).toUpperCase() + status.slice(1).replace('-', '')}`);
+    checkbox.checked = !checkbox.checked;
+    
+    // Update selected statuses
+    updateSelectedStatuses();
+    
+    // Update checkbox style
+    if (checkbox.checked) {
+      element.classList.add(`active-${status}`);
+    } else {
+      element.classList.remove(`active-${status}`);
+    }
+  }
+
+  function updateSelectedStatuses() {
+    selectedStatuses = [];
+    
+    if (document.getElementById('statusNew')?.checked) selectedStatuses.push('new');
+    if (document.getElementById('statusContacted')?.checked) selectedStatuses.push('contacted');
+    if (document.getElementById('statusInterested')?.checked) selectedStatuses.push('interested');
+    if (document.getElementById('statusNotInterested')?.checked) selectedStatuses.push('not-interested');
+    if (document.getElementById('statusFollowUp')?.checked) selectedStatuses.push('follow-up');
+  }
+
+  function filterByStatus(status) {
+    // Clear all status checkboxes
+    document.querySelectorAll('.status-filter').forEach(cb => {
+      cb.checked = false;
+    });
+    document.querySelectorAll('.status-checkbox').forEach(el => {
+      el.classList.remove('active-new', 'active-contacted', 'active-interested', 'active-not-interested', 'active-follow-up');
+    });
+    
+    if (status !== 'all') {
+      // Check the specific status
+      const statusId = `status${status.charAt(0).toUpperCase() + status.slice(1).replace('-', '')}`;
+      const checkbox = document.getElementById(statusId);
+      if (checkbox) {
+        checkbox.checked = true;
+        const parent = checkbox.closest('.status-checkbox');
+        parent.classList.add(`active-${status}`);
+      }
+    }
+    
+    updateSelectedStatuses();
+    applyFilters();
+  }
+
+  // Apply all filters
+  function applyFilters() {
+    loadCompanies(1);
+  }
+
+  // Clear all filters
+  function clearAllFilters() {
+    // Clear search
+    document.getElementById('searchInput').value = '';
+    currentSearch = '';
+    
+    // Clear date filters
+    document.querySelectorAll('.date-filter-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    document.getElementById('customDateRange').style.display = 'none';
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    currentDateFilter = '';
+    customDateFrom = '';
+    customDateTo = '';
+    
+    // Clear status filters
+    document.querySelectorAll('.status-filter').forEach(cb => {
+      cb.checked = false;
+    });
+    document.querySelectorAll('.status-checkbox').forEach(el => {
+      el.classList.remove('active-new', 'active-contacted', 'active-interested', 'active-not-interested', 'active-follow-up');
+    });
+    selectedStatuses = [];
+    
+    // Apply changes
+    applyFilters();
+    
+    showNotification('All filters cleared', 'success');
+  }
+
+  // Update active filters display
+  function updateActiveFiltersDisplay() {
+    const container = document.getElementById('activeFiltersContainer');
+    let filters = [];
+    
+    // Add date filter
+    if (currentDateFilter) {
+      let filterText = '';
+      switch(currentDateFilter) {
+        case 'today': filterText = 'Today'; break;
+        case 'yesterday': filterText = 'Yesterday'; break;
+        case 'thisWeek': filterText = 'This Week'; break;
+        case 'thisMonth': filterText = 'This Month'; break;
+        case 'thisYear': filterText = 'This Year'; break;
+      }
+      filters.push(`<span class="filter-tag"><i class="bi bi-calendar"></i> ${filterText}</span>`);
+    }
+    
+    // Add custom date range
+    if (customDateFrom && customDateTo) {
+      filters.push(`<span class="filter-tag"><i class="bi bi-calendar-range"></i> ${customDateFrom} to ${customDateTo}</span>`);
+    }
+    
+    // Add status filters
+    selectedStatuses.forEach(status => {
+      filters.push(`<span class="filter-tag"><i class="bi bi-tag"></i> ${status.replace('-', ' ')}</span>`);
+    });
+    
+    if (filters.length > 0) {
+      container.innerHTML = filters.join(' ');
+    } else {
+      container.innerHTML = '<span class="filter-tag" style="background: transparent; border: none;">No active filters</span>';
+    }
+  }
+
+  // Helper function to escape HTML
+  function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  // Update pagination
+  function updatePagination(pagination) {
+    const container = document.getElementById('pagination');
+    
+    if (!pagination || pagination.pages <= 1) {
+      container.innerHTML = '';
+      return;
+    }
+
+    const start = ((pagination.page - 1) * pagination.limit) + 1;
+    const end = Math.min(pagination.page * pagination.limit, pagination.total);
+
+    let html = `
+      <div class="pagination-info">
+        Showing ${start} to ${end} of ${pagination.total} companies
+      </div>
+      <div class="pagination-controls">
+    `;
+
+    // Previous button
+    html += `<button onclick="loadCompanies(${pagination.page - 1})" class="page-btn" ${pagination.page <= 1 ? 'disabled' : ''}>
+      <i class="bi bi-chevron-left"></i>
+    </button>`;
+
+    // Page numbers
+    for (let i = 1; i <= pagination.pages; i++) {
+      if (i === pagination.page) {
+        html += `<button class="page-btn active">${i}</button>`;
+      } else if (i === 1 || i === pagination.pages || (i >= pagination.page - 2 && i <= pagination.page + 2)) {
+        html += `<button onclick="loadCompanies(${i})" class="page-btn">${i}</button>`;
+      } else if (i === pagination.page - 3 || i === pagination.page + 3) {
+        html += `<span class="page-btn" style="border: none; background: transparent;">...</span>`;
+      }
+    }
+
+    // Next button
+    html += `<button onclick="loadCompanies(${pagination.page + 1})" class="page-btn" ${pagination.page >= pagination.pages ? 'disabled' : ''}>
+      <i class="bi bi-chevron-right"></i>
+    </button>`;
+
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  // Load stats
+  async function loadStats() {
+    try {
+      const response = await fetch('/api/companies/stats');
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        document.getElementById('totalCompanies').textContent = data.data.totalCompanies || 0;
+        document.getElementById('newCompanies').textContent = data.data.newCompanies || 0;
+        document.getElementById('contactedCompanies').textContent = data.data.contacted || 0;
+        document.getElementById('interestedCompanies').textContent = data.data.interested || 0;
+        document.getElementById('notInterestedCompanies').textContent = data.data.notInterested || 0;
+        document.getElementById('followUpCompanies').textContent = data.data.followUp || 0;
+      }
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
+  }
+
+  // Check for duplicates
+  async function checkDuplicate() {
+    const companyName = document.getElementById('companyName').value.trim();
+    const phoneNumber = document.getElementById('phoneNumber').value.trim();
+    const companyId = document.getElementById('companyId').value;
+    
+    if (!companyName && !phoneNumber) return true;
+
+    document.getElementById('companyNameError').classList.add('hidden');
+    document.getElementById('phoneError').classList.add('hidden');
+
+    try {
+      const params = new URLSearchParams();
+      if (companyName) params.append('name', companyName);
+      if (phoneNumber) params.append('phone', phoneNumber);
+      
+      const response = await fetch(`/api/companies/check?${params}`);
+      const data = await response.json();
+      
+      if (data.success && data.exists && data.company._id !== companyId) {
+        if (companyName && data.company.companyName.toLowerCase() === companyName.toLowerCase()) {
+          document.getElementById('companyNameError').textContent = 'Company name already exists';
+          document.getElementById('companyNameError').classList.remove('hidden');
+        }
+        if (phoneNumber && data.company.phoneNumber === phoneNumber) {
+          document.getElementById('phoneError').textContent = 'Phone number already exists';
+          document.getElementById('phoneError').classList.remove('hidden');
+        }
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Error checking duplicate:', error);
+      return true;
+    }
+  }
+
+  // Open modal for new company
+  function openCompanyModal() {
+    document.getElementById('modalTitle').textContent = 'Add New Company';
+    document.getElementById('companyForm').reset();
+    document.getElementById('companyId').value = '';
+    document.getElementById('statusField').style.display = 'none';
+    document.getElementById('notesField').style.display = 'none';
+    document.getElementById('companyNameError').classList.add('hidden');
+    document.getElementById('phoneError').classList.add('hidden');
+    document.getElementById('companyModal').style.display = 'flex';
+  }
+
+  // Open modal for edit
+  async function editCompany(id) {
+    try {
+      const response = await fetch(`/api/companies/${id}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        document.getElementById('modalTitle').textContent = 'Edit Company';
+        document.getElementById('companyId').value = data.data._id;
+        document.getElementById('companyName').value = data.data.companyName || '';
+        document.getElementById('phoneNumber').value = data.data.phoneNumber || '';
+        document.getElementById('location').value = data.data.location || '';
+        document.getElementById('status').value = data.data.status || 'new';
+        document.getElementById('notes').value = data.data.notes || '';
+        document.getElementById('statusField').style.display = 'block';
+        document.getElementById('notesField').style.display = 'block';
+        document.getElementById('companyNameError').classList.add('hidden');
+        document.getElementById('phoneError').classList.add('hidden');
+        document.getElementById('companyModal').style.display = 'flex';
+      }
+    } catch (error) {
+      console.error('Error loading company:', error);
+      showNotification('Error loading company details', 'error');
+    }
+  }
+
+  // Close modal
+  function closeCompanyModal() {
+    document.getElementById('companyModal').style.display = 'none';
+  }
+
+  // Save company
+  async function saveCompany(event) {
+    event.preventDefault();
+    
+    const isUnique = await checkDuplicate();
+    if (!isUnique) {
+      showNotification('Please fix the duplicate entries', 'error');
+      return;
+    }
+
+    const companyId = document.getElementById('companyId').value;
+    const formData = {
+      companyName: document.getElementById('companyName').value.trim(),
+      phoneNumber: document.getElementById('phoneNumber').value.trim(),
+      location: document.getElementById('location').value.trim()
+    };
+
+    if (companyId) {
+      formData.status = document.getElementById('status').value;
+      formData.notes = document.getElementById('notes').value.trim();
+    }
+
+    const url = companyId ? `/api/companies/${companyId}` : '/api/companies';
+    const method = companyId ? 'PUT' : 'POST';
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        closeCompanyModal();
+        await loadCompanies(currentPage);
+        await loadStats();
+        showNotification(companyId ? 'Company updated successfully' : 'Company added successfully', 'success');
+      } else {
+        showNotification(data.message || 'Error saving company', 'error');
+      }
+    } catch (error) {
+      console.error('Error saving company:', error);
+      showNotification('Error saving company', 'error');
+    }
+  }
+
+  // Delete company
+  async function deleteCompany(id) {
+    if (!confirm('Are you sure you want to delete this company?')) return;
+
+    try {
+      const response = await fetch(`/api/companies/${id}`, {
+        method: 'DELETE'
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        await loadCompanies(currentPage);
+        await loadStats();
+        showNotification('Company deleted successfully', 'success');
+      } else {
+        showNotification(data.message || 'Error deleting company', 'error');
+      }
+    } catch (error) {
+      console.error('Error deleting company:', error);
+      showNotification('Error deleting company', 'error');
+    }
+  }
+
+  // Show notification
+  function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+      <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-circle'}"></i>
+      <span>${message}</span>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideIn 0.3s ease reverse';
+      setTimeout(() => {
+        notification.remove();
+      }, 300);
+    }, 3000);
+  }
+
+  // Search with debounce
+  document.getElementById('searchInput').addEventListener('input', function(e) {
+    clearTimeout(debounceTimer);
+    currentSearch = e.target.value;
+    
+    debounceTimer = setTimeout(() => {
+      loadCompanies(1);
+    }, 500);
+  });
+
+  // Close modal when clicking outside
+  window.onclick = function(event) {
+    const modal = document.getElementById('companyModal');
+    if (event.target === modal) {
+      closeCompanyModal();
+    }
+  };
+
+  // Add hidden class style
+  const style = document.createElement('style');
+  style.textContent = `
+    .hidden {
+      display: none !important;
+    }
+  `;
+  document.head.appendChild(style);
+</script>

@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Dashboard - Order Management</title>
+    
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Custom styles for better UX */
+        .badge {
+            @apply px-2.5 py-1 text-xs font-medium rounded-full inline-flex items-center;
+        }
+        
+        .filter-btn {
+            @apply transition-all duration-200;
+        }
+        
+        .bill-punched {
+            background-color: #f0fdf4 !important;
+        }
+        
+        /* Smooth hover effects */
+        .table-row-hover:hover {
+            background-color: #f9fafb;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-green-600 to-green-800 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-file-invoice-dollar text-2xl"></i>
+                    <div>
+                        <h1 class="text-xl font-bold">Account Dashboard</h1>
+                        <p class="text-xs text-green-100">Order Billing & Tracking</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <div class="text-sm font-medium"><%= user.name %></div>
+                        <div class="text-xs text-green-200">Account Team</div>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-lg">
+                        <%= user.name ? user.name.charAt(0).toUpperCase() : 'A' %>
+                    </div>
+                    <div>
+                        <% if (user) { %>
+                        <a href="/auth/logout" class="text-sm text-white/90 hover:text-white underline">
+                            <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                        </a>
+                        <% } else { %>
+                        <a href="/auth/login" class="text-sm text-white/90 hover:text-white underline">
+                            <i class="fas fa-sign-in-alt mr-1"></i> Login
+                        </a>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Page Header -->
+        <!-- <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Orders Overview</h2>
+                <p class="text-sm text-gray-600 mt-1">Track dispatched orders and manage billing</p>
+            </div>
+            
+            <div class="flex space-x-3">
+                <a href="/products" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center shadow-sm">
+                    <i class="fas fa-box mr-2"></i> Stock Manager
+                </a>
+                <button onclick="exportOrders()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center shadow-sm">
+                    <i class="fas fa-file-excel mr-2"></i> Export
+                </button>
+            </div>
+        </div> -->
+
+        <!-- Quick Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+            <!-- Dispatched (In Transit) -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500 hover:shadow-md transition">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">In Transit</p>
+                        <h3 class="text-2xl font-bold text-gray-900" id="dispatchedCount">0</h3>
+                        <p class="text-xs text-gray-500 mt-2">Awaiting delivery</p>
+                    </div>
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-truck text-yellow-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delivered -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500 hover:shadow-md transition">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Delivered</p>
+                        <h3 class="text-2xl font-bold text-gray-900" id="deliveredCount">0</h3>
+                        <p class="text-xs text-gray-500 mt-2">Successfully delivered</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cancelled -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500 hover:shadow-md transition">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Cancelled</p>
+                        <h3 class="text-2xl font-bold text-gray-900" id="cancelledCount">0</h3>
+                        <p class="text-xs text-gray-500 mt-2">Cancelled orders</p>
+                    </div>
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-times-circle text-red-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bill Pending -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500 hover:shadow-md transition">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Bill Pending</p>
+                        <h3 class="text-2xl font-bold text-gray-900" id="billPendingCount">0</h3>
+                        <p class="text-xs text-gray-500 mt-2">Awaiting bill punch</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-receipt text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Date Filters - Default Today -->
+        <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="text-sm font-medium text-gray-700 mr-2">
+                    <i class="far fa-calendar-alt mr-1"></i> Quick Filters:
+                </span>
+                <button onclick="setDateFilter('today')" class="filter-btn px-4 py-2 text-sm font-medium rounded-lg bg-green-600 text-white hover:bg-green-700 shadow-sm" id="filter-today">
+                    <i class="far fa-sun mr-1"></i> Today
+                </button>
+                <button onclick="setDateFilter('yesterday')" class="filter-btn px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200" id="filter-yesterday">
+                    <i class="far fa-calendar mr-1"></i> Yesterday
+                </button>
+                <button onclick="setDateFilter('thisWeek')" class="filter-btn px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200" id="filter-thisWeek">
+                    <i class="fas fa-calendar-week mr-1"></i> This Week
+                </button>
+                <button onclick="setDateFilter('thisMonth')" class="filter-btn px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200" id="filter-thisMonth">
+                    <i class="far fa-calendar-alt mr-1"></i> This Month
+                </button>
+                <button onclick="setDateFilter('thisYear')" class="filter-btn px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200" id="filter-thisYear">
+                    <i class="far fa-calendar-alt mr-1"></i> This Year
+                </button>
+                <button onclick="clearFilters()" class="ml-auto px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">
+                    <i class="fas fa-redo-alt mr-1"></i> Reset
+                </button>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <!-- Search - Wider -->
+                <div class="md:col-span-5">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="fas fa-search mr-1 text-gray-400"></i> Search Orders
+                    </label>
+                    <div class="flex">
+                        <input type="text" id="searchQuery" placeholder="Order ID, Customer, Invoice, Tracking..." 
+                               class="flex-1 rounded-l-lg border-gray-300 focus:ring-green-500 focus:border-green-500 text-sm">
+                        <button onclick="loadOrders(1)" class="bg-green-600 hover:bg-green-700 text-white px-5 rounded-r-lg transition">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="md:col-span-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="fas fa-tag mr-1 text-gray-400"></i> Status
+                    </label>
+                    <select id="statusFilter" onchange="loadOrders(1)" class="w-full rounded-lg border-gray-300 focus:ring-green-500 focus:border-green-500 text-sm">
+                        <option value="">All Status (Dispatched, Delivered, Cancelled)</option>
+                        <option value="dispatched">In Transit</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+
+                <!-- Order Type -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="fas fa-credit-card mr-1 text-gray-400"></i> Order Type
+                    </label>
+                    <select id="orderTypeFilter" onchange="loadOrders(1)" class="w-full rounded-lg border-gray-300 focus:ring-green-500 focus:border-green-500 text-sm">
+                        <option value="">All Types</option>
+                        <option value="cod">COD</option>
+                        <option value="prepaid">Prepaid</option>
+                        <option value="credit">Credit</option>
+                    </select>
+                </div>
+
+                <!-- Bill Punch Filter -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="fas fa-receipt mr-1 text-gray-400"></i> Bill Status
+                    </label>
+                    <select id="billFilter" onchange="loadOrders(1)" class="w-full rounded-lg border-gray-300 focus:ring-green-500 focus:border-green-500 text-sm">
+                        <option value="">All Bills</option>
+                        <option value="punched">Bill Punched</option>
+                        <option value="pending">Bill Pending</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Custom Date Range -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="far fa-calendar-alt mr-1 text-gray-400"></i> From Date
+                    </label>
+                    <input type="date" id="dateFrom" onchange="loadOrders(1)" class="w-full rounded-lg border-gray-300 focus:ring-green-500 focus:border-green-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="far fa-calendar-alt mr-1 text-gray-400"></i> To Date
+                    </label>
+                    <input type="date" id="dateTo" onchange="loadOrders(1)" class="w-full rounded-lg border-gray-300 focus:ring-green-500 focus:border-green-500 text-sm">
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Table -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-list mr-2 text-green-600"></i> Orders List
+                    </h3>
+                    <span class="text-sm text-gray-600 bg-white px-3 py-1 rounded-full" id="tableInfo">Loading...</span>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Order ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Customer</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Contact</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Amount</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Order Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-sm text-gray-700" id="paginationInfo">
+                    Showing 0 to 0 of 0 orders
+                </div>
+                <div class="flex space-x-1" id="pagination"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentPage = 1;
+        const ordersPerPage = 15;
+        let currentDateFilter = 'today';
+
+        // Initialize - set today's date filter
+        document.addEventListener('DOMContentLoaded', function() {
+            setDateFilter('today');
+        });
+
+        // Date filter handler
+        function setDateFilter(range) {
+            // Update button styles
+            document.querySelectorAll('[id^="filter-"]').forEach(btn => {
+                btn.classList.remove('bg-green-600', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-700');
+            });
+            
+            const activeBtn = document.getElementById(`filter-${range}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-gray-100', 'text-gray-700');
+                activeBtn.classList.add('bg-green-600', 'text-white');
+            }
+            
+            currentDateFilter = range;
+            
+            const today = new Date();
+            let fromDate = new Date();
+            let toDate = new Date();
+
+            switch(range) {
+                case 'today':
+                    fromDate = today;
+                    toDate = today;
+                    break;
+                case 'yesterday':
+                    fromDate = new Date(today);
+                    fromDate.setDate(today.getDate() - 1);
+                    toDate = new Date(today);
+                    toDate.setDate(today.getDate() - 1);
+                    break;
+                case 'thisWeek':
+                    fromDate = new Date(today);
+                    fromDate.setDate(today.getDate() - today.getDay());
+                    toDate = today;
+                    break;
+                case 'thisMonth':
+                    fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                    toDate = today;
+                    break;
+                case 'thisYear':
+                    fromDate = new Date(today.getFullYear(), 0, 1);
+                    toDate = today;
+                    break;
+            }
+
+            // Set date inputs
+            document.getElementById('dateFrom').value = fromDate.toISOString().split('T')[0];
+            document.getElementById('dateTo').value = toDate.toISOString().split('T')[0];
+            
+            loadOrders(1);
+        }
+
+        // Load orders with filters
+        async function loadOrders(page = 1) {
+            currentPage = page;
+            
+            try {
+                showLoading();
+                
+                const params = new URLSearchParams();
+                params.append('page', page);
+                params.append('limit', ordersPerPage);
+                
+                // Get filter values
+                const status = document.getElementById('statusFilter').value;
+                const orderType = document.getElementById('orderTypeFilter').value;
+                const billFilter = document.getElementById('billFilter').value;
+                const searchQuery = document.getElementById('searchQuery').value;
+                const dateFrom = document.getElementById('dateFrom').value;
+                const dateTo = document.getElementById('dateTo').value;
+                
+                // Build status filter (include dispatched, delivered, cancelled by default)
+                if (status) {
+                    params.append('status', status);
+                } else {
+                    params.append('status', 'dispatched,delivered,cancelled');
+                }
+                
+                if (orderType) params.append('orderType', orderType);
+                if (billFilter) params.append('billFilter', billFilter);
+                if (searchQuery) params.append('search', searchQuery);
+                if (dateFrom) params.append('dateFrom', dateFrom);
+                if (dateTo) params.append('dateTo', dateTo);
+
+                const response = await fetch(`/api/account/orders?${params}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                updateOrdersTable(data.orders);
+                updatePagination(data.total, data.page, data.pages);
+                updateStats(data.stats);
+                
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                showError('Error loading orders. Please try again.');
+            }
+        }
+
+        function updateOrdersTable(orders) {
+            const tbody = document.getElementById('ordersTableBody');
+            
+            if (!orders || orders.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="px-6 py-12 text-center text-gray-500">
+                            <i class="fas fa-inbox text-4xl mb-3 block text-gray-300"></i>
+                            <p class="text-gray-500">No orders found matching your criteria</p>
+                            <button onclick="clearFilters()" class="mt-3 text-sm text-green-600 hover:text-green-800">
+                                <i class="fas fa-redo-alt mr-1"></i> Clear Filters
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = orders.map(order => {
+                const isBillPunched = order.billPunch === true;
+                const rowClass = isBillPunched ? 'bill-punched' : 'table-row-hover';
+                
+                return `
+                <tr class="${rowClass} transition">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-green-600">#${order.invoiceNo || order.orderReference || order._id.slice(-6).toUpperCase()}</div>
+                        ${order.trackingId ? `<div class="text-xs text-gray-500 mt-1"><i class="fas fa-box mr-1"></i>${order.trackingId}</div>` : ''}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-gray-900">${order.customer?.name || order.customerName || 'N/A'}</div>
+                        <div class="text-xs text-gray-500 mt-1">${order.customer?.address?.city || order.shippingAddress?.city || ''}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <i class="fas fa-phone-alt mr-1 text-gray-400 text-xs"></i>
+                        ${order.customer?.mobileNumber || order.customerContact || 'N/A'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        ₹${(order.total || order.totalAmount || 0).toLocaleString('en-IN')}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="badge ${order.orderType === 'cod' ? 'bg-yellow-100 text-yellow-800' : 
+                                            order.orderType === 'prepaid' ? 'bg-green-100 text-green-800' : 
+                                            'bg-gray-100 text-gray-800'}">
+                            ${order.orderType?.toUpperCase() || 'N/A'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="badge ${order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                            order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                            'bg-yellow-100 text-yellow-800'}">
+                            <i class="fas ${order.status === 'delivered' ? 'fa-check-circle' :
+                                            order.status === 'cancelled' ? 'fa-times-circle' :
+                                            'fa-truck'} mr-1"></i>
+                            ${order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : 'N/A'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <i class="far fa-calendar mr-1 text-gray-400"></i>
+                        ${formatDate(order.orderDate || order.createdAt)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <div class="flex space-x-3">
+                            <!-- Print Icon - Added here -->
+                            <button onclick="printInvoice('${order._id}')" class="text-gray-600 hover:text-gray-800 transition" title="Print Invoice">
+                                <i class="fas fa-print"></i>
+                            </button>
+                            
+                            <a href="/account/orders/${order._id}" class="text-blue-600 hover:text-blue-800 transition" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            
+                            ${!isBillPunched ? `
+                                <button onclick="markBillPunch('${order._id}')" class="text-green-600 hover:text-green-800 transition" title="Mark Bill Punch">
+                                    <i class="fas fa-receipt"></i>
+                                </button>
+                            ` : `
+                                <span class="text-gray-400 cursor-not-allowed" title="Already Billed">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
+                            `}
+                        </div>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+                
+        // Mark bill punch
+        async function markBillPunch(orderId) {
+            if (!confirm('Mark this order as bill punched?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/account/orders/${orderId}/billpunch`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ billPunch: true })
+                });
+
+                if (response.ok) {
+                    alert('Bill punch marked successfully!');
+                    loadOrders(currentPage);
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + (error.error || 'Failed to update'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error updating bill punch status');
+            }
+        }
+
+        // Helper functions
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-IN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+
+        function updateStats(stats) {
+            if (stats) {
+                document.getElementById('dispatchedCount').textContent = stats.dispatchedOrders?.toLocaleString() || '0';
+                document.getElementById('deliveredCount').textContent = stats.deliveredOrders?.toLocaleString() || '0';
+                document.getElementById('cancelledCount').textContent = stats.cancelledOrders?.toLocaleString() || '0';
+                document.getElementById('billPendingCount').textContent = stats.billPendingOrders?.toLocaleString() || '0';
+            }
+        }
+
+        function updatePagination(total, page, pages) {
+            const pagination = document.getElementById('pagination');
+            const info = document.getElementById('paginationInfo');
+            
+            if (!total || total === 0) {
+                pagination.innerHTML = '';
+                info.textContent = 'No orders found';
+                return;
+            }
+
+            const start = ((page - 1) * ordersPerPage) + 1;
+            const end = Math.min(page * ordersPerPage, total);
+            info.textContent = `Showing ${start} to ${end} of ${total} orders`;
+
+            let html = '';
+            
+            // Previous button
+            html += `<button onclick="loadOrders(${page - 1})" ${page === 1 ? 'disabled' : ''} 
+                    class="px-3 py-1 rounded border ${page === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}">
+                    <i class="fas fa-chevron-left"></i>
+                </button>`;
+
+            // Page numbers
+            for (let i = 1; i <= pages; i++) {
+                if (i === page) {
+                    html += `<button class="px-3 py-1 rounded bg-green-600 text-white font-medium">${i}</button>`;
+                } else {
+                    html += `<button onclick="loadOrders(${i})" class="px-3 py-1 rounded border bg-white text-gray-700 hover:bg-gray-50">${i}</button>`;
+                }
+            }
+
+            // Next button
+            html += `<button onclick="loadOrders(${page + 1})" ${page === pages ? 'disabled' : ''} 
+                    class="px-3 py-1 rounded border ${page === pages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}">
+                    <i class="fas fa-chevron-right"></i>
+                </button>`;
+
+            pagination.innerHTML = html;
+        }
+
+        function showLoading() {
+            document.getElementById('ordersTableBody').innerHTML = `
+                <tr>
+                    <td colspan="9" class="px-6 py-8 text-center text-gray-500">
+                        <i class="fas fa-spinner fa-spin text-2xl mb-2 block text-green-600"></i>
+                        <p>Loading orders...</p>
+                    </td>
+                </tr>
+            `;
+            document.getElementById('tableInfo').textContent = 'Loading...';
+        }
+
+        function showError(message) {
+            document.getElementById('ordersTableBody').innerHTML = `
+                <tr>
+                    <td colspan="9" class="px-6 py-8 text-center text-red-600">
+                        <i class="fas fa-exclamation-triangle text-2xl mb-2 block"></i>
+                        <p>${message}</p>
+                        <button onclick="loadOrders(1)" class="mt-3 text-sm text-green-600 hover:text-green-800">
+                            <i class="fas fa-redo-alt mr-1"></i> Try Again
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        function clearFilters() {
+            document.getElementById('searchQuery').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('orderTypeFilter').value = '';
+            document.getElementById('billFilter').value = '';
+            setDateFilter('today');
+        }
+
+        async function exportOrders() {
+            try {
+                const params = new URLSearchParams();
+                
+                const status = document.getElementById('statusFilter').value;
+                const orderType = document.getElementById('orderTypeFilter').value;
+                const billFilter = document.getElementById('billFilter').value;
+                const searchQuery = document.getElementById('searchQuery').value;
+                const dateFrom = document.getElementById('dateFrom').value;
+                const dateTo = document.getElementById('dateTo').value;
+                
+                params.append('status', status || 'dispatched,delivered,cancelled');
+                if (orderType) params.append('orderType', orderType);
+                if (billFilter) params.append('billFilter', billFilter);
+                if (searchQuery) params.append('search', searchQuery);
+                if (dateFrom) params.append('dateFrom', dateFrom);
+                if (dateTo) params.append('dateTo', dateTo);
+
+                window.location.href = `/api/account/orders/export?${params}`;
+            } catch (error) {
+                alert('Export failed. Please try again.');
+            }
+        }
+
+        // Enter key for search
+        document.getElementById('searchQuery').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                loadOrders(1);
+            }
+        });
+        // Print/Download Invoice
+        function printInvoice(orderId) {
+            // Open invoice in new tab
+            window.open(`/api/account/orders/${orderId}/invoice`, '_blank');
+        }
+    </script>
+</body>
+</html>

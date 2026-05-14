@@ -1,0 +1,278 @@
+<!-- views/dashboard/orders/index.ejs -->
+<%- include('../../partials/header', { title: 'Order Management Dashboard' }) %>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mt-4">Order Management Dashboard</h1>
+        <div class="btn-group">
+            <a href="/dashboard/order_importer" class="btn btn-success active">Dashboard</a>
+            <a href="/dashboard/order_importer/product-orders" class="btn btn-primary">Product Orders</a>
+            <a href="/dashboard/order_importer/raw-material-orders" class="btn btn-primary">Raw Material Orders</a>
+        </div>
+    </div>
+
+    <!-- Dashboard Cards -->
+    <div class="row">
+        <!-- Product Orders Card -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Product Orders</h5>
+                            <h2 class="card-text"><%= productOrderCount %></h2>
+                        </div>
+                        <i class="fas fa-box fa-2x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="/dashboard/order_importer/product-orders">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Raw Material Orders Card -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Raw Material Orders</h5>
+                            <h2 class="card-text"><%= rawMaterialOrderCount %></h2>
+                        </div>
+                        <i class="fas fa-tools fa-2x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="/dashboard/order_importer/raw-material-orders">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Product Orders Card -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Pending Product Orders</h5>
+                            <h2 class="card-text"><%= pendingProductOrders %></h2>
+                        </div>
+                        <i class="fas fa-clipboard-list fa-2x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="/dashboard/order_importer/product-orders?status=pending">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Raw Material Orders Card -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-danger text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Pending Material Orders</h5>
+                            <h2 class="card-text"><%= pendingRawMaterialOrders %></h2>
+                        </div>
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="/dashboard/order_importer/raw-material-orders?status=pending">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs for Orders -->
+    <ul class="nav nav-tabs" id="orderTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="product-orders-tab" data-bs-toggle="tab" data-bs-target="#product-orders" type="button" role="tab" aria-controls="product-orders" aria-selected="true">
+                Product Orders
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="raw-material-orders-tab" data-bs-toggle="tab" data-bs-target="#raw-material-orders" type="button" role="tab" aria-controls="raw-material-orders" aria-selected="false">
+                Raw Material Orders
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="orderTabsContent">
+        <!-- Product Orders Tab -->
+        <div class="tab-pane fade show active" id="product-orders" role="tabpanel" aria-labelledby="product-orders-tab">
+            <div class="card mb-4 mt-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-table me-1"></i>
+                        Recent Product Orders
+                    </div>
+                    <!-- <a href="/dashboard/order_importer/product-orders?action=create" class="btn btn-sm btn-success">New Product Order</a> -->
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Order Number</th>
+                                    <th>Items</th>
+                                    <th>Status</th>
+                                    <th>Created By</th>
+                                    <th>Order Date</th>
+                                    <!-- <th>Total Cost</th> -->
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (recentProductOrders.length > 0) { %>
+                                    <% recentProductOrders.forEach(order => { %>
+                                        <tr>
+                                            <td><%= order.orderNumber %></td>
+                                            <td>
+                                                <% order.items.forEach(item => { %>
+                                                    <%= item.quantity %> x 
+                                                    <% if (item.product) { %>
+                                                        <%= item.product.name %>
+                                                    <% } else { %>
+                                                        [Product Deleted]
+                                                    <% } %>
+                                                    <br>
+                                                <% }) %>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-<%= 
+                                                    order.status === 'delivered' ? 'success' : 
+                                                    order.status === 'shipped' ? 'info' : 
+                                                    order.status === 'ordered' ? 'primary' : 
+                                                    order.status === 'pending' ? 'warning' : 
+                                                    'danger' %>">
+                                                    <%= order.status %>
+                                                </span>
+                                            </td>
+                                            <td><%= order.createdBy.name %></td>
+                                            <td><%= new Date(order.orderDate).toLocaleDateString() %></td>
+                                            <!-- <td>$<%= order.totalCost.toFixed(2) %></td> -->
+                                            <td>
+                                                <a href="/dashboard/order_importer/product-orders/<%= order._id %>" class="btn btn-sm btn-info">View</a>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="7" class="text-center">No product orders found</td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Raw Material Orders Tab -->
+        <div class="tab-pane fade" id="raw-material-orders" role="tabpanel" aria-labelledby="raw-material-orders-tab">
+            <div class="card mb-4 mt-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-table me-1"></i>
+                        Recent Raw Material Orders
+                    </div>
+                    <!-- <a href="/dashboard/order_importer/raw-material-orders?action=create" class="btn btn-sm btn-success">New Material Order</a> -->
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Order Number</th>
+                                    <th>Items</th>
+                                    <th>Status</th>
+                                    <th>Created By</th>
+                                    <th>Order Date</th>
+                                    <!-- <th>Total Cost</th> -->
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (recentRawMaterialOrders.length > 0) { %>
+                                    <% recentRawMaterialOrders.forEach(order => { %>
+                                        <tr>
+                                            <td><%= order.orderNumber %></td>
+                                            <td>
+                                                <% order.items.forEach(item => { %>
+                                                    <%= item.quantity %> x 
+                                                    <% if (item.rawMaterial) { %>
+                                                        <%= item.rawMaterial.name %>
+                                                    <% } else { %>
+                                                        [Material Deleted]
+                                                    <% } %>
+                                                    <br>
+                                                <% }) %>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-<%= 
+                                                    order.status === 'delivered' ? 'success' : 
+                                                    order.status === 'shipped' ? 'info' : 
+                                                    order.status === 'ordered' ? 'primary' : 
+                                                    order.status === 'pending' ? 'warning' : 
+                                                    'danger' %>">
+                                                    <%= order.status %>
+                                                </span>
+                                            </td>
+                                            <td><%= order.createdBy.name %></td>
+                                            <td><%= new Date(order.orderDate).toLocaleDateString() %></td>
+                                            <!-- <td>$<%= order.totalCost.toFixed(2) %></td> -->
+                                            <td>
+                                                <a href="/dashboard/order_importer/raw-material-orders/<%= order._id %>" class="btn btn-sm btn-info">View</a>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="7" class="text-center">No raw material orders found</td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Activate Bootstrap tabs and handle tab state persistence
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the tab parameter from URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeTab = urlParams.get('tab');
+    
+    if (activeTab) {
+        const tabTrigger = document.querySelector(`[data-bs-target="#${activeTab}"]`);
+        if (tabTrigger) {
+            new bootstrap.Tab(tabTrigger).show();
+        }
+    }
+    
+    // Update URL when tab changes without reloading page
+    const tabEls = document.querySelectorAll('button[data-bs-toggle="tab"]');
+    tabEls.forEach(tabEl => {
+        tabEl.addEventListener('shown.bs.tab', function(event) {
+            const target = event.target.getAttribute('data-bs-target').substring(1);
+            const url = new URL(window.location);
+            url.searchParams.set('tab', target);
+            window.history.replaceState({}, '', url);
+        });
+    });
+});
+</script>
+
+<%- include('../../partials/footer') %>

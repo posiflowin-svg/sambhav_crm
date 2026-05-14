@@ -1,0 +1,795 @@
+<!-- views/admin/users.ejs -->
+<%- include('../partials/header') %>
+
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+<style>
+  :root {
+    --primary: #4361ee;
+    --primary-light: #3a86ff;
+    --secondary: #3f37c9;
+    --success: #4cc9f0;
+    --danger: #f72585;
+    --warning: #f8961e;
+    --info: #4895ef;
+    --dark: #212529;
+    --light: #f8f9fa;
+    --gray: #6c757d;
+    --white: #ffffff;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+    --card-shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  body {
+    background-color: #f5f7fb;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    color: #4a5568;
+  }
+
+  .tab-nav {
+    display: flex;
+    gap: 8px;
+    background-color: var(--white);
+    padding: 12px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  .tab-nav a {
+    text-decoration: none;
+    color: var(--gray);
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+
+  .tab-nav a.active,
+  .tab-nav a:hover {
+    background-color: var(--primary);
+    color: var(--white);
+  }
+
+  .admin-content {
+    padding: 24px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .page-header h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--dark);
+    margin: 0;
+  }
+
+  /* Search Container */
+  .search-container {
+    margin-bottom: 24px;
+  }
+
+  .search-card {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    padding: 20px;
+  }
+
+  .search-form {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .search-form .form-control {
+    flex: 1;
+  }
+
+  /* User Grid */
+  .user-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+
+  .user-card {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+    border: 1px solid #e2e8f0;
+  }
+
+  .user-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--card-shadow-hover);
+  }
+
+  .card-body {
+    padding: 20px;
+  }
+
+  .user-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, var(--primary), var(--primary-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 16px;
+  }
+
+  .user-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 16px;
+  }
+
+  .user-detail {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 14px;
+  }
+
+  .user-detail i {
+    color: var(--gray);
+    width: 16px;
+  }
+
+  .user-status {
+    font-weight: 500;
+  }
+
+  .status-active {
+    color: #10b981;
+  }
+
+  .status-inactive {
+    color: #ef4444;
+  }
+
+  .user-actions {
+    display: flex;
+    gap: 8px;
+    padding: 16px 20px;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+  }
+
+  .user-actions .btn {
+    flex: 1;
+    font-size: 13px;
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 60px 40px;
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+  }
+
+  .empty-state i {
+    font-size: 64px;
+    color: #cbd5e0;
+    margin-bottom: 20px;
+  }
+
+  .empty-state h3 {
+    color: var(--dark);
+    margin-bottom: 12px;
+  }
+
+  .empty-state p {
+    color: var(--gray);
+    margin-bottom: 0;
+  }
+
+  /* Modal Styles */
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    overflow-y: auto;
+  }
+
+  .modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-content {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 24px 0;
+    margin-bottom: 0;
+  }
+
+  .modal-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--dark);
+    margin: 0;
+  }
+
+  .btn-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--gray);
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-close:hover {
+    color: var(--dark);
+  }
+
+  .modal-body {
+    padding: 24px;
+  }
+
+  .modal-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 0 24px 24px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--dark);
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+
+  .form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+  }
+
+  /* Role Badges */
+  .role-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+
+  .role-admin {
+    background: #6366f1;
+    color: white;
+  }
+
+  .role-sales {
+    background: #10b981;
+    color: white;
+  }
+
+  .role-dispatcher {
+    background: #f59e0b;
+    color: white;
+  }
+
+  /* Alert Messages */
+  .alert {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+
+  .alert-success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+  }
+
+  .alert-error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
+
+  @media (max-width: 768px) {
+    .user-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .search-form {
+      flex-direction: column;
+    }
+    
+    .search-form .btn {
+      width: 100%;
+    }
+    
+    .page-header {
+      flex-direction: column;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    
+    .modal-content {
+      width: 95%;
+      margin: 20px;
+    }
+  }
+</style>
+
+<div class="tab-nav">
+  <!-- <a href="/admin/dashboard">
+    <i class="bi bi-speedometer2"></i> Dashboard
+  </a> -->
+  <a href="/admin/reports">
+    <i class="bi bi-speedometer2"></i> Dashboard
+  </a>
+  <a href="/admin/users" class="active">
+    <i class="bi bi-people-fill"></i> Users
+  </a>
+  <a href="/admin/orders">
+    <i class="bi bi-cart-fill"></i> Orders
+  </a>
+  <a href="/customers">
+    <i class="bi bi-person-lines-fill"></i> Customers
+  </a>
+</div>
+
+<div class="admin-content">
+  <!-- Alert Messages -->
+  <!-- <% if (typeof success_msg !== 'undefined' && success_msg) { %>
+    <div class="alert alert-success">
+      <i class="bi bi-check-circle-fill"></i> <%= success_msg %>
+    </div>
+  <% } %>
+  
+  <% if (typeof error_msg !== 'undefined' && error_msg) { %>
+    <div class="alert alert-error">
+      <i class="bi bi-exclamation-circle-fill"></i> <%= error_msg %>
+    </div>
+  <% } %> -->
+
+  <div class="page-header">
+    <h2>User Management</h2>
+    <button class="btn btn-primary" onclick="openCreateModal()">
+      <i class="bi bi-plus"></i> Create User
+    </button>
+  </div>
+
+  <!-- Search Card -->
+  <div class="search-container">
+    <div class="card search-card">
+      <form id="searchForm" class="search-form">
+        <input 
+          type="text" 
+          id="searchQuery"
+          class="form-control"
+          placeholder="Search users by name, email or role..." 
+          value="<%= typeof searchQuery !== 'undefined' ? searchQuery : '' %>"
+        >
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-search"></i> Search
+        </button>
+        <% if (typeof searchQuery !== 'undefined' && searchQuery) { %>
+          <button type="button" class="btn btn-danger" onclick="clearSearch()">
+            <i class="bi bi-x"></i> Clear
+          </button>
+        <% } %>
+      </form>
+    </div>
+  </div>
+
+  <!-- User Grid -->
+  <div class="user-grid" id="usersGrid">
+    <% if (users && users.length === 0) { %>
+      <div class="card empty-state">
+        <i class="bi bi-people"></i>
+        <% if (searchQuery) { %>
+          <h3>No users found</h3>
+          <p>No users match your search for "<%= searchQuery %>". Try a different search term.</p>
+        <% } else { %>
+          <h3>No users yet</h3>
+          <p>Get started by creating your first user account.</p>
+          <button class="btn btn-primary mt-3" onclick="openCreateModal()">
+            <i class="bi bi-plus"></i> Create User
+          </button>
+        <% } %>
+      </div>
+    <% } else { %>
+      <% users.forEach(function(user) { %>
+        <div class="card user-card">
+          <div class="card-body">
+            <div class="user-avatar">
+              <%= user.name.charAt(0).toUpperCase() %>
+            </div>
+            <h3 class="user-name"><%= user.name %></h3>
+            
+            <div class="user-detail">
+              <i class="bi bi-envelope-fill"></i>
+              <span><%= user.email %></span>
+            </div>
+            
+            <div class="user-detail">
+              <i class="bi bi-person-badge-fill"></i>
+              <span class="role-badge role-<%= user.role %>">
+                <%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %>
+              </span>
+            </div>
+
+            <div class="user-detail">
+              <i class="bi bi-calendar-event"></i>
+              <span>Joined <%= new Date(user.createdAt).toLocaleDateString() %></span>
+            </div>
+
+            <div class="user-detail">
+              <i class="bi bi-circle-fill"></i>
+              <span class="user-status <%= user.isActive ? 'status-active' : 'status-inactive' %>">
+                <%= user.isActive ? 'Active' : 'Inactive' %>
+              </span>
+            </div>
+          </div>
+          
+          <div class="user-actions">
+            <button class="btn btn-warning" onclick='openEditModal(<%- JSON.stringify(user) %>)'>
+              <i class="bi bi-pencil-square"></i> Edit
+            </button>
+            <button class="btn btn-danger" onclick='deleteUser("<%= user._id %>", "<%= user.name %>")'>
+              <i class="bi bi-trash-fill"></i> Delete
+            </button>
+          </div>
+        </div>
+      <% }); %>
+    <% } %>
+  </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal" id="createModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Create New User</h3>
+      <button class="btn-close" onclick="closeCreateModal()">&times;</button>
+    </div>
+    <form id="createForm">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" name="name" class="form-control" placeholder="John Doe" required />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" class="form-control" placeholder="user@example.com" required />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" name="password" class="form-control" placeholder="••••••••" required minlength="6" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Confirm Password</label>
+          <input type="password" name="confirmPassword" class="form-control" placeholder="••••••••" required />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <select name="role" class="form-control" required>
+            <option value="">Select Role</option>
+            <option value="admin">Admin</option>
+            <option value="sales">Sales</option>
+            <option value="dispatcher">Dispatcher</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select name="isActive" class="form-control" required>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create User</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal" id="editModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Edit User</h3>
+      <button class="btn-close" onclick="closeEditModal()">&times;</button>
+    </div>
+    <form id="editForm">
+      <div class="modal-body">
+        <input type="hidden" name="userId" id="editUserId">
+        
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" name="name" id="editName" class="form-control" placeholder="John Doe" required />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" id="editEmail" class="form-control" placeholder="user@example.com" required />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">New Password (leave blank to keep current)</label>
+          <input type="password" name="password" id="editPassword" class="form-control" placeholder="••••••••" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Confirm New Password</label>
+          <input type="password" name="confirmPassword" id="editConfirmPassword" class="form-control" placeholder="••••••••" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <select name="role" id="editRole" class="form-control" required>
+            <option value="">Select Role</option>
+            <option value="admin">Admin</option>
+            <option value="sales">Sales</option>
+            <option value="dispatcher">Dispatcher</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select name="isActive" id="editIsActive" class="form-control" required>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Update User</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Bootstrap Bundle JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  // Modal Functions
+  function openCreateModal() {
+    document.getElementById('createModal').classList.add('show');
+    document.getElementById('createForm').reset();
+  }
+
+  function closeCreateModal() {
+    document.getElementById('createModal').classList.remove('show');
+  }
+
+  function openEditModal(user) {
+    document.getElementById('editModal').classList.add('show');
+    document.getElementById('editUserId').value = user._id;
+    document.getElementById('editName').value = user.name;
+    document.getElementById('editEmail').value = user.email;
+    document.getElementById('editRole').value = user.role;
+    document.getElementById('editIsActive').value = user.isActive;
+  }
+
+  function closeEditModal() {
+    document.getElementById('editModal').classList.remove('show');
+  }
+
+  // Close modals when clicking outside
+  window.addEventListener('click', function(event) {
+    if (event.target.classList.contains('modal')) {
+      closeCreateModal();
+      closeEditModal();
+    }
+  });
+
+  // Search functionality
+  document.getElementById('searchForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const query = document.getElementById('searchQuery').value.trim();
+    if (query) {
+      window.location.href = `/admin/users?search=${encodeURIComponent(query)}`;
+    }
+  });
+
+  function clearSearch() {
+    window.location.href = '/admin/users';
+  }
+
+  // Create User Form
+  document.getElementById('createForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const userData = Object.fromEntries(formData);
+    
+    // Validate passwords match
+    if (userData.password !== userData.confirmPassword) {
+      alert('Passwords do not match!');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(userData)
+      });
+
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        alert('Error: ' + error.message);
+      }
+    } catch (error) {
+      console.error('Error creating user:', error);
+      alert('Error creating user');
+    }
+  });
+
+  // Edit User Form
+  document.getElementById('editForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const userData = Object.fromEntries(formData);
+    const userId = userData.userId;
+    
+    // Remove userId from data
+    delete userData.userId;
+    
+    // Validate passwords match if provided
+    if (userData.password && userData.password !== userData.confirmPassword) {
+      alert('Passwords do not match!');
+      return;
+    }
+    
+    // Remove confirmPassword from the data
+    delete userData.confirmPassword;
+    
+    // If password is empty, remove it completely
+    if (!userData.password || userData.password.trim() === '') {
+      delete userData.password;
+    }
+
+    // Convert isActive to boolean if it exists
+    if (userData.isActive !== undefined) {
+      userData.isActive = userData.isActive === 'on' || userData.isActive === 'true';
+    }
+
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(userData)
+      });
+
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        alert('Error: ' + error.message);
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+      alert('Error updating user');
+    }
+  });
+  
+  // Delete User
+  async function deleteUser(userId, userName) {
+    if (!confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        alert('Error: ' + error.message);
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      alert('Error deleting user');
+    }
+  }
+
+  // Load users data if using AJAX (optional)
+  async function loadUsers(searchQuery = '') {
+    try {
+      const url = searchQuery ? `/api/users?search=${encodeURIComponent(searchQuery)}` : '/api/users';
+      const response = await fetch(url);
+      const users = await response.json();
+      
+      // Update the users grid (you can implement this if using AJAX)
+      updateUsersGrid(users);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
+  }
+
+  function updateUsersGrid(users) {
+    const grid = document.getElementById('usersGrid');
+    // Implement AJAX grid update if needed
+  }
+</script>
+
+<%- include('../partials/footer') %>

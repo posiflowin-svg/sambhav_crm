@@ -1,0 +1,212 @@
+<!-- views/dashboard/stockManager/productionOrders/edit.ejs -->
+<%- include('../../../partials/header', { title: 'Edit Production Order - ' + productionOrder.poNumber }) %>
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mt-4">Edit Production Order: <%= productionOrder.poNumber %></h1>
+        <a href="/dashboard/stock_manager/production-orders" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <!-- Error Messages -->
+    <% if (errors && errors.length > 0) { %>
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                <% errors.forEach(error => { %>
+                    <li><%= error %></li>
+                <% }) %>
+            </ul>
+        </div>
+    <% } %>
+
+    <!-- Success Messages -->
+    <% if (success_msg && success_msg.length > 0) { %>
+        <div class="alert alert-success">
+            <%= success_msg %>
+        </div>
+    <% } %>
+
+    <!-- Edit Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-edit me-1"></i>
+            Production Order Details
+        </div>
+        <div class="card-body">
+            <form method="POST" action="/dashboard/stock_manager/production-orders/<%= productionOrder._id %>">
+                <input type="hidden" name="_method" value="PUT">
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">PO Number</label>
+                            <input type="text" class="form-control" value="<%= productionOrder.poNumber %>" disabled>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Product</label>
+                            <input type="text" class="form-control" value="<%= productionOrder.productName %>" disabled>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="targetQuantity" class="form-label">Target Quantity *</label>
+                            <input type="number" class="form-control" id="targetQuantity" name="targetQuantity" 
+                                   value="<%= productionOrder.targetQuantity %>" min="1" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status" 
+                                <%= (productionOrder.status === 'completed' || productionOrder.status === 'cancelled') ? 'disabled' : '' %>>
+                                <option value="draft" <%= productionOrder.status === 'draft' ? 'selected' : '' %>>Draft</option>
+                                <option value="pending" <%= productionOrder.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                                <option value="approved" <%= productionOrder.status === 'approved' ? 'selected' : '' %>>Approved</option>
+                                <option value="in_progress" <%= productionOrder.status === 'in_progress' ? 'selected' : '' %>>In Progress</option>
+                                <% if (productionOrder.status === 'completed' || productionOrder.status === 'cancelled') { %>
+                                    <option value="<%= productionOrder.status %>" selected>
+                                        <%= productionOrder.status.charAt(0).toUpperCase() + productionOrder.status.slice(1).replace('_', ' ') %>
+                                    </option>
+                                <% } %>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="expectedCompletionDate" class="form-label">Expected Completion Date</label>
+                            <input type="datetime-local" class="form-control" id="expectedCompletionDate" 
+                                   name="expectedCompletionDate" 
+                                   value="<%= productionOrder.expectedCompletionDate ? new Date(productionOrder.expectedCompletionDate).toISOString().slice(0, 16) : '' %>">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="assignedTo" class="form-label">Assign To</label>
+                            <select class="form-select" id="assignedTo" name="assignedTo">
+                                <option value="">Unassigned</option>
+                                <% users.forEach(user => { %>
+                                    <option value="<%= user._id %>" 
+                                        <%= (productionOrder.assignedTo && productionOrder.assignedTo._id.toString() === user._id.toString()) ? 'selected' : '' %>>
+                                        <%= user.name %> (<%= user.role %>)
+                                    </option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Notes</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3"><%= productionOrder.notes || '' %></textarea>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="/dashboard/stock_manager/production-orders" class="btn btn-secondary me-md-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Update Production Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Material Requirements -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-list-alt me-1"></i>
+            Material Requirements
+        </div>
+        <div class="card-body">
+            <% if (productionOrder.materialRequirements && productionOrder.materialRequirements.length > 0) { %>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Raw Material</th>
+                                <th>Required Quantity</th>
+                                <th>Available Quantity</th>
+                                <th>Missing Quantity</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% productionOrder.materialRequirements.forEach(req => { 
+                                const isSufficient = req.availableQuantity >= req.requiredQuantity;
+                            %>
+                                <tr>
+                                    <td><%= req.materialName %></td>
+                                    <td><%= req.requiredQuantity %></td>
+                                    <td><%= req.availableQuantity %></td>
+                                    <td><%= req.missingQuantity %></td>
+                                    <td>
+                                        <span class="badge bg-<%= isSufficient ? 'success' : 'danger' %>">
+                                            <%= isSufficient ? 'Sufficient' : 'Insufficient' %>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <% if (productionOrder.status === 'draft' || productionOrder.status === 'pending') { %>
+                    <div class="d-grid mt-3">
+                        <form method="POST" action="/dashboard/stock_manager/production-orders/<%= productionOrder._id %>/recalculate">
+                            <button type="submit" class="btn btn-outline-primary">Recalculate Requirements</button>
+                        </form>
+                    </div>
+                <% } %>
+            <% } else { %>
+                <p class="text-muted">No material requirements available</p>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Status Actions -->
+    <% if (productionOrder.status === 'pending') { %>
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-cog me-1"></i>
+            Order Actions
+        </div>
+        <div class="card-body">
+            <div class="d-grid gap-2 d-md-flex">
+                <form method="POST" action="/dashboard/stock_manager/production-orders/<%= productionOrder._id %>/approve" class="me-2">
+                    <button type="submit" class="btn btn-success">Approve Order</button>
+                </form>
+                <form method="POST" action="/dashboard/stock_manager/production-orders/<%= productionOrder._id %>/cancel">
+                    <button type="submit" class="btn btn-danger">Cancel Order</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <% } %>
+    
+    <% if (productionOrder.status === 'approved') { %>
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-cog me-1"></i>
+            Order Actions
+        </div>
+        <div class="card-body">
+            <div class="d-grid gap-2 d-md-flex">
+                <form method="POST" action="/dashboard/stock_manager/production-orders/<%= productionOrder._id %>/start" class="me-2">
+                    <button type="submit" class="btn btn-success">Start Production</button>
+                </form>
+                <form method="POST" action="/dashboard/stock_manager/production-orders/<%= productionOrder._id %>/cancel">
+                    <button type="submit" class="btn btn-danger">Cancel Order</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <% } %>
+</div>
+
+<%- include('../../../partials/footer') %>

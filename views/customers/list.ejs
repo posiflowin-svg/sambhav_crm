@@ -1,0 +1,1016 @@
+<!-- views/customers/list.ejs -->
+<%- include('../partials/header') %>
+
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+<style>
+  :root {
+    --primary: #4361ee;
+    --primary-light: #3a86ff;
+    --secondary: #3f37c9;
+    --success: #4cc9f0;
+    --danger: #f72585;
+    --warning: #f8961e;
+    --info: #4895ef;
+    --dark: #212529;
+    --light: #f8f9fa;
+    --gray: #6c757d;
+    --white: #ffffff;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+    --card-shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  body {
+    background-color: #f5f7fb;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    color: #4a5568;
+  }
+
+  .tab-nav {
+    display: flex;
+    gap: 8px;
+    background-color: var(--white);
+    padding: 12px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  .tab-nav a {
+    text-decoration: none;
+    color: var(--gray);
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+
+  .tab-nav a.active,
+  .tab-nav a:hover {
+    background-color: var(--primary);
+    color: var(--white);
+  }
+
+  .admin-content {
+    padding: 24px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .page-header h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--dark);
+    margin: 0;
+  }
+
+  /* Search Container */
+  .search-container {
+    margin-bottom: 24px;
+  }
+
+  .search-card {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    padding: 20px;
+  }
+
+  .search-form {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .search-form .form-control {
+    flex: 1;
+  }
+
+  /* Customer Grid */
+  .customer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+  }
+
+  .customer-card {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+    border: 1px solid #e2e8f0;
+  }
+
+  .customer-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--card-shadow-hover);
+  }
+
+  .card-body {
+    padding: 20px;
+  }
+
+  .customer-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #10b981, #059669);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 16px;
+  }
+
+  .customer-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 16px;
+  }
+
+  .customer-detail {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 14px;
+  }
+
+  .customer-detail i {
+    color: var(--gray);
+    width: 16px;
+  }
+
+  .customer-status {
+    font-weight: 500;
+  }
+
+  .status-active {
+    color: #10b981;
+  }
+
+  .status-inactive {
+    color: #ef4444;
+  }
+
+  .customer-actions {
+    display: flex;
+    gap: 8px;
+    padding: 16px 20px;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+  }
+
+  .customer-actions .btn {
+    flex: 1;
+    font-size: 13px;
+  }
+
+  /* Address Section */
+  .address-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed #e2e8f0;
+  }
+
+  .address-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .address-text {
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--dark);
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 60px 40px;
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+  }
+
+  .empty-state i {
+    font-size: 64px;
+    color: #cbd5e0;
+    margin-bottom: 20px;
+  }
+
+  .empty-state h3 {
+    color: var(--dark);
+    margin-bottom: 12px;
+  }
+
+  .empty-state p {
+    color: var(--gray);
+    margin-bottom: 0;
+  }
+
+  /* Modal Styles */
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    overflow-y: auto;
+  }
+
+  .modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-content {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 24px 0;
+    margin-bottom: 0;
+  }
+
+  .modal-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--dark);
+    margin: 0;
+  }
+
+  .btn-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--gray);
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-close:hover {
+    color: var(--dark);
+  }
+
+  .modal-body {
+    padding: 24px;
+  }
+
+  .modal-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 0 24px 24px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--dark);
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+
+  .form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+  }
+
+  .form-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .form-check-input {
+    margin: 0;
+  }
+
+  .address-fields {
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 6px;
+    margin-top: 8px;
+  }
+
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e2e8f0;
+  }
+
+  /* Alert Styles */
+  .alert-container {
+    margin-bottom: 24px;
+  }
+
+  .alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    animation: slideInDown 0.3s ease-out;
+  }
+
+  .alert-success {
+    background-color: #d1fae5;
+    border-color: #a7f3d0;
+    color: #065f46;
+  }
+
+  .alert-danger {
+    background-color: #fee2e2;
+    border-color: #fecaca;
+    color: #991b1b;
+  }
+
+  .alert .btn-close {
+    padding: 0.75rem;
+    margin-left: auto;
+  }
+
+  @keyframes slideInDown {
+    from {
+      transform: translateY(-20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .customer-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .search-form {
+      flex-direction: column;
+    }
+    
+    .search-form .btn {
+      width: 100%;
+    }
+    
+    .page-header {
+      flex-direction: column;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    
+    .modal-content {
+      width: 95%;
+      margin: 20px;
+    }
+  }
+</style>
+
+<div class="tab-nav">
+  <a href="/admin/reports">
+    <i class="bi bi-speedometer2"></i> Dashboard
+  </a>
+  <a href="/admin/users">
+    <i class="bi bi-people-fill"></i> Users
+  </a>
+  <a href="/admin/orders">
+    <i class="bi bi-cart-fill"></i> Orders
+  </a>
+  <a href="/customers" class="active">
+    <i class="bi bi-person-lines-fill"></i> Customers
+  </a>
+</div>
+
+<div class="admin-content">
+  <div class="page-header">
+    <h2>Customer Management</h2>
+    <button class="btn btn-primary" onclick="openCreateModal()">
+      <i class="bi bi-plus"></i> Add Customer
+    </button>
+  </div>
+
+  <!-- Search Card -->
+  <div class="search-container">
+    <div class="card search-card">
+      <form id="searchForm" class="search-form">
+        <input 
+          type="text" 
+          id="searchQuery"
+          class="form-control"
+          placeholder="Search customers by name, mobile, GSTIN..." 
+          value="<%= typeof searchQuery !== 'undefined' ? searchQuery : '' %>"
+        >
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-search"></i> Search
+        </button>
+        <% if (typeof searchQuery !== 'undefined' && searchQuery) { %>
+          <button type="button" class="btn btn-danger" onclick="clearSearch()">
+            <i class="bi bi-x"></i> Clear
+          </button>
+        <% } %>
+      </form>
+    </div>
+  </div>
+
+  <!-- Customer Grid -->
+  <div class="customer-grid" id="customersGrid">
+    <% if (customers && customers.length === 0) { %>
+      <div class="card empty-state">
+        <i class="bi bi-people"></i>
+        <% if (searchQuery) { %>
+          <h3>No customers found</h3>
+          <p>No customers match your search for "<%= searchQuery %>". Try a different search term.</p>
+        <% } else { %>
+          <h3>No customers yet</h3>
+          <p>Get started by adding your first customer.</p>
+          <button class="btn btn-primary mt-3" onclick="openCreateModal()">
+            <i class="bi bi-plus"></i>
+          </button>
+        <% } %>
+      </div>
+    <% } else { %>
+      <% customers.forEach(function(customer) { %>
+        <div class="card customer-card">
+          <div class="card-body">
+            <div class="customer-avatar">
+              <%= customer.name.charAt(0).toUpperCase() %>
+            </div>
+            <h3 class="customer-name"><%= customer.name %></h3>
+            
+            <div class="customer-detail">
+              <i class="bi bi-telephone-fill"></i>
+              <span><%= customer.mobileNumber %></span>
+            </div>
+            
+            <% if (customer.gstin) { %>
+              <div class="customer-detail">
+                <i class="bi bi-building"></i>
+                <span>GSTIN: <%= customer.gstin %></span>
+              </div>
+            <% } %>
+
+            <div class="customer-detail">
+              <i class="bi bi-person-check-fill"></i>
+              <span>
+                <% if (customer.assignedSalesPerson && customer.assignedSalesPerson.name) { %>
+                  Sales: <%= customer.assignedSalesPerson.name %>
+                <% } else { %>
+                  Sales: Not assigned
+                <% } %>
+              </span>
+            </div>
+
+            <div class="customer-detail">
+              <i class="bi bi-calendar-event"></i>
+              <span>Added <%= new Date(customer.createdAt).toLocaleDateString() %></span>
+            </div>
+
+            <div class="customer-detail">
+              <i class="bi bi-circle-fill"></i>
+              <span class="customer-status <%= customer.isActive ? 'status-active' : 'status-inactive' %>">
+                <%= customer.isActive ? 'Active' : 'Inactive' %>
+              </span>
+            </div>
+
+            <!-- Address Section -->
+            <div class="address-section">
+              <div class="address-title">
+                <i class="bi bi-geo-alt"></i>
+                Billing Address
+              </div>
+              <div class="address-text">
+                <%= customer.billingAddress.street %>, <%= customer.billingAddress.city %>, 
+                <%= customer.billingAddress.state %> - <%= customer.billingAddress.pincode %>
+              </div>
+            </div>
+
+            <% if (customer.shippingAddress && customer.shippingAddress.street) { %>
+              <div class="address-section">
+                <div class="address-title">
+                  <i class="bi bi-truck"></i>
+                  Shipping Address
+                </div>
+                <div class="address-text">
+                  <%= customer.shippingAddress.street %>, <%= customer.shippingAddress.city %>, 
+                  <%= customer.shippingAddress.state %> - <%= customer.shippingAddress.pincode %>
+                </div>
+              </div>
+            <% } %>
+          </div>
+          
+          <div class="customer-actions">
+            <button class="btn btn-warning" onclick='openEditModal(<%- JSON.stringify(customer) %>)'>
+              <i class="bi bi-pencil-square"></i> Edit
+            </button>
+            <button class="btn btn-danger" onclick='deleteCustomer("<%= customer._id %>", "<%= customer.name %>")'>
+              <i class="bi bi-trash-fill"></i> Delete
+            </button>
+          </div>
+        </div>
+      <% }); %>
+    <% } %>
+  </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal" id="createModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Add New Customer</h3>
+      <button class="btn-close" onclick="closeCreateModal()">&times;</button>
+    </div>
+    <form id="createForm">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Customer Name *</label>
+          <input type="text" name="name" class="form-control" placeholder="Enter customer name" required />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Mobile Number *</label>
+          <input type="tel" name="mobileNumber" class="form-control" placeholder="10-digit mobile number" 
+                 pattern="[0-9]{10}" required />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">GSTIN</label>
+          <input type="text" name="gstin" class="form-control" placeholder="GSTIN number (optional)" />
+        </div>
+
+        <% if (user.role === 'admin') { %>
+          <div class="form-group">
+            <label class="form-label">Assign to Sales Person *</label>
+            <select name="assignedSalesPerson" class="form-control" required id="salesPersonSelect">
+              <option value="">Select Sales Person</option>
+              <!-- Options will be populated by JavaScript -->
+            </select>
+          </div>
+        <% } %>
+
+        <div class="section-title">Billing Address</div>
+        
+        <div class="form-group">
+          <label class="form-label">Street</label>
+          <input type="text" name="billingAddress[street]" class="form-control" placeholder="Street address" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input type="text" name="billingAddress[city]" class="form-control" placeholder="City" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">State</label>
+          <input type="text" name="billingAddress[state]" class="form-control" placeholder="State" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Pincode</label>
+          <input type="text" name="billingAddress[pincode]" class="form-control" placeholder="Pincode" />
+        </div>
+
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="sameAsBilling" onchange="toggleShippingAddress()">
+          <label class="form-check-label" for="sameAsBilling">
+            Shipping address same as billing
+          </label>
+        </div>
+
+        <div id="shippingAddressSection">
+          <div class="section-title">Shipping Address</div>
+          
+          <div class="form-group">
+            <label class="form-label">Street</label>
+            <input type="text" name="shippingAddress[street]" class="form-control" placeholder="Street address" />
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">City</label>
+            <input type="text" name="shippingAddress[city]" class="form-control" placeholder="City" />
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">State</label>
+            <input type="text" name="shippingAddress[state]" class="form-control" placeholder="State" />
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Pincode</label>
+            <input type="text" name="shippingAddress[pincode]" class="form-control" placeholder="Pincode" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select name="isActive" class="form-control" required>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Customer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal" id="editModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Edit Customer</h3>
+      <button class="btn-close" onclick="closeEditModal()">&times;</button>
+    </div>
+    <form id="editForm">
+      <div class="modal-body">
+        <input type="hidden" name="customerId" id="editCustomerId">
+        
+        <div class="form-group">
+          <label class="form-label">Customer Name *</label>
+          <input type="text" name="name" id="editName" class="form-control" placeholder="Enter customer name" required />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Mobile Number *</label>
+          <input type="tel" name="mobileNumber" id="editMobileNumber" class="form-control" 
+                 placeholder="10-digit mobile number" pattern="[0-9]{10}" required />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">GSTIN</label>
+          <input type="text" name="gstin" id="editGstin" class="form-control" placeholder="GSTIN number (optional)" />
+        </div>
+
+        <% if (user.role === 'admin') { %>
+          <div class="form-group">
+            <label class="form-label">Assign to Sales Person *</label>
+            <select name="assignedSalesPerson" id="editAssignedSalesPerson" class="form-control" required>
+              <option value="">Select Sales Person</option>
+              <!-- Options will be populated by JavaScript -->
+            </select>
+          </div>
+        <% } %>
+
+        <div class="section-title">Billing Address</div>
+        
+        <div class="form-group">
+          <label class="form-label">Street</label>
+          <input type="text" name="billingAddress[street]" id="editBillingStreet" class="form-control" placeholder="Street address" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input type="text" name="billingAddress[city]" id="editBillingCity" class="form-control" placeholder="City" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">State</label>
+          <input type="text" name="billingAddress[state]" id="editBillingState" class="form-control" placeholder="State" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Pincode</label>
+          <input type="text" name="billingAddress[pincode]" id="editBillingPincode" class="form-control" placeholder="Pincode" />
+        </div>
+
+        <div class="section-title">Shipping Address</div>
+        
+        <div class="form-group">
+          <label class="form-label">Street</label>
+          <input type="text" name="shippingAddress[street]" id="editShippingStreet" class="form-control" placeholder="Street address" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input type="text" name="shippingAddress[city]" id="editShippingCity" class="form-control" placeholder="City" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">State</label>
+          <input type="text" name="shippingAddress[state]" id="editShippingState" class="form-control" placeholder="State" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Pincode</label>
+          <input type="text" name="shippingAddress[pincode]" id="editShippingPincode" class="form-control" placeholder="Pincode" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select name="isActive" id="editIsActive" class="form-control" required>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Update Customer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Bootstrap Bundle JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  // Load sales persons for admin
+  async function loadSalesPersons() {
+    try {
+      const response = await fetch('/api/users?role=sales');
+      const salesPersons = await response.json();
+      
+      const createSelect = document.getElementById('salesPersonSelect');
+      const editSelect = document.getElementById('editAssignedSalesPerson');
+      
+      if (createSelect) {
+        createSelect.innerHTML = '<option value="">Select Sales Person</option>' +
+          salesPersons.map(user => 
+            `<option value="${user._id}">${user.name} (${user.email})</option>`
+          ).join('');
+      }
+      
+      if (editSelect) {
+        editSelect.innerHTML = '<option value="">Select Sales Person</option>' +
+          salesPersons.map(user => 
+            `<option value="${user._id}">${user.name} (${user.email})</option>`
+          ).join('');
+      }
+    } catch (error) {
+      console.error('Error loading sales persons:', error);
+    }
+  }
+
+  // Modal Functions
+  function openCreateModal() {
+    document.getElementById('createModal').classList.add('show');
+    document.getElementById('createForm').reset();
+    document.getElementById('shippingAddressSection').style.display = 'block';
+    <% if (user.role === 'admin') { %>
+      loadSalesPersons();
+    <% } %>
+  }
+
+  function closeCreateModal() {
+    document.getElementById('createModal').classList.remove('show');
+  }
+
+  function openEditModal(customer) {
+    document.getElementById('editModal').classList.add('show');
+    
+    // Populate form fields
+    document.getElementById('editCustomerId').value = customer._id;
+    document.getElementById('editName').value = customer.name;
+    document.getElementById('editMobileNumber').value = customer.mobileNumber;
+    document.getElementById('editGstin').value = customer.gstin || '';
+    document.getElementById('editIsActive').value = customer.isActive;
+    
+    // Populate billing address
+    document.getElementById('editBillingStreet').value = customer.billingAddress?.street || '';
+    document.getElementById('editBillingCity').value = customer.billingAddress?.city || '';
+    document.getElementById('editBillingState').value = customer.billingAddress?.state || '';
+    document.getElementById('editBillingPincode').value = customer.billingAddress?.pincode || '';
+    
+    // Populate shipping address
+    document.getElementById('editShippingStreet').value = customer.shippingAddress?.street || '';
+    document.getElementById('editShippingCity').value = customer.shippingAddress?.city || '';
+    document.getElementById('editShippingState').value = customer.shippingAddress?.state || '';
+    document.getElementById('editShippingPincode').value = customer.shippingAddress?.pincode || '';
+    
+    <% if (user.role === 'admin') { %>
+      loadSalesPersons().then(() => {
+        document.getElementById('editAssignedSalesPerson').value = customer.assignedSalesPerson?._id || customer.assignedSalesPerson;
+      });
+    <% } %>
+  }
+
+  function closeEditModal() {
+    document.getElementById('editModal').classList.remove('show');
+  }
+
+  // Toggle shipping address
+  function toggleShippingAddress() {
+    const sameAsBilling = document.getElementById('sameAsBilling').checked;
+    const shippingSection = document.getElementById('shippingAddressSection');
+    
+    if (sameAsBilling) {
+      shippingSection.style.display = 'none';
+      // Copy billing address to shipping address
+      const billingStreet = document.querySelector('[name="billingAddress[street]"]').value;
+      const billingCity = document.querySelector('[name="billingAddress[city]"]').value;
+      const billingState = document.querySelector('[name="billingAddress[state]"]').value;
+      const billingPincode = document.querySelector('[name="billingAddress[pincode]"]').value;
+      
+      document.querySelector('[name="shippingAddress[street]"]').value = billingStreet;
+      document.querySelector('[name="shippingAddress[city]"]').value = billingCity;
+      document.querySelector('[name="shippingAddress[state]"]').value = billingState;
+      document.querySelector('[name="shippingAddress[pincode]"]').value = billingPincode;
+    } else {
+      shippingSection.style.display = 'block';
+    }
+  }
+
+  // Close modals when clicking outside
+  window.addEventListener('click', function(event) {
+    if (event.target.classList.contains('modal')) {
+      closeCreateModal();
+      closeEditModal();
+    }
+  });
+
+  // Search functionality
+  document.getElementById('searchForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const query = document.getElementById('searchQuery').value.trim();
+    if (query) {
+      window.location.href = `/customers?search=${encodeURIComponent(query)}`;
+    }
+  });
+
+  function clearSearch() {
+    window.location.href = '/customers';
+  }
+
+  // Create Customer Form
+  document.getElementById('createForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    let customerData = {};
+    
+    // Convert FormData to object with nested structure
+    for (let [key, value] of formData.entries()) {
+      if (key.includes('[')) {
+        // Handle nested objects like billingAddress[street]
+        const [parent, child] = key.split('[').map(part => part.replace(']', ''));
+        if (!customerData[parent]) customerData[parent] = {};
+        customerData[parent][child] = value;
+      } else {
+        customerData[key] = value;
+      }
+    }
+
+    try {
+      const response = await fetch('/api/customers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(customerData)
+      });
+
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        alert('Error: ' + error.message);
+      }
+    } catch (error) {
+      console.error('Error creating customer:', error);
+      alert('Error creating customer');
+    }
+  });
+
+  // Edit Customer Form
+  document.getElementById('editForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    let customerData = {};
+    const customerId = formData.get('customerId');
+    
+    // Convert FormData to object with nested structure
+    for (let [key, value] of formData.entries()) {
+      if (key === 'customerId') continue; // Skip the ID field
+      
+      if (key.includes('[')) {
+        // Handle nested objects like billingAddress[street]
+        const [parent, child] = key.split('[').map(part => part.replace(']', ''));
+        if (!customerData[parent]) customerData[parent] = {};
+        customerData[parent][child] = value;
+      } else {
+        customerData[key] = value;
+      }
+    }
+
+    try {
+      const response = await fetch(`/api/customers/${customerId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(customerData)
+      });
+
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        alert('Error: ' + error.message);
+      }
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      alert('Error updating customer');
+    }
+  });
+
+  // Delete Customer
+  async function deleteCustomer(customerId, customerName) {
+    if (!confirm(`Are you sure you want to delete customer "${customerName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/customers/${customerId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        alert('Error: ' + error.message);
+      }
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      alert('Error deleting customer');
+    }
+  }
+
+  // Auto-hide alerts after 5 seconds
+  document.addEventListener('DOMContentLoaded', function() {
+    const alerts = document.querySelectorAll('.alert');
+    
+    alerts.forEach(alert => {
+      setTimeout(() => {
+        const bsAlert = new bootstrap.Alert(alert);
+        bsAlert.close();
+      }, 5000);
+    });
+  });
+</script>
+
+<%- include('../partials/footer') %>

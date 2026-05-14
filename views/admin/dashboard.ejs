@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #eef2ff;
+            --secondary: #6c757d;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #94a3b8;
+            --border: #e2e8f0;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --sidebar-width: 250px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f1f5f9;
+            color: var(--dark);
+            overflow-x: hidden;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary) 0%, #3a56d4 100%);
+            color: white;
+            padding: 1.5rem 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .sidebar-header {
+            padding: 0 1.5rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .sidebar-header h3 {
+            font-weight: 600;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 0.25rem;
+        }
+        
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .sidebar-menu a:hover, 
+        .sidebar-menu a.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left-color: white;
+        }
+        
+        .sidebar-menu a i {
+            font-size: 1.1rem;
+            width: 24px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .page-title h1 {
+            font-weight: 700;
+            font-size: 1.75rem;
+            color: var(--dark);
+            margin-bottom: 0.25rem;
+        }
+        
+        .page-title p {
+            color: var(--gray);
+            margin: 0;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .user-info {
+            text-align: right;
+        }
+        
+        .user-info .name {
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .user-info .role {
+            font-size: 0.875rem;
+            color: var(--gray);
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        
+        /* Period Tabs */
+        .period-tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            padding: 0.25rem;
+            box-shadow: var(--card-shadow);
+            width: fit-content;
+            margin-bottom: 1.5rem;
+        }
+        
+        .period-tab {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            color: var(--gray);
+        }
+        
+        .period-tab.active {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        /* Statistics Cards */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .stat-card h3 {
+            font-size: 0.875rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .stat-card .value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .trend {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        
+        .trend.up {
+            color: var(--success);
+        }
+        
+        .trend.down {
+            color: var(--danger);
+        }
+        
+        .comparison {
+            font-size: 0.75rem;
+            color: var(--gray);
+        }
+        
+        /* Charts Row */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin: 0;
+        }
+        
+        .chart-actions {
+            display: flex;
+            background: var(--primary-light);
+            border-radius: 8px;
+            padding: 0.25rem;
+        }
+        
+        .chart-actions button {
+            padding: 0.375rem 0.75rem;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .chart-actions button.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Recent Orders */
+        .recent-orders {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .orders-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .orders-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin: 0;
+        }
+        
+        /* Table Styles */
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+        
+        .table thead th {
+            background-color: var(--primary-light);
+            color: var(--dark);
+            font-weight: 600;
+            border: none;
+            padding: 0.875rem 1rem;
+            font-size: 0.875rem;
+        }
+        
+        .table tbody td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(67, 97, 238, 0.03);
+        }
+        
+        /* Badge Styles */
+        .badge {
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-pending {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+        
+        .status-approved {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+        
+        .status-dispatched {
+            background-color: rgba(139, 92, 246, 0.1);
+            color: #8b5cf6;
+        }
+        
+        .status-delivered {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+        
+        .status-cancelled {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+        
+        .type-regular {
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+        }
+        
+        .type-express {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+        
+        /* Mobile Responsiveness */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 70px;
+                overflow: hidden;
+            }
+            
+            .sidebar:hover {
+                width: var(--sidebar-width);
+            }
+            
+            .sidebar-header h3 span,
+            .sidebar-menu a span {
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+            
+            .sidebar:hover .sidebar-header h3 span,
+            .sidebar:hover .sidebar-menu a span {
+                opacity: 1;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+            }
+            
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .top-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .user-menu {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .period-tabs {
+                width: 100%;
+                overflow-x: auto;
+            }
+            
+            .table-responsive {
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3><i class="bi bi-speedometer2"></i> <span>Admin Panel</span></h3>
+        </div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="/admin/dashboard" class="active">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="/admin/users">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Users</span>
+                </a>
+            </li>
+            <li>
+                <a href="/admin/orders">
+                    <i class="bi bi-cart-fill"></i>
+                    <span>Orders</span>
+                </a>
+            </li>
+            <li>
+                <a href="/admin/reports">
+                    <i class="bi bi-graph-up"></i>
+                    <span>Reports</span>
+                </a>
+            </li>
+            <li>
+                <a href="/customers">
+                    <i class="bi bi-person-lines-fill"></i>
+                    <span>Customers</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="page-title">
+                <h1>Dashboard</h1>
+                <p>Welcome back, <%= user.name %>. Here's what's happening with your business today.</p>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="name"><%= user.name %></div>
+                    <div class="role">Administrator</div>
+                </div>
+                <div class="user-avatar">
+                    <%= user.name.charAt(0).toUpperCase() %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Period Tabs -->
+        <div class="period-tabs">
+            <div class="period-tab active" data-period="today">Today</div>
+            <div class="period-tab" data-period="week">This Week</div>
+            <div class="period-tab" data-period="month">This Month</div>
+            <div class="period-tab" data-period="year">This Year</div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <h3>Total Orders</h3>
+                <div class="value" id="totalOrders">0</div>
+                <div class="trend up">
+                    <i class="bi bi-arrow-up"></i>
+                    <span id="ordersTrend">0%</span>
+                </div>
+                <div class="comparison">vs previous period</div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Total Revenue</h3>
+                <div class="value">₹<span id="totalRevenue">0</span></div>
+                <div class="trend up">
+                    <i class="bi bi-arrow-up"></i>
+                    <span id="revenueTrend">0%</span>
+                </div>
+                <div class="comparison">vs previous period</div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Pending Orders</h3>
+                <div class="value" id="pendingOrders">0</div>
+                <div class="trend down">
+                    <i class="bi bi-arrow-down"></i>
+                    <span id="pendingTrend">0%</span>
+                </div>
+                <div class="comparison">needs attention</div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Active Customers</h3>
+                <div class="value" id="activeCustomers">0</div>
+                <div class="trend up">
+                    <i class="bi bi-arrow-up"></i>
+                    <span id="customersTrend">0%</span>
+                </div>
+                <div class="comparison">new customers this month</div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-row">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Orders Overview</h3>
+                    <div class="chart-actions">
+                        <button class="active" data-chart="orders">Orders</button>
+                        <button data-chart="revenue">Revenue</button>
+                    </div>
+                </div>
+                <canvas id="ordersChart" height="300"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Order Status Distribution</h3>
+                </div>
+                <canvas id="statusChart" height="300"></canvas>
+            </div>
+        </div>
+
+        <!-- Recent Orders -->
+        <div class="recent-orders">
+            <div class="orders-header">
+                <h3 class="orders-title">Recent Orders</h3>
+                <a href="/admin/orders" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Sales Person</th>
+                            <th>Amount</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentOrdersBody">
+                        <!-- Orders will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        let ordersChart, statusChart;
+        let currentPeriod = 'today';
+
+        // Load dashboard data
+        async function loadDashboardData(period = 'today') {
+            try {
+                const response = await fetch(`/api/admin/dashboard-stats?period=${period}`);
+                const data = await response.json();
+                
+                updateStatistics(data.statistics);
+                updateRecentOrders(data.recentOrders);
+                updateCharts(data.chartData);
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        // Update statistics cards
+        function updateStatistics(stats) {
+            document.getElementById('totalOrders').textContent = stats.totalOrders.toLocaleString();
+            document.getElementById('totalRevenue').textContent = stats.totalRevenue.toLocaleString();
+            document.getElementById('pendingOrders').textContent = stats.pendingOrders.toLocaleString();
+            document.getElementById('activeCustomers').textContent = stats.activeCustomers.toLocaleString();
+            
+            document.getElementById('ordersTrend').textContent = `${stats.ordersGrowth}%`;
+            document.getElementById('revenueTrend').textContent = `${stats.revenueGrowth}%`;
+            document.getElementById('pendingTrend').textContent = `${stats.pendingGrowth}%`;
+            document.getElementById('customersTrend').textContent = `${stats.customersGrowth}%`;
+        }
+
+        // Update recent orders table
+        function updateRecentOrders(orders) {
+            const tbody = document.getElementById('recentOrdersBody');
+            
+            if (orders.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">
+                            No recent orders found
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = orders.map(order => `
+                <tr>
+                    <td>
+                        <strong>#${order.orderId || order._id.slice(-6).toUpperCase()}</strong>
+                    </td>
+                    <td>${order.customer?.name || 'N/A'}</td>
+                    <td>${order.salesPerson?.name || 'N/A'}</td>
+                    <td>₹${order.totalAmount?.toLocaleString() || '0'}</td>
+                    <td>
+                        <span class="badge type-${order.orderType}">
+                            ${order.orderType?.toUpperCase() || 'N/A'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge status-${order.status}">
+                            ${order.status?.charAt(0).toUpperCase() + order.status?.slice(1) || 'Pending'}
+                        </span>
+                    </td>
+                    <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td>
+                        <a href="/orders/${order._id}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Initialize charts
+        function updateCharts(chartData) {
+            // Destroy existing charts
+            if (ordersChart) ordersChart.destroy();
+            if (statusChart) statusChart.destroy();
+
+            // Orders/Revenue Chart
+            const ordersCtx = document.getElementById('ordersChart').getContext('2d');
+            ordersChart = new Chart(ordersCtx, {
+                type: 'line',
+                data: {
+                    labels: chartData.monthlyLabels,
+                    datasets: [{
+                        label: 'Orders',
+                        data: chartData.monthlyOrders,
+                        borderColor: '#4361ee',
+                        backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Revenue',
+                        data: chartData.monthlyRevenue,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Status Distribution Chart
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            statusChart = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: chartData.statusLabels,
+                    datasets: [{
+                        data: chartData.statusData,
+                        backgroundColor: [
+                            '#f59e0b', // pending
+                            '#3b82f6', // approved
+                            '#8b5cf6', // dispatched
+                            '#10b981', // delivered
+                            '#ef4444'  // cancelled
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Event listeners for period tabs
+        document.querySelectorAll('.period-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                currentPeriod = this.dataset.period;
+                loadDashboardData(currentPeriod);
+            });
+        });
+
+        // Event listeners for chart type buttons
+        document.querySelectorAll('.chart-actions button').forEach(button => {
+            button.addEventListener('click', function() {
+                document.querySelectorAll('.chart-actions button').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                // Here you can implement chart type switching logic
+            });
+        });
+
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData(currentPeriod);
+            
+            // Refresh data every 2 minutes
+            setInterval(() => {
+                loadDashboardData(currentPeriod);
+            }, 120000);
+        });
+    </script>
+</body>
+</html>

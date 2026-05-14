@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - StockMaster</title>
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation (same as index.ejs) -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-boxes text-blue-600 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold text-gray-800">StockMaster</span>
+                    </div>
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <a href="/products" class="nav-link border-transparent text-gray-500 hover:border-gray-300">Products</a>
+                        <a href="/products/transactions" class="nav-link border-transparent text-gray-500 hover:border-gray-300">Transactions</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div class="bg-white shadow rounded-lg p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Add New Product</h2>
+                    <p class="text-gray-600 mt-1">Fill in the product details below</p>
+                </div>
+                <a href="/products" class="text-blue-600 hover:text-blue-800">
+                    <i class="fas fa-arrow-left mr-2"></i> Back to Products
+                </a>
+            </div>
+
+            <form id="add-product-form" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Item Code -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Item Code *
+                        </label>
+                        <input type="text" name="itemCode" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <!-- Item Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Item Name *
+                        </label>
+                        <input type="text" name="itemName" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <!-- Category -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Category *
+                        </label>
+                        <select name="category" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Select Category</option>
+                            <option value="Components">Components</option>
+                            <option value="Display">Display</option>
+                            <option value="TFT Display">TFT Display</option>
+                            <option value="POS">POS</option>
+                            <option value="Printer">Printer</option>
+                            <!--<option value="Accessories">Accessories</option> -->
+                        </select>
+                    </div>
+
+                    <!-- Location -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Location *
+                        </label>
+                        <input type="text" name="location" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <!-- Unit -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Unit *
+                        </label>
+                        <input type="text" name="unit" value="pcs" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <!-- Initial Stock -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Initial Stock
+                        </label>
+                        <input type="number" name="stockQuantity" value="0" min="0"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <!-- Minimum Stock -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Minimum Stock (Alert Level)
+                        </label>
+                        <input type="number" name="minimumStock" value="0" min="0"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <!-- Maximum Stock -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Maximum Stock (Optional)
+                        </label>
+                        <input type="number" name="maximumStock" min="0"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Description
+                    </label>
+                    <textarea name="description" rows="3"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"></textarea>
+                </div>
+
+                <!-- Notes -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Notes
+                    </label>
+                    <textarea name="notes" rows="2"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"></textarea>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex justify-end space-x-3 pt-4 border-t">
+                    <a href="/products" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </a>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Save Product
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('add-product-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Convert number fields
+            data.stockQuantity = parseInt(data.stockQuantity) || 0;
+            data.minimumStock = parseInt(data.minimumStock) || 0;
+            data.maximumStock = data.maximumStock ? parseInt(data.maximumStock) : null;
+            
+            try {
+                const response = await fetch('/products/api/products', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Product added successfully!');
+                    window.location.href = '/products';
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('Error adding product: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

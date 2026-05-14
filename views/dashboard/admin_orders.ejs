@@ -1,0 +1,920 @@
+<%- include('../partials/header') %>
+
+<div class="tab-nav">
+  <a href="/dashboard/admin">
+    <i class="bi bi-speedometer2"></i> Dashboard
+  </a>
+  <a href="/dashboard/admin/users">
+    <i class="bi bi-people-fill"></i> Users
+  </a>
+  <a href="/dashboard/admin/products">
+    <i class="bi bi-box-seam"></i> Products
+  </a>
+  <a href="/dashboard/admin/orders" class="active">
+    <i class="bi bi-cart-fill"></i> Orders
+  </a>
+  <a href="/dashboard/admin/products1">
+    <i class="bi bi-box-seam"></i> Inventory
+  </a>
+</div>
+
+<div class="admin-content">
+  <!-- Filters Section -->
+  <div class="card filters-card">
+    <form id="orderFilters" method="GET" action="/dashboard/admin/orders">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="timeRange">Time Range:</label>
+          <select id="timeRange" name="timeRange" class="form-control">
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
+
+        <div class="filter-group custom-date-range" style="display:none;">
+          <label for="fromDate">From:</label>
+          <input type="date" id="fromDate" name="fromDate" class="form-control">
+          
+          <label for="toDate">To:</label>
+          <input type="date" id="toDate" name="toDate" class="form-control">
+        </div>
+
+        <div class="filter-group">
+          <label for="orderType">Order Type:</label>
+          <select id="orderType" name="orderType" class="form-control">
+            <option value="">All Types</option>
+            <option value="cod">COD</option>
+            <option value="prepaid">Prepaid</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="status">Status:</label>
+          <select id="status" name="status" class="form-control">
+            <option value="">All Statuses</option>
+            <option value="created">Created</option>
+            <option value="processing">Processing</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="returned">Returned</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="companyStatus">Company Status:</label>
+          <select id="companyStatus" name="companyStatus" class="form-control">
+            <option value="">All Statuses</option>
+            <option value="created">Created</option>
+            <option value="accountant_review">Accountant Review</option>
+            <option value="accountant_approved">Accountant Approved</option>
+            <option value="dispatch_packed">Dispatch Packed</option>
+            <option value="dispatched">Dispatched</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="companyName">Company:</label>
+          <select id="companyName" name="companyName" class="form-control">
+            <option value="">All Companies</option>
+            <option value="POSIFLOW">POSIFLOW</option>
+            <option value="Shreyans">Shreyans</option>
+            <option value="SR GOLD">SR GOLD</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label for="salesPersonId">Sales Person:</label>
+        <select id="salesPersonId" name="salesPersonId" class="form-control">
+          <option value="">All Sales Persons</option>
+          <% salesPersons.forEach(salesPerson => { %>
+            <option value="<%= salesPerson._id %>" 
+              <%= selectedSalesPersonId === salesPerson._id.toString() ? 'selected' : '' %>>
+              <%= salesPerson.name %>
+            </option>
+          <% }); %>
+        </select>
+      </div>
+      
+      <div class="filter-actions">
+        <button type="submit" class="btn-primary">Apply Filters</button>
+        <button type="button" id="resetFilters" class="btn-secondary">Reset</button>
+        <button type="button" id="exportExcel" class="btn-success">Export to Excel</button>
+        <button type="button" id="exportitemwiseExcel" class="btn-success">Export ItemWise Report</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="card">
+    <% if (orders.length === 0) { %>
+      <p class="no-results">No orders found matching your criteria.</p>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Order ID/Ref</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Contact</th>
+              <th>Type</th>
+              <th>Total (₹)</th>
+              <th>Payment Status</th>
+              <th>Courier</th>
+              <th>Company Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% orders.forEach(order => { %>
+              <tr class="<%= order.isBillOnHold ? 'table-warning' : '' %>">
+                <td><%= order.orderReference || order._id.toString().slice(-6).toUpperCase() %></td>
+                <td><%= new Date(order.createdAt).toLocaleDateString() %></td>
+                <td><%= order.customerName %></td>
+                <td><%= order.customerContact %></td>
+                <td>
+                  <span class="badge <%= order.orderType === 'cod' ? 'badge-warning' : 'badge-success' %>">
+                    <%= order.orderType.toUpperCase() %>
+                  </span>
+                </td>
+                <td><%= order.total.toFixed(2) %></td>
+                <td>
+                  <span class="badge <%= order.paymentStatus === 'verified' ? 'badge-success' : 'badge-secondary' %>">
+                    <%= order.paymentStatus ? order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) : 'Pending' %>
+                  </span>
+                </td>
+                <td>
+                  <% if (order.shippingType) { %>
+                  <span class="badge 
+                    <% if (order.shippingType === 'Critica') { %> bg-danger <% } %>
+                    <% if (order.shippingType === 'Blue Dart') { %> bg-primary <% } %>
+                    <% if (order.shippingType === 'ShipRocket') { %> bg-success <% } %>
+                    <% if (order.shippingType === 'Other') { %> bg-secondary <% } %>
+                    <% if (order.shippingType === 'PORTER') { %> bg-warning text-dark <% } %>
+                  ">
+                    <%= order.shippingType %>
+                  </span>
+                  <% } else { %>
+                    <span class="text-muted">Not assigned</span>
+                  <% } %>
+                </td>
+                <td>
+                  <span class="badge badge-company-<%= order.companyStatus %>">
+                    <%= order.companyStatus.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') %>
+                  </span>
+                </td>
+                <td class="actions">
+                  <a href="/dashboard/admin/orders/<%= order._id %>/details" class="btn-view" title="View">
+                    <i class="bi bi-eye-fill"></i>
+                  </a>
+                  <!-- Edit and Delete buttons commented out -->
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+    <!-- Pagination -->
+    <% if (totalPages > 1) { %>
+      <div class="pagination-container">
+        <ul class="pagination-list">
+          <% if (currentPage > 1) { %>
+            <li><a href="?page=<%= currentPage - 1 %>">&laquo;</a></li>
+          <% } %>
+
+          <% for (let i = 1; i <= totalPages; i++) { %>
+            <% if (
+              i === 1 || i === totalPages || 
+              (i >= currentPage - 1 && i <= currentPage + 1)
+            ) { %>
+              <li>
+                <a href="?page=<%= i %>" class="<%= i === currentPage ? 'active' : '' %>"><%= i %></a>
+              </li>
+            <% } else if (
+              i === 2 && currentPage > 3 || 
+              i === totalPages - 1 && currentPage < totalPages - 2
+            ) { %>
+              <li><span class="ellipsis">...</span></li>
+            <% } %>
+          <% } %>
+
+          <% if (currentPage < totalPages) { %>
+            <li><a href="?page=<%= currentPage + 1 %>">&raquo;</a></li>
+          <% } %>
+        </ul>
+      </div>
+    <% } %>
+<br>
+    <% } %>
+  </div>
+</div>
+
+<script>
+  (function () {
+    // ---- cache elements ----
+    const form = document.getElementById('orderFilters');
+    const timeRangeEl = document.getElementById('timeRange');
+    const fromEl = document.getElementById('fromDate');
+    const toEl = document.getElementById('toDate');
+    const orderTypeEl = document.getElementById('orderType');
+    const statusEl = document.getElementById('status');
+    const companyStatusEl = document.getElementById('companyStatus');
+    const companyNameEl = document.getElementById('companyName');
+    const salesPersonEl = document.getElementById('salesPersonId');
+    const customBox = document.querySelector('.custom-date-range');
+
+    const resetBtn = document.getElementById('resetFilters');
+    const exportBtn = document.getElementById('exportExcel');
+    const exportItemwiseBtn = document.getElementById('exportitemwiseExcel');
+
+    // ---- helpers ----
+    function toggleCustomRange() {
+      const isCustom = timeRangeEl.value === 'custom';
+      customBox.style.display = isCustom ? 'block' : 'none';
+      if (!isCustom) {
+        // keep UI clean when not custom
+        fromEl.value = '';
+        toEl.value = '';
+      }
+    }
+
+    function setIf(el, val) { if (el && val != null) el.value = val; }
+
+    // Build a clean querystring from form values
+    // - Strips empty fields
+    // - Removes from/to dates when timeRange != custom
+    function buildQueryFromForm() {
+      const params = new URLSearchParams();
+
+      const timeRange = timeRangeEl.value || 'today';
+      params.set('timeRange', timeRange);
+
+      if (timeRange === 'custom') {
+        if (fromEl.value) params.set('fromDate', fromEl.value);
+        if (toEl.value) params.set('toDate', toEl.value);
+      }
+
+      if (orderTypeEl.value)     params.set('orderType', orderTypeEl.value);
+      if (statusEl.value)        params.set('status', statusEl.value);
+      if (companyStatusEl.value) params.set('companyStatus', companyStatusEl.value);
+      if (companyNameEl.value)   params.set('companyName', companyNameEl.value);
+      if (salesPersonEl && salesPersonEl.value) params.set('salesPersonId', salesPersonEl.value);
+
+      return params.toString();
+    }
+
+    // ---- events ----
+    // Show/hide custom date range based on selection
+    timeRangeEl.addEventListener('change', toggleCustomRange);
+
+    // Reset filters: go to orders page with default today (fast)
+    resetBtn.addEventListener('click', function () {
+      const url = new URL(window.location.origin + '/dashboard/admin/orders');
+      url.searchParams.set('timeRange', 'today');
+      window.location.href = url.toString();
+    });
+
+    // Export to Excel (order-level)
+    exportBtn.addEventListener('click', function () {
+      const qs = buildQueryFromForm();
+      window.location.href = `/dashboard/admin/orders/export${qs ? `?${qs}` : ''}`;
+    });
+
+    // Export Item-wise
+    exportItemwiseBtn.addEventListener('click', function () {
+      const qs = buildQueryFromForm();
+      window.location.href = `/dashboard/admin/orders/product-wise-export${qs ? `?${qs}` : ''}`;
+    });
+
+    // Validate on submit (only for custom)
+    form.addEventListener('submit', function (e) {
+      if (timeRangeEl.value === 'custom') {
+        if (!fromEl.value || !toEl.value) {
+          e.preventDefault();
+          alert('Please select both From and To for Custom Range.');
+          return;
+        }
+        if (new Date(fromEl.value) > new Date(toEl.value)) {
+          e.preventDefault();
+          alert('End date must be after start date.');
+          return;
+        }
+      } else {
+        // Ensure clean URL (no stray dates when not custom)
+        fromEl.disabled = true;
+        toEl.disabled = true;
+      }
+    });
+
+    // ---- initial state (from URL) ----
+    document.addEventListener('DOMContentLoaded', function () {
+      const urlParams = new URLSearchParams(window.location.search);
+
+      // Default to today if timeRange missing or invalid
+      const validRanges = new Set(['all', 'today', 'week', 'month', 'custom']);
+      let timeRange = urlParams.get('timeRange');
+      if (!validRanges.has(timeRange)) timeRange = 'today';
+
+      setIf(timeRangeEl, timeRange);
+      setIf(fromEl, urlParams.get('fromDate'));
+      setIf(toEl, urlParams.get('toDate'));
+      setIf(orderTypeEl, urlParams.get('orderType'));
+      setIf(statusEl, urlParams.get('status'));
+      setIf(companyStatusEl, urlParams.get('companyStatus'));
+      setIf(companyNameEl, urlParams.get('companyName'));
+      if (salesPersonEl) setIf(salesPersonEl, urlParams.get('salesPersonId'));
+
+      toggleCustomRange();
+    });
+  })();
+</script>
+
+<style>
+    :root {
+    --primary: #4361ee;
+    --primary-light: #e6f0fd;
+    --secondary: #3f37c9;
+    --success: #4cc9f0;
+    --danger: #f72585;
+    --warning: #f8961e;
+    --info: #4895ef;
+    --light: #f8f9fa;
+    --dark: #212529;
+    --gray: #6c757d;
+    --white: #ffffff;
+    --border-radius: 8px;
+    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+  }
+
+  .filter-group {
+    margin-right: 15px;
+    margin-bottom: 10px;
+  }
+
+  .filter-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  .tab-nav {
+    display: flex;
+    gap: 10px;
+    background-color: var(--white);
+    padding: 15px 30px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: var(--box-shadow);
+  }
+  .tab-nav a {
+    text-decoration: none;
+    color: var(--gray);
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    font-size: 14px;
+  }
+  .tab-nav a.active,
+  .tab-nav a:hover {
+    background-color: var(--primary);
+    color: var(--white);
+  }
+  
+  .admin-content {
+    padding: 30px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+  
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    animation: fadeIn 0.5s ease;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .page-header h2 {
+    color: var(--dark);
+    font-size: 24px;
+    margin: 0;
+  }
+  
+  .pagination-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    overflow-x: auto;
+  }
+
+  .pagination-list {
+    list-style: none;
+    display: flex;
+    gap: 6px;
+    padding: 0;
+    margin: 0;
+  }
+
+  .pagination-list li a,
+  .pagination-list li span {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #333;
+    background-color: #fff;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    min-width: 36px;
+    text-align: center;
+    display: inline-block;
+  }
+
+  .pagination-list li a:hover {
+    background-color: #f0f0f0;
+  }
+
+  .pagination-list li a.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+    font-weight: bold;
+  }
+
+  .ellipsis {
+    padding: 8px 12px;
+    color: #888;
+    pointer-events: none;
+    font-size: 16px;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: var(--border-radius);
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+  }
+  
+  .btn-primary {
+    background-color: var(--primary);
+    color: var(--white);
+  }
+  
+  .btn-primary:hover {
+    background-color: var(--secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(67, 97, 238, 0.2);
+  }
+  
+  .btn-danger {
+    background-color: var(--danger);
+    color: var(--white);
+  }
+  
+  .btn-danger:hover {
+    background-color: #d1146b;
+    transform: translateY(-2px);
+  }
+  
+  .btn-warning {
+    background-color: var(--warning);
+    color: var(--white);
+  }
+  
+  .btn-warning:hover {
+    background-color: #e08715;
+    transform: translateY(-2px);
+  }
+  
+  .card {
+    background: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    transition: var(--transition);
+    overflow: hidden;
+  }
+  
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .card-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+  
+  .card-body {
+    padding: 20px;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--dark);
+    font-size: 14px;
+  }
+  
+  .form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    transition: var(--transition);
+    background-color: var(--light);
+  }
+  
+  .form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    background-color: var(--white);
+  }
+  
+  .search-container {
+    margin-bottom: 30px;
+    animation: slideUp 0.4s ease;
+  }
+  
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .search-card {
+    padding: 20px;
+    background-color: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+  }
+  
+  .search-form {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .search-form .form-control {
+    flex: 1;
+  }
+  
+  .user-form-card {
+    margin-bottom: 30px;
+    animation: slideUp 0.5s ease;
+  }
+  
+  .user-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    animation: fadeIn 0.6s ease;
+  }
+  
+  .user-card {
+    position: relative;
+  }
+  
+  .user-card .card-body {
+    padding-bottom: 60px;
+  }
+  
+  .user-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-weight: bold;
+    font-size: 24px;
+    margin-bottom: 15px;
+  }
+  
+  .user-name {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 5px;
+    color: var(--dark);
+  }
+  
+  .user-detail {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: var(--gray);
+  }
+  
+  .user-detail i {
+    margin-right: 10px;
+    color: var(--primary);
+    width: 20px;
+    text-align: center;
+  }
+  
+  .user-status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .status-active {
+    background-color: rgba(76, 201, 240, 0.1);
+    color: var(--success);
+  }
+  
+  .status-inactive {
+    background-color: rgba(247, 37, 133, 0.1);
+    color: var(--danger);
+  }
+  
+  .user-actions {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 15px 20px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    gap: 10px;
+  }
+  
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    animation: fadeIn 0.5s ease;
+  }
+  
+  .empty-state i {
+    font-size: 60px;
+    color: var(--gray);
+    opacity: 0.3;
+    margin-bottom: 20px;
+  }
+  
+  .empty-state h3 {
+    color: var(--dark);
+    margin-bottom: 10px;
+  }
+  
+  .empty-state p {
+    color: var(--gray);
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  
+  /* Modal */
+  .modal {
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .modal.show {
+    opacity: 1;
+    display: flex;
+  }
+  
+  .modal-content {
+    background-color: var(--white);
+    padding: 30px;
+    border-radius: var(--border-radius);
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    position: relative;
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+  }
+  
+  .modal.show .modal-content {
+    transform: translateY(0);
+  }
+  
+  .modal-header {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .modal-title {
+    margin: 0;
+    font-size: 20px;
+    color: var(--dark);
+  }
+  
+  .btn-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--gray);
+    cursor: pointer;
+    transition: var(--transition);
+    padding: 0;
+    line-height: 1;
+  }
+  
+  .btn-close:hover {
+    color: var(--danger);
+    transform: rotate(90deg);
+  }
+  
+  .modal-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  
+  @media (max-width: 768px) {
+    .admin-content {
+      padding: 20px;
+    }
+    
+    .search-form {
+      flex-direction: column;
+    }
+    
+    .user-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .tab-nav {
+      overflow-x: auto;
+      padding: 15px;
+    }
+    
+    .tab-nav a {
+      white-space: nowrap;
+    }
+  }
+
+  .filters-card {
+    margin-bottom: 20px;
+    padding: 20px;
+  }
+  
+  .filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+  }
+  
+  .filter-group {
+    flex: 1;
+    min-width: 200px;
+  }
+  
+  .filter-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+  
+  .filter-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  
+  .custom-date-range {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+  }
+  
+  .badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+  }
+  
+  .badge-success {
+    background-color: #28a745;
+    color: white;
+  }
+  
+  .badge-status-created { background-color: #6c757d; color: white; }
+  .badge-status-processing { background-color: #17a2b8; color: white; }
+  .badge-status-shipped { background-color: #007bff; color: white; }
+  .badge-status-delivered { background-color: #28a745; color: white; }
+  .badge-status-cancelled { background-color: #dc3545; color: white; }
+  .badge-status-returned { background-color: #fd7e14; color: white; }
+  
+  .badge-company-created { background-color: #6c757d; color: white; }
+  .badge-company-accountant_review { background-color: #17a2b8; color: white; }
+  .badge-company-accountant_approved { background-color: #6610f2; color: white; }
+  .badge-company-dispatch_packed { background-color: #20c997; color: white; }
+  .badge-company-dispatched { background-color: #007bff; color: white; }
+  .badge-company-delivered { background-color: #28a745; color: white; }
+  .badge-company-cancelled { background-color: #dc3545; color: white; }
+  
+  .actions {
+    white-space: nowrap;
+  }
+  
+  .inline-form {
+    display: inline-block;
+    margin-left: 5px;
+  }
+  
+  .btn-view, .btn-edit, .btn-delete {
+    padding: 5px 8px;
+    border-radius: 4px;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .btn-view { background-color: #17a2b8; }
+  .btn-edit { background-color: #ffc107; }
+  .btn-delete { background-color: #dc3545; }
+  
+  .no-results {
+    text-align: center;
+    padding: 20px;
+    color: #6c757d;
+  }
+  
+  .pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    gap: 5px;
+  }
+  
+  .pagination a {
+    padding: 8px 16px;
+    text-decoration: none;
+    border: 1px solid #ddd;
+    color: #007bff;
+  }
+  
+  .pagination a.active {
+    background-color: #007bff;
+    color: white;
+    border: 1px solid #007bff;
+  }
+  
+  .pagination a:hover:not(.active) {
+    background-color: #ddd;
+  }
+</style>
+
+<%- include('../partials/footer') %>

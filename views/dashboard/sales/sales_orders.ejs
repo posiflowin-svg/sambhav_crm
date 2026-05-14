@@ -1,0 +1,54 @@
+<%- include('../partials/header') %>
+
+<div class="tab-nav">
+  <a href="/dashboard/sales">Home</a>
+  <a href="/dashboard/sales/orders" class="active">Orders</a>
+</div>
+
+<div class="admin-content">
+  <h2><%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %> Orders</h2>
+
+  <% if (user.role === 'sales') { %>
+    <a href="/dashboard/sales/orders/new" class="btn-create">+ Create Order</a>
+  <% } %>
+
+  <% if (orders.length === 0) { %>
+    <p>No orders found.</p>
+  <% } else { %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Contact</th>
+          <th>Type</th>
+          <th>Total</th>
+          <th>Status</th>
+          <% if (user.role === 'sales' || user.role === 'admin') { %>
+            <th>Actions</th>
+          <% } %>
+        </tr>
+      </thead>
+      <tbody>
+        <% orders.forEach(order => { %>
+          <tr>
+            <td><%= order.customerName %></td>
+            <td><%= order.customerContact %></td>
+            <td><%= order.orderType.toUpperCase() %></td>
+            <td>₹<%= order.total.toFixed(2) %></td>
+            <td><%= order.status %></td>
+            <% if (user.role === 'sales' || user.role === 'admin') { %>
+              <td>
+                <a href="/dashboard/<%= user.role %>/orders/<%= order._id %>/edit" class="btn-edit">Edit</a>
+                <form action="/dashboard/<%= user.role %>/orders/<%= order._id %>/delete" method="POST" style="display:inline;">
+                  <button type="submit" class="btn-delete">Delete</button>
+                </form>
+              </td>
+            <% } %>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

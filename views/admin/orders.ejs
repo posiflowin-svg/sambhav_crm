@@ -1,0 +1,1120 @@
+<!-- views/admin/orders.ejs -->
+<%- include('../partials/header') %>
+
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+<!-- Bootstrap Bundle JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<style>
+  :root {
+    --primary: #4361ee;
+    --primary-light: #3a86ff;
+    --secondary: #3f37c9;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --info: #06b6d4;
+    --dark: #1f2937;
+    --light: #f8fafc;
+    --gray: #6b7280;
+    --white: #ffffff;
+    --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --card-shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  body {
+    background-color: #f9fafb;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #374151;
+  }
+
+  .tab-nav {
+    display: flex;
+    gap: 8px;
+    background-color: var(--white);
+    padding: 12px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .tab-nav a {
+    text-decoration: none;
+    color: var(--gray);
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+
+  .tab-nav a.active,
+  .tab-nav a:hover {
+    background-color: var(--primary);
+    color: var(--white);
+  }
+
+  .admin-content {
+    padding: 24px;
+    max-width: 1800px;
+    margin: 0 auto;
+  }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .page-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--dark);
+    margin: 0;
+  }
+
+  .page-subtitle {
+    color: var(--gray);
+    margin: 4px 0 0 0;
+    font-size: 14px;
+  }
+
+  .stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--white);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    border-left: 4px solid var(--primary);
+  }
+
+  .stat-card.pending { border-left-color: var(--warning); }
+  .stat-card.approved { border-left-color: var(--info); }
+  .stat-card.dispatched { border-left-color: var(--primary); }
+  .stat-card.delivered { border-left-color: var(--success); }
+
+  .stat-card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .stat-card .value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 4px;
+  }
+
+  .filter-section {
+    background: var(--white);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 24px;
+  }
+
+  .filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    align-items: end;
+  }
+
+  .search-section {
+    background: var(--white);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 20px;
+  }
+
+  .search-form {
+    display: flex;
+    gap: 12px;
+    align-items: end;
+  }
+
+  .search-form .form-control {
+    flex: 1;
+  }
+
+  /* Status badges */
+  .badge {
+    font-size: 0.75em;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 20px;
+  }
+
+  .status-pending { background-color: #fef3c7; color: #92400e; }
+  .status-approved { background-color: #dbeafe; color: #1e40af; }
+  .status-dispatched { background-color: #e0e7ff; color: #3730a3; }
+  .status-delivered { background-color: #d1fae5; color: #065f46; }
+  .status-cancelled { background-color: #fee2e2; color: #991b1b; }
+
+  /* Order type badges */
+  .type-cod { background-color: #e7f3ff; color: #0d6efd; }
+  .type-prepaid { background-color: #e7f6ec; color: #198754; }
+  .type-credit { background-color: #fef7e6; color: #fd7e14; }
+
+  /* Table styles */
+  .table-container {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+  }
+
+  .table th {
+    background-color: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+    font-weight: 600;
+    color: var(--gray);
+    padding: 12px 16px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .table td {
+    padding: 12px 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 14px;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 6px;
+  }
+
+  .btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .overdue {
+    color: #ef4444;
+    font-weight: 600;
+  }
+
+  .export-buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 768px) {
+    .filter-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .search-form {
+      flex-direction: column;
+    }
+    
+    .action-buttons {
+      flex-direction: column;
+    }
+    
+    .export-buttons {
+      flex-direction: column;
+    }
+  }
+
+  .filter-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .filter-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .filter-content {
+    display: block;
+  }
+
+  .filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+  }
+
+  .search-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: end;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .overdue {
+    color: #dc3545;
+    font-weight: bold;
+  }
+
+  .badge.status-pending { background-color: #ffc107; color: #000; }
+  .badge.status-approved { background-color: #198754; color: #fff; }
+  .badge.status-dispatched { background-color: #0dcaf0; color: #000; }
+  .badge.status-delivered { background-color: #6f42c1; color: #fff; }
+  .badge.status-cancelled { background-color: #dc3545; color: #fff; }
+
+  .badge.type-cod { background-color: #17a2b8; color: #fff; }
+  .badge.type-prepaid { background-color: #20c997; color: #fff; }
+  .badge.type-credit { background-color: #fd7e14; color: #fff; }
+
+  .action-buttons {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .order-id {
+    font-family: 'Courier New', monospace;
+  }
+
+  .pagination-info {
+    font-size: 0.875rem;
+  }
+
+  @media (max-width: 768px) {
+    .filter-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .search-actions {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<div class="tab-nav">
+  <a href="/admin/reports">
+    <i class="bi bi-speedometer2"></i> Dashboard
+  </a>
+  <a href="/admin/users">
+    <i class="bi bi-people-fill"></i> Users
+  </a>
+  <a href="/admin/orders" class="active">
+    <i class="bi bi-cart-fill"></i> Orders
+  </a>
+  <a href="/customers">
+    <i class="bi bi-person-lines-fill"></i> Customers
+  </a>
+</div>
+
+<div class="admin-content">
+  <!-- Alert Messages -->
+  <div class="alert-container" id="alertContainer">
+    <% if (locals.success_msg || locals.error_msg) { %>
+      <% if (locals.success_msg) { %>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <i class="bi bi-check-circle-fill me-2"></i> 
+          <%= success_msg %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      <% } %>
+      
+      <% if (locals.error_msg) { %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="bi bi-exclamation-circle-fill me-2"></i> 
+          <%= error_msg %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      <% } %>
+    <% } %>
+  </div>
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Orders Management</h1>
+      <p class="page-subtitle">Manage and track all orders across the organization</p>
+    </div>
+    <div class="header-actions">
+      <div class="export-buttons">
+        <button class="btn btn-success" id="exportBtn">
+          <i class="bi bi-file-earmark-excel"></i> Export to Excel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="stats-container">
+    <div class="stat-card">
+      <h3>Total Orders</h3>
+      <div class="value" id="totalOrders">0</div>
+      <div class="text-muted">All orders</div>
+    </div>
+
+    <div class="stat-card pending">
+      <h3>Pending Approval</h3>
+      <div class="value" id="pendingOrders">0</div>
+      <div class="text-muted">Needs action</div>
+    </div>
+
+    <div class="stat-card approved">
+      <h3>Approved</h3>
+      <div class="value" id="approvedOrders">0</div>
+      <div class="text-muted">Ready for dispatch</div>
+    </div>
+
+    <div class="stat-card delivered">
+      <h3>Delivered</h3>
+      <div class="value" id="deliveredOrders">0</div>
+      <div class="text-muted">Completed orders</div>
+    </div>
+  </div>
+
+  <!-- Search Section -->
+  <div class="search-section">
+    <form id="searchForm" class="search-form">
+      <div class="flex-grow-1">
+        <label class="form-label">Search Orders</label>
+        <input 
+          type="text" 
+          id="searchQuery"
+          class="form-control"
+          placeholder="Search by customer name, order ID, invoice number, sales person, product..." 
+        >
+      </div>
+      <div class="search-actions">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-search"></i> Search
+        </button>
+        <button type="button" class="btn btn-outline-secondary" id="resetFilters">
+          <i class="bi bi-arrow-clockwise"></i> Reset
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Advanced Filters -->
+  <div class="filter-section">
+    <div class="filter-header">
+      <h5 class="mb-0">
+        <i class="bi bi-funnel me-2"></i>Advanced Filters
+      </h5>
+      <button class="btn btn-sm btn-outline-secondary" type="button" id="toggleFilters">
+        <i class="bi bi-chevron-down"></i> Toggle
+      </button>
+    </div>
+    
+    <div class="filter-content" id="filterContent">
+      <form id="filterForm" class="filter-grid">
+        <div class="filter-group">
+          <label class="form-label">Status</label>
+          <select name="status" class="form-select">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="dispatched">Dispatched</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label class="form-label">Order Type</label>
+          <select name="orderType" class="form-select">
+            <option value="">All Types</option>
+            <option value="cod">COD</option>
+            <option value="prepaid">Prepaid</option>
+            <option value="credit">Credit</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label class="form-label">Sales Person</label>
+          <select name="salesPerson" id="salesPersonSelect" class="form-select">
+            <option value="">All Sales Persons</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label class="form-label">Date Range</label>
+          <select name="dateRange" class="form-select" id="dateRangeSelect">
+            <option value="">Custom Range</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="this_week">This Week</option>
+            <option value="last_week">Last Week</option>
+            <option value="this_month">This Month</option>
+            <option value="last_month">Last Month</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label class="form-label">From Date</label>
+          <input type="date" name="dateFrom" class="form-control" id="dateFrom">
+        </div>
+        
+        <div class="filter-group">
+          <label class="form-label">To Date</label>
+          <input type="date" name="dateTo" class="form-control" id="dateTo">
+        </div>
+        
+        <div class="filter-group">
+          <label class="form-label">Amount Range</label>
+          <select name="amountRange" class="form-select">
+            <option value="">All Amounts</option>
+            <option value="0-1000">₹0 - ₹1,000</option>
+            <option value="1000-5000">₹1,000 - ₹5,000</option>
+            <option value="5000-10000">₹5,000 - ₹10,000</option>
+            <option value="10000-50000">₹10,000 - ₹50,000</option>
+            <option value="50000+">Above ₹50,000</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label class="form-label">Sort By</label>
+          <select name="sortBy" class="form-select">
+            <option value="createdAt">Order Date</option>
+            <option value="dueDate">Due Date</option>
+            <option value="totalAmount">Amount</option>
+            <option value="updatedAt">Last Updated</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label class="form-label">Sort Order</label>
+          <select name="sortOrder" class="form-select">
+            <option value="desc">Newest First</option>
+            <option value="asc">Oldest First</option>
+          </select>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="table-container">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover" id="ordersTable">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Sales Person</th>
+              <th>Invoice No</th>
+              <th>Amount</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Order Date</th>
+              <th>Due Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody">
+            <tr>
+              <td colspan="10" class="text-center py-4">
+                <div class="spinner-border spinner-border-sm" role="status"></div>
+                Loading orders...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Pagination -->
+      <div id="pagination" class="d-flex justify-content-between align-items-center mt-3">
+        <!-- Pagination will be loaded here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+class OrdersManager {
+  constructor() {
+    this.currentPage = 1;
+    this.ordersPerPage = 15;
+    this.currentFilters = {};
+    this.isLoading = false;
+    
+    this.init();
+  }
+
+  init() {
+    this.bindEvents();
+    this.loadSalesPersons();
+    this.loadOrders();
+    this.setDefaultDates();
+  }
+
+  bindEvents() {
+    // Search form
+    document.getElementById('searchForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.loadOrders(1);
+    });
+
+    // Reset filters
+    document.getElementById('resetFilters').addEventListener('click', () => this.resetFilters());
+
+    // Export button
+    document.getElementById('exportBtn').addEventListener('click', () => this.exportOrders());
+
+    // Toggle filters
+    document.getElementById('toggleFilters').addEventListener('click', () => this.toggleFilters());
+
+    // Filter change events
+    const filterElements = document.querySelectorAll('#filterForm select, #filterForm input');
+    filterElements.forEach(element => {
+      element.addEventListener('change', () => {
+        this.debouncedLoadOrders();
+      });
+    });
+
+    // Date range change
+    document.getElementById('dateRangeSelect').addEventListener('change', (e) => {
+      this.handleDateRangeChange(e.target.value);
+    });
+  }
+
+  debouncedLoadOrders() {
+    if (this.debounceTimer) clearTimeout(this.debounceTimer);
+    this.debounceTimer = setTimeout(() => this.loadOrders(1), 300);
+  }
+
+  setDefaultDates() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('dateTo').value = today;
+    
+    // Set default from date to 30 days ago
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    document.getElementById('dateFrom').value = thirtyDaysAgo.toISOString().split('T')[0];
+  }
+
+  async loadOrders(page = 1) {
+    if (this.isLoading) return;
+    
+    this.currentPage = page;
+    this.isLoading = true;
+    
+    try {
+      this.showLoading();
+      
+      const params = this.buildQueryParams();
+      params.append('page', page);
+      params.append('limit', this.ordersPerPage);
+
+      const response = await fetch(`/api/admin/orders?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      this.updateOrdersTable(data.orders || data.data || []);
+      this.updatePagination(data.total || data.totalOrders || 0, data.pages || data.totalPages || 1);
+      this.updateStats(data.stats);
+      
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      this.showError('Failed to load orders. Please try again.');
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  buildQueryParams() {
+    const params = new URLSearchParams();
+    const formData = new FormData(document.getElementById('filterForm'));
+    
+    // Add filter parameters
+    for (let [key, value] of formData.entries()) {
+      if (value) {
+        params.append(key, value);
+      }
+    }
+    
+    // Add search query
+    const searchQuery = document.getElementById('searchQuery').value.trim();
+    if (searchQuery) {
+      params.append('search', searchQuery);
+    }
+
+    return params;
+  }
+
+  updateOrdersTable(orders) {
+    const tbody = document.getElementById('ordersTableBody');
+    
+    if (!orders || orders.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="10" class="text-center py-5">
+            <div class="empty-state">
+              <i class="bi bi-inbox display-4 text-muted mb-3"></i>
+              <h4 class="text-muted">No orders found</h4>
+              <p class="text-muted">No orders match your current filters</p>
+              <button class="btn btn-primary mt-2" onclick="ordersManager.resetFilters()">
+                <i class="bi bi-arrow-clockwise"></i> Reset Filters
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = orders.map(order => `
+      <tr>
+        <td>
+          <div class="order-id">
+            <strong class="text-primary">#${this.escapeHtml(order.invoiceNo || order.orderId || order._id?.slice(-6).toUpperCase() || 'N/A')}</strong>
+            ${!order.piDocument?.original ? '<i class="bi bi-exclamation-triangle text-warning ms-1" title="PI Document Missing"></i>' : ''}
+          </div>
+        </td>
+        <td>
+          <div class="customer-info">
+            <strong>${this.escapeHtml(order.customer?.name || 'N/A')}</strong>
+            ${order.customer?.mobileNumber ? `
+              <br>
+              <small class="text-muted">${this.escapeHtml(order.customer.mobileNumber)}</small>
+            ` : ''}
+          </div>
+        </td>
+        <td>
+          <span class="sales-person">${this.escapeHtml(order.salesPerson?.name || 'N/A')}</span>
+        </td>
+        <td>${this.escapeHtml(order.invoiceNo || 'N/A')}</td>
+        <td>
+          <strong class="text-success">₹${(order.totalAmount || 0).toLocaleString()}</strong>
+        </td>
+        <td>
+          <span class="badge type-${order.orderType}">
+            ${(order.orderType || 'N/A').toUpperCase()}
+          </span>
+        </td>
+        <td>
+          <span class="badge status-${order.status}">
+            ${this.getStatusDisplay(order.status)}
+          </span>
+        </td>
+        <td>
+          <span class="order-date">${new Date(order.orderDate || order.createdAt).toLocaleDateString()}</span>
+        </td>
+        <td>
+          <span class="due-date ${this.isOverdue(order.dueDate) ? 'overdue' : ''}">
+            ${new Date(order.dueDate).toLocaleDateString()}
+            ${this.isOverdue(order.dueDate) ? '<i class="bi bi-exclamation-circle ms-1 text-danger"></i>' : ''}
+          </span>
+        </td>
+        <td>
+          <div class="action-buttons">
+            <a href="/admin/orders/${order._id || order.orderId}" class="btn btn-outline-primary btn-sm" title="View Details">
+              <i class="bi bi-eye"></i>
+            </a>
+            ${order.status === 'pending' ? `
+              <button class="btn btn-outline-success btn-sm" onclick="ordersManager.updateOrderStatus('${order._id || order.orderId}', 'approved')" title="Approve Order">
+                <i class="bi bi-check-lg"></i>
+              </button>
+            ` : ''}
+            <!-- New Passive Repeat Toggle Button -->
+            <button class="btn btn-sm ${order.isPassiveRepeat ? 'btn-warning' : 'btn-outline-secondary'}" 
+                    onclick="ordersManager.togglePassiveRepeat('${order._id || order.orderId}', ${order.isPassiveRepeat || false})"
+                    title="${order.isPassiveRepeat ? 'Remove Passive Repeat' : 'Mark as Passive Repeat'}">
+              <i class="bi ${order.isPassiveRepeat ? 'bi-arrow-repeat' : 'bi-arrow-repeat'}"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async togglePassiveRepeat(orderId, currentState) {
+    const action = currentState ? 'remove passive repeat from' : 'mark as passive repeat';
+    if (!confirm(`Are you sure you want to ${action} this order?`)) return;
+
+    try {
+      const response = await fetch(`/api/admin/orders/${orderId}/passive-repeat`, {
+        method: 'PATCH',
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        this.showAlert(`Order ${action}ed successfully!`, 'success');
+        this.loadOrders(this.currentPage);
+      } else {
+        throw new Error(result.error || 'Failed to update passive repeat status');
+      }
+    } catch (error) {
+      console.error('Update passive repeat error:', error);
+      this.showAlert(`Error: ${error.message}`, 'danger');
+    }
+  }
+
+  getStatusDisplay(status) {
+    const statusMap = {
+      'pending': 'Pending',
+      'approved': 'Approved',
+      'dispatched': 'Dispatched',
+      'delivered': 'Delivered',
+      'cancelled': 'Cancelled'
+    };
+    return statusMap[status] || 'Pending';
+  }
+
+  isOverdue(dueDate) {
+    if (!dueDate) return false;
+    const due = new Date(dueDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    due.setHours(0, 0, 0, 0);
+    return due < today;
+  }
+
+  updatePagination(total, totalPages) {
+    const pagination = document.getElementById('pagination');
+    
+    if (total === 0) {
+      pagination.innerHTML = '';
+      return;
+    }
+
+    const startItem = ((this.currentPage - 1) * this.ordersPerPage) + 1;
+    const endItem = Math.min(this.currentPage * this.ordersPerPage, total);
+
+    let paginationHTML = `
+      <div class="pagination-info">
+        <span class="text-muted">Showing ${startItem} to ${endItem} of ${total} orders</span>
+      </div>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+    `;
+
+    // Previous button
+    paginationHTML += `
+      <li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="ordersManager.loadOrders(${this.currentPage - 1}); return false;">
+          <i class="bi bi-chevron-left"></i>
+        </a>
+      </li>
+    `;
+
+    // Page numbers
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    // First page and ellipsis
+    if (startPage > 1) {
+      paginationHTML += `
+        <li class="page-item">
+          <a class="page-link" href="#" onclick="ordersManager.loadOrders(1); return false;">1</a>
+        </li>
+        ${startPage > 2 ? '<li class="page-item disabled"><span class="page-link">...</span></li>' : ''}
+      `;
+    }
+
+    // Page numbers
+    for (let i = startPage; i <= endPage; i++) {
+      paginationHTML += `
+        <li class="page-item ${i === this.currentPage ? 'active' : ''}">
+          <a class="page-link" href="#" onclick="ordersManager.loadOrders(${i}); return false;">${i}</a>
+        </li>
+      `;
+    }
+
+    // Last page and ellipsis
+    if (endPage < totalPages) {
+      paginationHTML += `
+        ${endPage < totalPages - 1 ? '<li class="page-item disabled"><span class="page-link">...</span></li>' : ''}
+        <li class="page-item">
+          <a class="page-link" href="#" onclick="ordersManager.loadOrders(${totalPages}); return false;">${totalPages}</a>
+        </li>
+      `;
+    }
+
+    // Next button
+    paginationHTML += `
+      <li class="page-item ${this.currentPage === totalPages ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="ordersManager.loadOrders(${this.currentPage + 1}); return false;">
+          <i class="bi bi-chevron-right"></i>
+        </a>
+      </li>
+    `;
+
+    paginationHTML += '</ul></nav>';
+    pagination.innerHTML = paginationHTML;
+  }
+
+  updateStats(stats) {
+    if (stats) {
+      document.getElementById('totalOrders').textContent = (stats.totalOrders || stats.total || 0).toLocaleString();
+      document.getElementById('pendingOrders').textContent = (stats.pendingOrders || stats.pending || 0).toLocaleString();
+      document.getElementById('approvedOrders').textContent = (stats.approvedOrders || stats.approved || 0).toLocaleString();
+      document.getElementById('deliveredOrders').textContent = (stats.deliveredOrders || stats.delivered || 0).toLocaleString();
+    }
+  }
+
+  async loadSalesPersons() {
+    try {
+      const response = await fetch('/api/admin/sales-persons');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const { salesPersons } = await response.json();  //  destructure the array
+      
+      const select = document.getElementById('salesPersonSelect');
+      select.innerHTML = '<option value="">All Sales Persons</option>' +
+        salesPersons.map(person => 
+          `<option value="${person._id}">${this.escapeHtml(person.name)}</option>`
+        ).join('');
+      
+    } catch (error) {
+      console.error('Error loading sales persons:', error);
+      this.showAlert('Warning: Could not load sales persons list', 'warning');
+    }
+  }
+
+  handleDateRangeChange(range) {
+    const dateFrom = document.getElementById('dateFrom');
+    const dateTo = document.getElementById('dateTo');
+    
+    const today = new Date();
+    let fromDate, toDate;
+
+    switch (range) {
+      case 'today':
+        fromDate = new Date(today);
+        toDate = new Date(today);
+        break;
+      case 'yesterday':
+        fromDate = new Date(today);
+        fromDate.setDate(today.getDate() - 1);
+        toDate = new Date(fromDate);
+        break;
+      case 'this_week':
+        fromDate = new Date(today);
+        fromDate.setDate(today.getDate() - today.getDay());
+        toDate = new Date(fromDate);
+        toDate.setDate(fromDate.getDate() + 6);
+        break;
+      case 'last_week':
+        fromDate = new Date(today);
+        fromDate.setDate(today.getDate() - today.getDay() - 7);
+        toDate = new Date(fromDate);
+        toDate.setDate(fromDate.getDate() + 6);
+        break;
+      case 'this_month':
+        fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        toDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        break;
+      case 'last_month':
+        fromDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        toDate = new Date(today.getFullYear(), today.getMonth(), 0);
+        break;
+      default:
+        return;
+    }
+
+    dateFrom.value = fromDate.toISOString().split('T')[0];
+    dateTo.value = toDate.toISOString().split('T')[0];
+    
+    this.loadOrders(1);
+  }
+
+  async updateOrderStatus(orderId, status) {
+    if (!confirm(`Are you sure you want to mark this order as ${status.toUpperCase()}?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status })
+      });
+
+      if (response.ok) {
+        this.showAlert(`Order status updated to ${status.toUpperCase()} successfully!`, 'success');
+        this.loadOrders(this.currentPage);
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || error.message || 'Failed to update status');
+      }
+    } catch (error) {
+      console.error('Status update error:', error);
+      this.showAlert(`Error updating order status: ${error.message}`, 'danger');
+    }
+  }
+
+  async exportOrders() {
+    const exportBtn = document.getElementById('exportBtn');
+    const originalText = exportBtn.innerHTML;
+    
+    try {
+      exportBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
+      exportBtn.disabled = true;
+
+      const params = this.buildQueryParams();
+      
+      const response = await fetch(`/api/admin/orders/export?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      const timestamp = new Date().toISOString().split('T')[0];
+      a.download = `orders_export_${timestamp}.xlsx`;
+      
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      this.showAlert('Export completed successfully!', 'success');
+      
+    } catch (error) {
+      console.error('Export error:', error);
+      this.showAlert(`Error exporting orders: ${error.message}`, 'danger');
+    } finally {
+      exportBtn.innerHTML = originalText;
+      exportBtn.disabled = false;
+    }
+  }
+
+  resetFilters() {
+    document.getElementById('searchQuery').value = '';
+    document.getElementById('filterForm').reset();
+    this.setDefaultDates();
+    this.loadOrders(1);
+    this.showAlert('Filters have been reset', 'info');
+  }
+
+  toggleFilters() {
+    const filterContent = document.getElementById('filterContent');
+    const toggleBtn = document.getElementById('toggleFilters');
+    
+    if (filterContent.style.display === 'none') {
+      filterContent.style.display = 'block';
+      toggleBtn.innerHTML = '<i class="bi bi-chevron-up"></i> Hide';
+    } else {
+      filterContent.style.display = 'none';
+      toggleBtn.innerHTML = '<i class="bi bi-chevron-down"></i> Show';
+    }
+  }
+
+  showLoading() {
+    document.getElementById('ordersTableBody').innerHTML = `
+      <tr>
+        <td colspan="10" class="text-center py-4">
+          <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+          Loading orders...
+        </td>
+      </tr>
+    `;
+  }
+
+  showError(message) {
+    document.getElementById('ordersTableBody').innerHTML = `
+      <tr>
+        <td colspan="10" class="text-center py-4 text-danger">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          ${message}
+        </td>
+      </tr>
+    `;
+  }
+
+  showAlert(message, type) {
+    const alertContainer = document.getElementById('alertContainer');
+    const alertId = 'alert-' + Date.now();
+    
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.innerHTML = `
+      <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : type === 'warning' ? 'bi-exclamation-triangle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    alertContainer.appendChild(alert);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      if (alert.parentNode) {
+        alert.remove();
+      }
+    }, 5000);
+  }
+
+  escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+}
+
+// Initialize orders manager when DOM is loaded
+let ordersManager;
+document.addEventListener('DOMContentLoaded', function() {
+  ordersManager = new OrdersManager();
+  
+  // Auto-hide existing alerts after 5 seconds
+  const alerts = document.querySelectorAll('.alert');
+  alerts.forEach(alert => {
+    setTimeout(() => {
+      if (alert.parentNode) {
+        const bsAlert = new bootstrap.Alert(alert);
+        bsAlert.close();
+      }
+    }, 5000);
+  });
+});
+</script>
+
+<%- include('../partials/footer') %>

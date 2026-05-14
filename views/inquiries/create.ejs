@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Inquiry Management</title>
+    
+    <!-- Tailwind CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 font-sans antialiased">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-plus-circle text-2xl"></i>
+                    <div>
+                        <h1 class="text-xl font-bold">Create New Inquiry</h1>
+                        <p class="text-xs text-blue-100">Add new customer inquiry</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="/inquiries" class="text-white/90 hover:text-white">
+                        <i class="fas fa-arrow-left mr-1"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <form id="createInquiryForm" onsubmit="submitForm(event)" class="p-6">
+                <!-- Company Selection -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-building mr-1 text-gray-400"></i> Company *
+                    </label>
+                    <select name="companyId" required class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Select Company</option>
+                        <% companies.forEach(company => { %>
+                            <option value="<%= company._id %>"><%= company.companyName %> - <%= company.phoneNumber %></option>
+                        <% }) %>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">
+                        <a href="/companies/create" class="text-blue-600 hover:underline">+ Add new company</a>
+                    </p>
+                </div>
+
+                <!-- Products Section -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-sm font-medium text-gray-700">
+                            <i class="fas fa-box mr-1 text-gray-400"></i> Products *
+                        </label>
+                        <button type="button" onclick="addProduct()" class="text-sm text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-plus mr-1"></i> Add Product
+                        </button>
+                    </div>
+                    
+                    <div id="productsContainer" class="space-y-3">
+                        <!-- Product rows will be added here -->
+                        <div class="product-row grid grid-cols-12 gap-3 items-end">
+                            <div class="col-span-5">
+                                <input type="text" name="products[0][productName]" placeholder="Product name" required
+                                       class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            </div>
+                            <div class="col-span-2">
+                                <input type="number" name="products[0][quantity]" placeholder="Qty" value="1" min="1" required
+                                       class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            </div>
+                            <div class="col-span-2">
+                                <input type="number" name="products[0][targetPrice]" placeholder="Target price" step="0.01"
+                                       class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            </div>
+                            <div class="col-span-2">
+                                <input type="number" name="products[0][chinaPrice]" placeholder="China price" step="0.01"
+                                       class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            </div>
+                            <div class="col-span-1 text-right">
+                                <button type="button" onclick="removeProduct(this)" class="text-red-500 hover:text-red-700">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assignment Section -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user-tie mr-1 text-gray-400"></i> Assign China Person
+                        </label>
+                        <select name="assignedChinaPerson" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Not Assigned</option>
+                            <% chinaUsers.forEach(user => { %>
+                                <option value="<%= user._id %>"><%= user.name %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user-headset mr-1 text-gray-400"></i> Assign Sales Person
+                        </label>
+                        <select name="assignedSalesPerson" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Not Assigned</option>
+                            <% salesUsers.forEach(user => { %>
+                                <option value="<%= user._id %>"><%= user.name %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Initial Note -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-sticky-note mr-1 text-gray-400"></i> Initial Note (Optional)
+                    </label>
+                    <textarea name="initialNote" rows="3" 
+                              class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="Add any initial notes about this inquiry..."></textarea>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="flex justify-end space-x-3 pt-4 border-t">
+                    <a href="/inquiries" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                        Cancel
+                    </a>
+                    <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center">
+                        <i class="fas fa-save mr-2"></i> Create Inquiry
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        let productCount = 1;
+
+        function addProduct() {
+            const container = document.getElementById('productsContainer');
+            const template = `
+                <div class="product-row grid grid-cols-12 gap-3 items-end">
+                    <div class="col-span-5">
+                        <input type="text" name="products[${productCount}][productName]" placeholder="Product name" required
+                               class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    </div>
+                    <div class="col-span-2">
+                        <input type="number" name="products[${productCount}][quantity]" placeholder="Qty" value="1" min="1" required
+                               class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    </div>
+                    <div class="col-span-2">
+                        <input type="number" name="products[${productCount}][targetPrice]" placeholder="Target price" step="0.01"
+                               class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    </div>
+                    <div class="col-span-2">
+                        <input type="number" name="products[${productCount}][chinaPrice]" placeholder="China price" step="0.01"
+                               class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    </div>
+                    <div class="col-span-1 text-right">
+                        <button type="button" onclick="removeProduct(this)" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', template);
+            productCount++;
+        }
+
+        function removeProduct(btn) {
+            if (document.querySelectorAll('.product-row').length > 1) {
+                btn.closest('.product-row').remove();
+            } else {
+                alert('At least one product is required');
+            }
+        }
+
+        async function submitForm(event) {
+            event.preventDefault();
+            
+            const form = document.getElementById('createInquiryForm');
+            const formData = new FormData(form);
+            
+            // Build products array
+            const products = [];
+            const productRows = document.querySelectorAll('.product-row');
+            
+            productRows.forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                const product = {
+                    productName: inputs[0].value,
+                    quantity: parseInt(inputs[1].value) || 1
+                };
+                
+                if (inputs[2].value) product.targetPrice = parseFloat(inputs[2].value);
+                if (inputs[3].value) product.chinaPrice = parseFloat(inputs[3].value);
+                
+                products.push(product);
+            });
+
+            const data = {
+                companyId: formData.get('companyId'),
+                products: products,
+                assignedChinaPerson: formData.get('assignedChinaPerson') || undefined,
+                assignedSalesPerson: formData.get('assignedSalesPerson') || undefined
+            };
+
+            // Add initial note if provided
+            const initialNote = formData.get('initialNote');
+            if (initialNote) {
+                data.notes = [{
+                    message: initialNote,
+                    role: '<%= user.role %>'
+                }];
+            }
+
+            try {
+                const response = await fetch('/api/inquiries', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('Inquiry created successfully!');
+                    window.location.href = '/inquiries';
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error creating inquiry');
+            }
+        }
+    </script>
+</body>
+</html>

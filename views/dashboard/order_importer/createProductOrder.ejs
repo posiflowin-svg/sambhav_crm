@@ -1,0 +1,342 @@
+<!-- views/dashboard/order_importer/createProductOrder.ejs -->
+<%- include('../../partials/header', { title: 'Create Product Order' }) %>
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mt-4">Create Product Order</h1>
+        <div class="btn-group">
+            <a href="/dashboard/order_importer/product-orders" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Back to Orders
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-edit me-1"></i>
+            New Product Order
+        </div>
+        <div class="card-body">
+            <form id="productOrderForm" action="/dashboard/order_importer/product-orders" method="POST">
+                <!-- Order Details -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="supplierName" class="form-label">Supplier Name</label>
+                            <input type="text" class="form-control" id="supplierName" name="supplierName">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="supplierContact" class="form-label">Supplier Contact</label>
+                            <input type="text" class="form-control" id="supplierContact" name="supplierContact">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="expectedDelivery" class="form-label">Expected Delivery Date</label>
+                            <input type="date" class="form-control" id="expectedDelivery" name="expectedDelivery">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="pending">Pending</option>
+                                <option value="ordered">Ordered</option>
+                                <option value="shipped">Shipped</option>
+                                <option value="delivered">Delivered</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-group mb-3">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Items -->
+                <h5 class="mb-3">Order Items</h5>
+                <div id="orderItems">
+                    <div class="order-item card mb-3">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group mb-4">
+                                        <label class="form-label">Product</label>
+                                        <select class="form-select product-select" name="items[0][product]" required>
+                                            <option value="">Select a product</option>
+                                            <% products.forEach(product => { %>
+                                                <option 
+                                                    value="<%= product._id %>" 
+                                                    data-price="<%= product.price %>"
+                                                    <%= product.hasActiveOrder ? 'disabled style="color: #6c757d; background-color: #f8f9fa;"' : '' %>
+                                                    data-has-active-order="<%= product.hasActiveOrder %>"
+                                                    data-active-order-number="<%= product.activeOrderNumber %>"
+                                                    data-active-order-status="<%= product.activeOrderStatus %>"
+                                                >
+                                                    <%= product.name %> (SKU: <%= product.sku %>)
+                                                    <% if (product.hasActiveOrder) { %>
+                                                        - ⚠️ Active Order: <%= product.activeOrderNumber %> (<%= product.activeOrderStatus %>)
+                                                    <% } %>
+                                                </option>
+                                            <% }) %>
+                                        </select>
+                                        <!-- Warning message for disabled products -->
+                                        <div class="active-order-warning mt-2" style="display: none;">
+                                            <small class="text-warning">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                This product has an active order. Please mark the existing order as delivered before creating a new one.
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Quantity</label>
+                                        <input type="number" class="form-control quantity-input" name="items[0][quantity]" min="1" value="1" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button type="button" class="btn btn-danger remove-item" disabled>
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" id="addItem" class="btn btn-secondary mb-4">
+                    <i class="fas fa-plus"></i> Add Item
+                </button>
+
+                <!-- Total Cost -->
+                <!-- <div class="row mb-4">
+                    <div class="col-md-4 offset-md-8">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>Total: $<span id="totalCost">0.00</span></h5>
+                                <input type="hidden" name="totalCost" id="totalCostInput" value="0">
+                            </div>
+                        </div>
+                    </div>
+                </div> -->
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="submit" class="btn btn-success">Create Order</button>
+                    <a href="/dashboard/order_importer/product-orders" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Product selection validation
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to handle product selection change
+    function handleProductSelection(selectElement) {
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        const hasActiveOrder = selectedOption.getAttribute('data-has-active-order') === 'true';
+        const warningElement = selectElement.closest('.form-group').querySelector('.active-order-warning');
+        
+        if (hasActiveOrder) {
+            warningElement.style.display = 'block';
+            selectElement.classList.add('is-invalid');
+        } else {
+            warningElement.style.display = 'none';
+            selectElement.classList.remove('is-invalid');
+        }
+    }
+    
+    // Add event listeners to all product selects
+    function initializeProductSelects() {
+        document.querySelectorAll('.product-select').forEach(select => {
+            select.addEventListener('change', function() {
+                handleProductSelection(this);
+            });
+            
+            // Check initial state
+            if (select.value) {
+                handleProductSelection(select);
+            }
+        });
+    }
+    
+    initializeProductSelects();
+    
+    // Update the addItem function to include the new event listeners
+    const originalAddItem = document.getElementById('addItem').onclick;
+    document.getElementById('addItem').addEventListener('click', function() {
+        // Your existing add item logic
+        const newItem = document.querySelector('.order-item').cloneNode(true);
+        const newIndex = itemCount++;
+        
+        // Update all names and IDs
+        newItem.querySelectorAll('[name]').forEach(el => {
+            const name = el.getAttribute('name').replace('[0]', `[${newIndex}]`);
+            el.setAttribute('name', name);
+        });
+        
+        // Clear values
+        newItem.querySelector('.product-select').selectedIndex = 0;
+        newItem.querySelector('.quantity-input').value = 1;
+        newItem.querySelector('.remove-item').disabled = false;
+        
+        // Add the warning div if it doesn't exist
+        if (!newItem.querySelector('.active-order-warning')) {
+            const warningDiv = document.createElement('div');
+            warningDiv.className = 'active-order-warning mt-2';
+            warningDiv.style.display = 'none';
+            warningDiv.innerHTML = '<small class="text-warning"><i class="fas fa-exclamation-triangle"></i> This product has an active order. Please mark the existing order as delivered before creating a new one.</small>';
+            newItem.querySelector('.form-group').appendChild(warningDiv);
+        }
+        
+        // Add event listeners
+        newItem.querySelector('.product-select').addEventListener('change', function() {
+            handleProductSelection(this);
+        });
+        newItem.querySelector('.quantity-input').addEventListener('input', calculateTotal);
+        newItem.querySelector('.remove-item').addEventListener('click', function() {
+            this.closest('.order-item').remove();
+            calculateTotal();
+        });
+        
+        document.getElementById('orderItems').appendChild(newItem);
+    });
+    
+    // Enhanced form validation
+    document.getElementById('productOrderForm').addEventListener('submit', function(e) {
+        // Validate at least one item
+        const items = document.querySelectorAll('.order-item');
+        if (items.length === 0) {
+            e.preventDefault();
+            alert('Please add at least one item to the order');
+            return;
+        }
+        
+        // Validate each item has a product selected and no active orders
+        let valid = true;
+        let hasActiveOrder = false;
+        
+        document.querySelectorAll('.product-select').forEach(select => {
+            if (!select.value) {
+                valid = false;
+                select.classList.add('is-invalid');
+            } else {
+                const selectedOption = select.options[select.selectedIndex];
+                const hasActive = selectedOption.getAttribute('data-has-active-order') === 'true';
+                
+                if (hasActive) {
+                    hasActiveOrder = true;
+                    select.classList.add('is-invalid');
+                    valid = false;
+                } else {
+                    select.classList.remove('is-invalid');
+                }
+            }
+        });
+        
+        if (!valid) {
+            e.preventDefault();
+            if (hasActiveOrder) {
+                alert('Cannot create order: One or more products have active orders. Please mark existing orders as delivered or select different products.');
+            } else {
+                alert('Please select a product for all items');
+            }
+        }
+    });
+});
+
+let itemCount = 1;
+
+// Add new item row
+// document.getElementById('addItem').addEventListener('click', function() {
+//     const newItem = document.querySelector('.order-item').cloneNode(true);
+//     const newIndex = itemCount++;
+    
+//     // Update all names and IDs
+//     newItem.querySelectorAll('[name]').forEach(el => {
+//         const name = el.getAttribute('name').replace('[0]', `[${newIndex}]`);
+//         el.setAttribute('name', name);
+//     });
+    
+//     // Clear values
+//     newItem.querySelector('.product-select').selectedIndex = 0;
+//     newItem.querySelector('.quantity-input').value = 1;
+//     // newItem.querySelector('.price-input').value = '';
+//     newItem.querySelector('.remove-item').disabled = false;
+    
+//     // Add event listeners
+//     newItem.querySelector('.product-select').addEventListener('change', updatePrice);
+//     newItem.querySelector('.quantity-input').addEventListener('input', calculateTotal);
+//     // newItem.querySelector('.price-input').addEventListener('input', calculateTotal);
+//     newItem.querySelector('.remove-item').addEventListener('click', function() {
+//         this.closest('.order-item').remove();
+//         calculateTotal();
+//     });
+    
+//     document.getElementById('orderItems').appendChild(newItem);
+// });
+
+// Update price when product is selected
+function updatePrice() {
+    const selectedOption = this.options[this.selectedIndex];
+    const price = selectedOption.getAttribute('data-price') || 0;
+    const priceInput = this.closest('.row').querySelector('.price-input');
+    priceInput.value = price;
+    calculateTotal();
+}
+
+// Calculate total cost
+function calculateTotal() {
+    let total = 0;
+    document.querySelectorAll('.order-item').forEach(item => {
+        const quantity = parseFloat(item.querySelector('.quantity-input').value) || 0;
+        const price = parseFloat(item.querySelector('.price-input').value) || 0;
+        total += quantity * price;
+    });
+    
+    document.getElementById('totalCost').textContent = total.toFixed(2);
+    document.getElementById('totalCostInput').value = total.toFixed(2);
+}
+
+// Add event listeners to initial elements
+document.querySelector('.product-select').addEventListener('change', updatePrice);
+document.querySelector('.quantity-input').addEventListener('input', calculateTotal);
+// document.querySelector('.price-input').addEventListener('input', calculateTotal);
+
+// Form submission
+// document.getElementById('productOrderForm').addEventListener('submit', function(e) {
+//     // Validate at least one item
+//     const items = document.querySelectorAll('.order-item');
+//     if (items.length === 0) {
+//         e.preventDefault();
+//         alert('Please add at least one item to the order');
+//         return;
+//     }
+    
+//     // Validate each item has a product selected
+//     let valid = true;
+//     document.querySelectorAll('.product-select').forEach(select => {
+//         if (!select.value) {
+//             valid = false;
+//             select.classList.add('is-invalid');
+//         } else {
+//             select.classList.remove('is-invalid');
+//         }
+//     });
+    
+//     if (!valid) {
+//         e.preventDefault();
+//         alert('Please select a product for all items');
+//     }
+// });
+
+</script>
+
+<%- include('../../partials/footer') %>

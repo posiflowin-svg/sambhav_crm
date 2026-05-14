@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    
+    <style>
+        /* Custom styles */
+        .status-badge {
+            @apply px-2.5 py-1 text-xs font-medium rounded-full inline-flex items-center;
+        }
+        
+        .product-tag {
+            @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 mr-1 mb-1;
+        }
+        
+        .filter-btn-active {
+            @apply bg-green-600 text-white hover:bg-green-700;
+        }
+        
+        .filter-btn-inactive {
+            @apply bg-gray-100 text-gray-700 hover:bg-gray-200;
+        }
+        
+        .stat-card {
+            @apply bg-white rounded-lg shadow-sm p-4 border-l-4 cursor-pointer transition hover:shadow-md;
+        }
+        
+        .stat-value {
+            @apply text-2xl font-bold;
+        }
+        
+        .stat-label {
+            @apply text-xs text-gray-600 mt-1;
+        }
+        
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal-container {
+            background: white;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Navigation */
+        .nav-link {
+            @apply flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition;
+        }
+        
+        .nav-link.active {
+            @apply text-blue-600 border-b-2 border-blue-600;
+        }
+        
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            border-left: 4px solid;
+        }
+        
+        .notification.success { border-left-color: #10b981; }
+        .notification.error { border-left-color: #ef4444; }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .modal-overlay.hidden {
+            display: none;
+        }
+
+        .modal-container {
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Filter Buttons */
+        .filter-btn-active {
+            @apply bg-blue-600 text-white shadow-sm;
+        }
+
+        .filter-btn-inactive {
+            @apply bg-gray-100 text-gray-700 hover:bg-gray-200;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            @apply px-3 py-1.5 rounded-full text-xs font-medium inline-flex items-center;
+        }
+
+        .status-badge i {
+            @apply mr-1 text-xs;
+        }
+
+        /* Product Tags */
+        .product-tag {
+            @apply bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-medium border border-blue-100;
+        }
+
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            color: white;
+            font-weight: 500;
+            z-index: 1100;
+            animation: slideIn 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Inquiry Details Styles */
+        .inquiry-detail-section {
+            @apply bg-gray-50 rounded-lg p-4 mb-4;
+        }
+
+        .inquiry-detail-label {
+            @apply text-xs font-medium text-gray-500 uppercase tracking-wider mb-2;
+        }
+
+        .inquiry-detail-value {
+            @apply text-sm text-gray-900;
+        }
+
+        .product-item {
+            @apply bg-white border border-gray-200 rounded-lg p-3 flex justify-between items-center;
+        }
+
+        .timeline-item {
+            @apply relative pl-6 pb-4 border-l-2 border-gray-200 last:border-0;
+        }
+
+        .timeline-dot {
+            @apply absolute -left-2 top-0 w-4 h-4 rounded-full bg-blue-500 border-2 border-white;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .modal-container {
+                margin: 0;
+                max-height: 100vh;
+                border-radius: 0;
+            }
+            
+            .modal-overlay {
+                padding: 0;
+                align-items: flex-end;
+            }
+            
+            @keyframes modalSlideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(100%);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="/sales/dashboard" class="nav-link <%= currentPage === 'dashboard' ? 'active' : '' %>">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/sales/orders" class="nav-link <%= currentPage === 'orders' ? 'active' : '' %>">
+                        <i class="bi bi-cart-fill"></i>
+                        <span>Orders</span>
+                    </a>
+                    <a href="/sales/companies" class="nav-link <%= currentPage === 'companies' ? 'active' : '' %>">
+                        <i class="bi bi-building"></i>
+                        <span>Companies</span>
+                    </a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-600"><%= user.name %></span>
+                    <a href="/auth/logout" class="text-gray-600 hover:text-gray-900">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Back Button -->
+        <div class="mb-6">
+            <a href="/sales/companies" class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+                <i class="bi bi-arrow-left mr-2"></i>
+                Back to Companies
+            </a>
+        </div>
+
+        <!-- Company Header (enhanced) -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-200">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-8 text-white relative overflow-hidden">
+                <!-- Decorative pattern -->
+                <div class="absolute top-0 right-0 opacity-10">
+                    <i class="bi bi-building text-9xl"></i>
+                </div>
+                
+                <div class="relative z-10">
+                    <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+                        <div>
+                            <h1 class="text-3xl font-bold mb-3"><%= company.companyName %></h1>
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+                                <span class="flex items-center text-blue-100">
+                                    <i class="bi bi-telephone mr-2"></i>
+                                    <a href="tel:<%= company.phoneNumber %>" class="hover:text-white transition-colors">
+                                        <%= company.phoneNumber %>
+                                    </a>
+                                </span>
+                                <% if (company.email) { %>
+                                    <span class="flex items-center text-blue-100">
+                                        <i class="bi bi-envelope mr-2"></i>
+                                        <a href="mailto:<%= company.email %>" class="hover:text-white transition-colors">
+                                            <%= company.email %>
+                                        </a>
+                                    </span>
+                                <% } %>
+                                <% if (company.location) { %>
+                                    <span class="flex items-center text-blue-100">
+                                        <i class="bi bi-geo-alt mr-2"></i>
+                                        <%= company.location %>
+                                    </span>
+                                <% } %>
+                            </div>
+                        </div>
+                        <span class="self-start px-4 py-2 rounded-full text-sm font-medium bg-white text-blue-600 shadow-sm status-<%= company.status %>">
+                            <i class="bi bi-circle-fill mr-1 text-xs"></i>
+                            <%= company.status?.replace('-', ' ') || 'Active' %>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <% if (company.notes) { %>
+                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                    <div class="flex items-start gap-2">
+                        <i class="bi bi-chat-square-text text-gray-400 mt-1"></i>
+                        <p class="text-gray-700"><%= company.notes %></p>
+                    </div>
+                </div>
+            <% } %>
+
+            <!-- Quick Stats (enhanced) -->
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 p-6">
+                <div class="stat-card border-l-4 border-l-blue-500 cursor-pointer hover:shadow-md transition-shadow bg-white rounded-lg p-4" onclick="filterByStatus('all')">
+                    <div class="stat-value text-2xl font-bold text-blue-600"><%= stats.total %></div>
+                    <div class="stat-label text-sm text-gray-600">Total</div>
+                </div>
+                <div class="stat-card border-l-4 border-l-purple-500 cursor-pointer hover:shadow-md transition-shadow bg-white rounded-lg p-4" onclick="filterByStatus('new')">
+                    <div class="stat-value text-2xl font-bold text-purple-600"><%= stats.new %></div>
+                    <div class="stat-label text-sm text-gray-600">New</div>
+                </div>
+                <div class="stat-card border-l-4 border-l-yellow-500 cursor-pointer hover:shadow-md transition-shadow bg-white rounded-lg p-4" onclick="filterByStatus('processing')">
+                    <div class="stat-value text-2xl font-bold text-yellow-600"><%= stats.processing %></div>
+                    <div class="stat-label text-sm text-gray-600">Processing</div>
+                </div>
+                <div class="stat-card border-l-4 border-l-green-500 cursor-pointer hover:shadow-md transition-shadow bg-white rounded-lg p-4" onclick="filterByStatus('completed')">
+                    <div class="stat-value text-2xl font-bold text-green-600"><%= stats.completed %></div>
+                    <div class="stat-label text-sm text-gray-600">Completed</div>
+                </div>
+                <div class="stat-card border-l-4 border-l-red-500 cursor-pointer hover:shadow-md transition-shadow bg-white rounded-lg p-4" onclick="filterByStatus('cancelled')">
+                    <div class="stat-value text-2xl font-bold text-red-600"><%= stats.cancelled %></div>
+                    <div class="stat-label text-sm text-gray-600">Cancelled</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inquiries Section Header (enhanced) -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Customer Inquiries</h2>
+                <p class="text-sm text-gray-500 mt-1">Manage and track all customer inquiries</p>
+            </div>
+            
+            <% if (user.role === 'sales') { %>
+                <button onclick="openCreateInquiryModal()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center shadow-sm hover:shadow-md">
+                    <i class="bi bi-plus-lg mr-2"></i>
+                    New Inquiry
+                </button>
+            <% } %>
+        </div>
+
+        <!-- Filters (enhanced with better styling) -->
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-6 border border-gray-200">
+            <!-- Quick Date Filters -->
+            <div class="flex flex-wrap items-center gap-2 mb-4 pb-4 border-b border-gray-100">
+                <span class="text-sm font-medium text-gray-700 mr-2">
+                    <i class="bi bi-calendar3 mr-1"></i> Quick Filters:
+                </span>
+                <button onclick="setDateFilter('today')" class="px-4 py-2 text-sm font-medium rounded-lg filter-btn-active transition-all" id="filter-today">
+                    Today
+                </button>
+                <button onclick="setDateFilter('yesterday')" class="px-4 py-2 text-sm font-medium rounded-lg filter-btn-inactive transition-all" id="filter-yesterday">
+                    Yesterday
+                </button>
+                <button onclick="setDateFilter('thisWeek')" class="px-4 py-2 text-sm font-medium rounded-lg filter-btn-inactive transition-all" id="filter-thisWeek">
+                    This Week
+                </button>
+                <button onclick="setDateFilter('thisMonth')" class="px-4 py-2 text-sm font-medium rounded-lg filter-btn-inactive transition-all" id="filter-thisMonth">
+                    This Month
+                </button>
+            </div>
+
+            <!-- Filter Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="bi bi-tag mr-1"></i> Status
+                    </label>
+                    <select id="statusFilter" onchange="loadInquiries(1)" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        <option value="all">All Status</option>
+                        <option value="new">New</option>
+                        <option value="china-processing">China Processing</option>
+                        <option value="pricing-ready">Pricing Ready</option>
+                        <option value="sales-processing">Sales Processing</option>
+                        <option value="completed">Won</option>
+                        <option value="cancelled">Lost</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="bi bi-search mr-1"></i> Search Products
+                    </label>
+                    <div class="relative">
+                        <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <input type="text" id="searchQuery" placeholder="Product name..." 
+                               class="w-full pl-10 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="bi bi-eye mr-1"></i> Show
+                    </label>
+                    <select id="perPageFilter" onchange="loadInquiries(1)" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        <option value="10">10 per page</option>
+                        <option value="25">25 per page</option>
+                        <option value="50">50 per page</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Date Range -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="bi bi-calendar2-range mr-1"></i> From Date
+                    </label>
+                    <input type="date" id="dateFrom" onchange="loadInquiries(1)" 
+                           class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="bi bi-calendar2-range mr-1"></i> To Date
+                    </label>
+                    <input type="date" id="dateTo" onchange="loadInquiries(1)" 
+                           class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                </div>
+            </div>
+        </div>
+
+        <!-- Inquiries Table (enhanced) -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Products</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Star Rating</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Created</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inquiriesTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Data loaded via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination (enhanced) -->
+            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="text-sm text-gray-700" id="paginationInfo"></div>
+                <div class="flex space-x-1" id="pagination"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create Inquiry Modal (enhanced with scroll) -->
+    <div id="createInquiryModal" class="modal-overlay hidden">
+        <div class="modal-container max-w-2xl w-full mx-4 my-8">
+            <div class="bg-white rounded-xl shadow-xl flex flex-col max-h-[90vh]">
+                <!-- Modal Header - Fixed -->
+                <div class="modal-header p-6 border-b flex justify-between items-center bg-gradient-to-r from-gray-50 to-white rounded-t-xl">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        <i class="bi bi-plus-circle text-green-600 mr-2"></i>
+                        Create New Inquiry
+                    </h3>
+                    <button onclick="closeCreateInquiryModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="bi bi-x-lg text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Modal Body - Scrollable -->
+                <div class="flex-1 overflow-y-auto p-6">
+                    <form id="createInquiryForm" onsubmit="createInquiry(event)">
+                        <div class="space-y-6">
+                            <!-- Products Section -->
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="flex justify-between items-center mb-3">
+                                    <label class="text-sm font-semibold text-gray-700">
+                                        <i class="bi bi-box mr-1"></i> Products *
+                                    </label>
+                                    <button type="button" onclick="addProduct()" class="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center">
+                                        <i class="bi bi-plus-circle mr-1"></i> Add Product
+                                    </button>
+                                </div>
+                                
+                                <div id="productsContainer" class="space-y-3 max-h-64 overflow-y-auto pr-2">
+                                    <div class="product-row flex gap-2 items-start">
+                                        <input type="text" name="products[0][productName]" placeholder="Product name" required
+                                               class="flex-1 rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500">
+                                        <input type="number" name="products[0][quantity]" placeholder="Qty" value="1" min="1" required
+                                               class="w-24 rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500">
+                                        <button type="button" onclick="removeProduct(this)" class="text-red-500 hover:text-red-700 p-2">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">
+                                    <i class="bi bi-info-circle"></i> Add at least one product for the inquiry
+                                </p>
+                            </div>
+
+                            <!-- Initial Note Section -->
+                            <div>
+                                <label class="text-sm font-medium text-gray-700 mb-2 block">
+                                    <i class="bi bi-chat-text mr-1"></i> Initial Note (Optional)
+                                </label>
+                                <textarea name="initialNote" rows="4" class="w-full rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500" 
+                                          placeholder="Add any initial notes or requirements..."></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Modal Footer - Fixed -->
+                <div class="p-6 border-t bg-gray-50 rounded-b-xl flex justify-end gap-3">
+                    <button type="button" onclick="closeCreateInquiryModal()" class="px-5 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all font-medium">
+                        Cancel
+                    </button>
+                    <button type="submit" form="createInquiryForm" class="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-medium shadow-sm hover:shadow-md flex items-center">
+                        <i class="bi bi-check-lg mr-2"></i>
+                        Create Inquiry
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inquiry Details Modal (NEW - with proper scroll) -->
+    <div id="inquiryDetailsModal" class="modal-overlay hidden">
+        <div class="modal-container max-w-4xl w-full mx-4 my-8">
+            <div class="bg-white rounded-xl shadow-xl flex flex-col max-h-[90vh]">
+                <!-- Modal Header - Fixed -->
+                <div class="modal-header p-6 border-b flex justify-between items-center bg-gradient-to-r from-blue-50 to-white rounded-t-xl">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                            <i class="bi bi-file-text text-blue-600 mr-2"></i>
+                            Inquiry Details
+                        </h3>
+                        <p class="text-sm text-gray-500 mt-1" id="inquiryReference">Loading...</p>
+                    </div>
+                    <button onclick="closeInquiryDetailsModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="bi bi-x-lg text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Modal Body - Scrollable -->
+                <div class="flex-1 overflow-y-auto p-6" id="inquiryDetailsContent">
+                    <!-- Loading State -->
+                    <div class="text-center py-8" id="inquiryDetailsLoading">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
+                        <p class="text-gray-500 mt-2">Loading details...</p>
+                    </div>
+                    
+                    <!-- Content will be injected here -->
+                    <div id="inquiryDetailsHtml" class="hidden"></div>
+                </div>
+
+                <!-- Modal Footer - Fixed -->
+                <div class="p-6 border-t bg-gray-50 rounded-b-xl flex justify-end gap-3">
+                    <button onclick="closeInquiryDetailsModal()" class="px-5 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all font-medium">
+                        Close
+                    </button>
+                    <button onclick="openReplyModal()" class="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-medium shadow-sm hover:shadow-md flex items-center">
+                        <i class="bi bi-reply mr-2"></i>
+                        Reply
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reply Modal -->
+    <div id="replyModal" class="modal-overlay hidden">
+        <div class="modal-container max-w-2xl">
+            <div class="bg-white rounded-xl shadow-xl">
+                <div class="modal-header p-6 border-b flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                            <i class="bi bi-reply text-green-600 mr-2"></i>
+                            Add Reply
+                        </h3>
+                        <p class="text-sm text-gray-500 mt-1" id="replyInquiryInfo">Add your response</p>
+                    </div>
+                    <button onclick="closeReplyModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="bi bi-x-lg text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="p-6">
+                    <form id="replyForm" onsubmit="submitReply(event)">
+                        <input type="hidden" id="replyInquiryId">
+                        
+                        <!-- Status Update (Optional) -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Update Status (Optional)</label>
+                            <select id="replyUpdateStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">Don't change status</option>
+                                <option value="sales-processing">Sales Processing</option>
+                                <option value="completed">Completed (Won)</option>
+                                <option value="cancelled">Cancelled (Lost)</option>
+                            </select>
+                        </div>
+
+                        <!-- Message -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Your Message *</label>
+                            <textarea id="replyMessage" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required
+                                    placeholder="Type your reply here..."></textarea>
+                        </div>
+
+                        <div class="flex justify-end gap-3">
+                            <button type="button" onclick="closeReplyModal()" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center">
+                                <i class="bi bi-send mr-2"></i>Send Reply
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const companyId = '<%= company._id %>';
+        const userRole = '<%= user.role %>';
+        let currentPage = 1;
+        let currentDateFilter = 'thisWeek';
+        let currentInquiryId = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setDateFilter('thisWeek');
+            
+            // Close modals on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeCreateInquiryModal();
+                    closeInquiryDetailsModal();
+                }
+            });
+
+            // Close modals on overlay click
+            document.querySelectorAll('.modal-overlay').forEach(overlay => {
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeCreateInquiryModal();
+                        closeInquiryDetailsModal();
+                    }
+                });
+            });
+        });
+
+        // Date filter handler
+        function setDateFilter(range) {
+            document.querySelectorAll('[id^="filter-"]').forEach(btn => {
+                btn.classList.remove('filter-btn-active');
+                btn.classList.add('filter-btn-inactive');
+            });
+            
+            const activeBtn = document.getElementById(`filter-${range}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('filter-btn-inactive');
+                activeBtn.classList.add('filter-btn-active');
+            }
+            
+            currentDateFilter = range;
+            
+            const today = new Date();
+            let fromDate = new Date();
+            let toDate = new Date();
+
+            switch(range) {
+                case 'today':
+                    fromDate = today;
+                    toDate = today;
+                    break;
+                case 'yesterday':
+                    fromDate = new Date(today);
+                    fromDate.setDate(today.getDate() - 1);
+                    toDate = new Date(today);
+                    toDate.setDate(today.getDate() - 1);
+                    break;
+                case 'thisWeek':
+                    fromDate = new Date(today);
+                    fromDate.setDate(today.getDate() - today.getDay());
+                    toDate = today;
+                    break;
+                case 'thisMonth':
+                    fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                    toDate = today;
+                    break;
+            }
+
+            document.getElementById('dateFrom').value = fromDate.toISOString().split('T')[0];
+            document.getElementById('dateTo').value = toDate.toISOString().split('T')[0];
+            
+            loadInquiries(1);
+        }
+
+        // Filter by status from stats card
+        function filterByStatus(status) {
+            document.getElementById('statusFilter').value = status === 'processing' ? 'china-processing' : status;
+            loadInquiries(1);
+        }
+
+        // Load inquiries
+        async function loadInquiries(page = 1) {
+            currentPage = page;
+            
+            const params = new URLSearchParams({
+                companyId: companyId,
+                page: page,
+                limit: document.getElementById('perPageFilter').value
+            });
+
+            const status = document.getElementById('statusFilter').value;
+            const search = document.getElementById('searchQuery').value;
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+
+            if (status && status !== 'all') params.append('status', status);
+            if (search) params.append('search', search);
+            if (dateFrom) params.append('dateFrom', dateFrom);
+            if (dateTo) params.append('dateTo', dateTo);
+
+            try {
+                const response = await fetch(`/api/inquiries/company?${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateInquiriesTable(data.data.inquiries);
+                    updatePagination(data.data.pagination);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error loading inquiries', 'error');
+            }
+        }
+
+        function updateInquiriesTable(inquiries) {
+            const tbody = document.getElementById('inquiriesTableBody');
+            
+            if (!inquiries || inquiries.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                            <i class="bi bi-inbox text-5xl mb-3 block text-gray-300"></i>
+                            <p class="text-lg font-medium">No inquiries found</p>
+                            <p class="text-sm mt-1">Try adjusting your filters or create a new inquiry</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = inquiries.map(inquiry => {
+                const productsHtml = inquiry.products.map(p => 
+                    `<span class="product-tag">${escapeHtml(p.productName)} (${p.quantity})</span>`
+                ).join('');
+
+                const statusColors = {
+                    'new': 'bg-purple-100 text-purple-800 border-purple-200',
+                    'china-processing': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                    'pricing-ready': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+                    'sales-processing': 'bg-orange-100 text-orange-800 border-orange-200',
+                    'completed': 'bg-green-100 text-green-800 border-green-200',
+                    'cancelled': 'bg-red-100 text-red-800 border-red-200'
+                };
+
+                return `
+                <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick="viewInquiry('${inquiry._id}')">
+                    <td class="px-6 py-4">
+                        <div class="flex flex-wrap gap-1 max-w-xs">
+                            ${productsHtml}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm space-y-1">
+                            ${inquiry.rating ? 
+                            `<div class="flex items-center text-gray-600">
+                                <i class="bi bi-star-fill text-yellow-400 mr-1 text-xs"></i>
+                                Rating: ${inquiry.rating}
+                            </div>` : ''}
+
+                            ${inquiry.assignedSalesPerson ? 
+                            `<div class="flex items-center text-gray-600">
+                                <i class="bi bi-person-badge text-gray-400 mr-1 text-xs"></i>
+                                Sales: ${inquiry.assignedSalesPerson.name}
+                            </div>` : ''}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="status-badge ${statusColors[inquiry.overallStatus]}">
+                            <i class="bi bi-circle-fill"></i>
+                            ${inquiry.overallStatus.replace('-', ' ')}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600">
+                        <div class="flex items-center">
+                            <i class="bi bi-calendar3 text-gray-400 mr-1"></i>
+                            ${new Date(inquiry.createdAt).toLocaleDateString()}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <button onclick="event.stopPropagation(); viewInquiry('${inquiry._id}')" 
+                                class="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition-colors"
+                                title="View Details">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        // View inquiry details (NEW - improved)
+        async function viewInquiry(inquiryId) {
+            currentInquiryId = inquiryId;
+            
+            // Show modal with loading
+            const modal = document.getElementById('inquiryDetailsModal');
+            const loading = document.getElementById('inquiryDetailsLoading');
+            const content = document.getElementById('inquiryDetailsHtml');
+            
+            modal.classList.remove('hidden');
+            loading.classList.remove('hidden');
+            content.classList.add('hidden');
+
+            try {
+                const response = await fetch(`/api/inquiries/${inquiryId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderInquiryDetails(data.data);
+                } else {
+                    showNotification('Error loading inquiry details', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error loading inquiry details', 'error');
+                closeInquiryDetailsModal();
+            }
+        }
+
+        // Render inquiry details (NEW)
+        function renderInquiryDetails(inquiry) {
+            const loading = document.getElementById('inquiryDetailsLoading');
+            const content = document.getElementById('inquiryDetailsHtml');
+            const reference = document.getElementById('inquiryReference');
+            
+            reference.textContent = `Inquiry #${inquiry._id.slice(-6)} • Created on ${new Date(inquiry.createdAt).toLocaleDateString()}`;
+            
+            const statusColors = {
+                'new': 'bg-purple-100 text-purple-800',
+                'china-processing': 'bg-yellow-100 text-yellow-800',
+                'pricing-ready': 'bg-indigo-100 text-indigo-800',
+                'sales-processing': 'bg-orange-100 text-orange-800',
+                'completed': 'bg-green-100 text-green-800',
+                'cancelled': 'bg-red-100 text-red-800'
+            };
+
+            const html = `
+                <div class="space-y-6">
+                    <!-- Status Bar -->
+                    <div class="bg-gray-50 rounded-lg p-4 flex items-center justify-between">
+                        <div>
+                            <span class="inquiry-detail-label">Current Status</span>
+                            <div class="mt-1">
+                                <span class="status-badge ${statusColors[inquiry.overallStatus]} text-base px-4 py-2">
+                                    <i class="bi bi-circle-fill"></i>
+                                    ${inquiry.overallStatus.replace('-', ' ')}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="inquiry-detail-label">Last Updated</span>
+                            <div class="text-sm text-gray-900 font-medium">
+                                ${new Date(inquiry.updatedAt).toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Products Section -->
+                    <div class="inquiry-detail-section">
+                        <h4 class="inquiry-detail-label">
+                            <i class="bi bi-box-seam mr-1"></i> Products (${inquiry.products.length})
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            ${inquiry.products.map(p => `
+                                <div class="product-item">
+                                    <div>
+                                        <div class="font-medium text-gray-900">${escapeHtml(p.productName)}</div>
+                                        ${p.specifications ? `<div class="text-xs text-gray-500 mt-1">${escapeHtml(p.specifications)}</div>` : ''}
+                                    </div>
+                                    <div class="text-lg font-semibold text-blue-600">${p.quantity}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Assignment Section -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="inquiry-detail-section">
+                            <h4 class="inquiry-detail-label">
+                                <i class="bi bi-person-badge mr-1"></i> China Team
+                            </h4>
+                            ${inquiry.assignedChinaPerson ? `
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
+                                        ${inquiry.assignedChinaPerson.name.charAt(0)}
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="font-medium text-gray-900">${inquiry.assignedChinaPerson.name}</div>
+                                        <div class="text-xs text-gray-500">${inquiry.assignedChinaPerson.email || ''}</div>
+                                    </div>
+                                </div>
+                            ` : `
+                                <p class="text-gray-500 text-sm">Not assigned yet</p>
+                            `}
+                        </div>
+
+                        <div class="inquiry-detail-section">
+                            <h4 class="inquiry-detail-label">
+                                <i class="bi bi-person-badge mr-1"></i> Sales Team
+                            </h4>
+                            ${inquiry.assignedSalesPerson ? `
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold">
+                                        ${inquiry.assignedSalesPerson.name.charAt(0)}
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="font-medium text-gray-900">${inquiry.assignedSalesPerson.name}</div>
+                                        <div class="text-xs text-gray-500">${inquiry.assignedSalesPerson.email || ''}</div>
+                                    </div>
+                                </div>
+                            ` : `
+                                <p class="text-gray-500 text-sm">Not assigned yet</p>
+                            `}
+                        </div>
+                    </div>
+
+                    <!-- Notes Timeline -->
+                    ${inquiry.notes && inquiry.notes.length > 0 ? `
+                        <div class="inquiry-detail-section">
+                            <h4 class="inquiry-detail-label">
+                                <i class="bi bi-chat-dots mr-1"></i> Activity Timeline
+                            </h4>
+                            <div class="mt-4 space-y-3">
+                                ${inquiry.notes.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).map(note => `
+                                    <div class="bg-gray-50 rounded-lg p-4 border-l-4 ${note.role === 'sales' ? 'border-green-500' : note.role === 'china' ? 'border-yellow-500' : 'border-gray-500'}">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <span class="text-xs font-medium px-2 py-1 rounded-full 
+                                                ${note.role === 'sales' ? 'bg-green-100 text-green-800' : 
+                                                note.role === 'china' ? 'bg-yellow-100 text-yellow-800' : 
+                                                'bg-gray-100 text-gray-800'}">
+                                                <i class="bi ${note.role === 'sales' ? 'bi-headset' : 
+                                                                note.role === 'china' ? 'bi-airplane' : 
+                                                                'bi-gear'} mr-1"></i>
+                                                ${note.role ? note.role.toUpperCase() : 'SYSTEM'}
+                                            </span>
+                                            <span class="text-xs text-gray-500">
+                                                ${new Date(note.createdAt).toLocaleString()}
+                                            </span>
+                                            ${note.addedBy ? `
+                                                <span class="text-xs text-gray-400">
+                                                    by ${note.addedBy.name || 'Unknown'}
+                                                </span>
+                                            ` : ''}
+                                        </div>
+                                        <p class="text-sm text-gray-700 whitespace-pre-wrap">${escapeHtml(note.message)}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="inquiry-detail-section">
+                            <h4 class="inquiry-detail-label">
+                                <i class="bi bi-chat-dots mr-1"></i> Activity Timeline
+                            </h4>
+                            <p class="text-gray-500 text-sm py-4 text-center">No notes yet. Click Reply to add one.</p>
+                        </div>
+                    `}
+
+                    <!-- Additional Info -->
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="inquiry-detail-label">Created By</span>
+                            <div class="text-gray-900">${inquiry.createdBy?.name || 'Unknown'}</div>
+                        </div>
+                        ${inquiry.expectedDelivery ? `
+                            <div>
+                                <span class="inquiry-detail-label">Expected Delivery</span>
+                                <div class="text-gray-900">${new Date(inquiry.expectedDelivery).toLocaleDateString()}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+
+            content.innerHTML = html;
+            loading.classList.add('hidden');
+            content.classList.remove('hidden');
+        }
+
+        // Edit inquiry (placeholder)
+        function editInquiry() {
+            if (currentInquiryId) {
+                // Implement edit functionality
+                console.log('Edit inquiry:', currentInquiryId);
+                showNotification('Edit functionality coming soon', 'info');
+            }
+        }
+
+        // Close inquiry details modal
+        function closeInquiryDetailsModal() {
+            document.getElementById('inquiryDetailsModal').classList.add('hidden');
+            document.getElementById('inquiryDetailsLoading').classList.remove('hidden');
+            document.getElementById('inquiryDetailsHtml').classList.add('hidden');
+            currentInquiryId = null;
+        }
+
+        // Create inquiry
+        async function createInquiry(event) {
+            event.preventDefault();
+            
+            const form = document.getElementById('createInquiryForm');
+            const formData = new FormData(form);
+            
+            const products = [];
+            document.querySelectorAll('.product-row').forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                products.push({
+                    productName: inputs[0].value,
+                    quantity: parseInt(inputs[1].value) || 1
+                });
+            });
+
+            const data = {
+                companyId: companyId,
+                products: products
+            };
+
+            const initialNote = formData.get('initialNote');
+            if (initialNote) {
+                data.notes = [{
+                    message: initialNote,
+                    role: 'sales'
+                }];
+            }
+
+            try {
+                const response = await fetch('/api/inquiries', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showNotification('Inquiry created successfully!', 'success');
+                    closeCreateInquiryModal();
+                    loadInquiries(1);
+                } else {
+                    showNotification('Error: ' + result.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Error creating inquiry', 'error');
+            }
+        }
+
+        // Product management
+        function addProduct() {
+            const container = document.getElementById('productsContainer');
+            const count = document.querySelectorAll('.product-row').length;
+            
+            const template = `
+                <div class="product-row flex gap-2">
+                    <input type="text" name="products[${count}][productName]" placeholder="Product name" required
+                           class="flex-1 rounded-lg border-gray-300 text-sm">
+                    <input type="number" name="products[${count}][quantity]" placeholder="Qty" value="1" min="1" required
+                           class="w-24 rounded-lg border-gray-300 text-sm">
+                    <button type="button" onclick="removeProduct(this)" class="text-red-500 hover:text-red-700">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', template);
+        }
+
+        function removeProduct(btn) {
+            if (document.querySelectorAll('.product-row').length > 1) {
+                btn.closest('.product-row').remove();
+            }
+        }
+
+        // Modal controls (keep existing)
+        function openCreateInquiryModal() {
+            document.getElementById('createInquiryModal').classList.remove('hidden');
+        }
+
+        function closeCreateInquiryModal() {
+            document.getElementById('createInquiryModal').classList.add('hidden');
+            document.getElementById('createInquiryForm').reset();
+            
+            // Reset to single product
+            document.getElementById('productsContainer').innerHTML = `
+                <div class="product-row flex gap-2 items-start">
+                    <input type="text" name="products[0][productName]" placeholder="Product name" required
+                           class="flex-1 rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500">
+                    <input type="number" name="products[0][quantity]" placeholder="Qty" value="1" min="1" required
+                           class="w-24 rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500">
+                    <button type="button" onclick="removeProduct(this)" class="text-red-500 hover:text-red-700 p-2">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+        }
+        
+        // Pagination
+        function updatePagination(pagination) {
+            const paginationDiv = document.getElementById('pagination');
+            const infoDiv = document.getElementById('paginationInfo');
+            
+            if (!pagination || pagination.total === 0) {
+                paginationDiv.innerHTML = '';
+                infoDiv.textContent = 'No inquiries found';
+                return;
+            }
+
+            const start = ((pagination.page - 1) * pagination.limit) + 1;
+            const end = Math.min(pagination.page * pagination.limit, pagination.total);
+            infoDiv.textContent = `Showing ${start} to ${end} of ${pagination.total} inquiries`;
+
+            let html = '';
+            
+            // Previous
+            html += `<button onclick="loadInquiries(${pagination.page - 1})" ${pagination.page === 1 ? 'disabled' : ''} 
+                    class="px-3 py-1 rounded border ${pagination.page === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}">
+                    <i class="bi bi-chevron-left"></i>
+                </button>`;
+
+            // Page numbers
+            for (let i = 1; i <= pagination.pages; i++) {
+                if (i === pagination.page) {
+                    html += `<button class="px-3 py-1 rounded bg-blue-600 text-white font-medium">${i}</button>`;
+                } else if (i === 1 || i === pagination.pages || (i >= pagination.page - 2 && i <= pagination.page + 2)) {
+                    html += `<button onclick="loadInquiries(${i})" class="px-3 py-1 rounded border bg-white text-gray-700 hover:bg-gray-50">${i}</button>`;
+                } else if (i === pagination.page - 3 || i === pagination.page + 3) {
+                    html += `<span class="px-3 py-1">...</span>`;
+                }
+            }
+
+            // Next
+            html += `<button onclick="loadInquiries(${pagination.page + 1})" ${pagination.page === pagination.pages ? 'disabled' : ''} 
+                    class="px-3 py-1 rounded border ${pagination.page === pagination.pages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}">
+                    <i class="bi bi-chevron-right"></i>
+                </button>`;
+
+            paginationDiv.innerHTML = html;
+        }
+
+        // Utility functions
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-circle'} mr-2"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        // Search with debounce
+        let debounceTimer;
+        document.getElementById('searchQuery').addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => loadInquiries(1), 500);
+        });
+
+        // ==================== REPLY FUNCTIONS ====================
+
+        // Open reply modal
+        function openReplyModal() {
+            if (!currentInquiryId) return;
+            
+            document.getElementById('replyInquiryId').value = currentInquiryId;
+            document.getElementById('replyInquiryInfo').textContent = `Reply to Inquiry #${currentInquiryId.slice(-6)}`;
+            document.getElementById('replyForm').reset();
+            document.getElementById('replyModal').classList.remove('hidden');
+        }
+
+        // Close reply modal
+        function closeReplyModal() {
+            document.getElementById('replyModal').classList.add('hidden');
+            document.getElementById('replyForm').reset();
+        }
+
+        // Submit reply
+        async function submitReply(event) {
+            event.preventDefault();
+            
+            const inquiryId = document.getElementById('replyInquiryId').value;
+            const message = document.getElementById('replyMessage').value.trim();
+            const updateStatus = document.getElementById('replyUpdateStatus').value;
+
+            if (!message) {
+                showNotification('Please enter a message', 'error');
+                return;
+            }
+
+            try {
+                // First add the note using the reply API
+                const noteResponse = await fetch(`/api/inquiries/${inquiryId}/notes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        role: 'sales' // Always sales for sales person
+                    })
+                });
+
+                if (!noteResponse.ok) {
+                    throw new Error('Failed to add reply');
+                }
+
+                // Then update status if selected
+                if (updateStatus) {
+                    await fetch(`/api/inquiries/${inquiryId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            overallStatus: updateStatus
+                        })
+                    });
+                }
+
+                showNotification('Reply added successfully!', 'success');
+                closeReplyModal();
+                
+                // Refresh the view
+                viewInquiry(inquiryId);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error adding reply', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

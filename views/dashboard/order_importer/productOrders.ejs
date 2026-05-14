@@ -1,0 +1,203 @@
+<!-- views/dashboard/orders/productOrders.ejs -->
+<%- include('../../partials/header', { title: 'Product Orders' }) %>
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mt-4">Product Orders</h1>
+        <div class="btn-group">
+            <a href="/dashboard/order_importer" class="btn btn-primary">Order Dashboard</a>
+            <a href="/dashboard/order_importer/product-orders/create/new" class="btn btn-success">
+                <i class="fas fa-plus"></i> New Product Order
+            </a>
+        </div>
+    </div>
+
+    <!-- Status Filter Cards -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap justify-content-around">
+                        <a href="/dashboard/order_importer/product-orders?status=all" 
+                           class="btn <%= (typeof status === 'undefined' || status === 'all') ? 'btn-primary' : 'btn-outline-primary' %> m-1">
+                            All <span class="badge bg-white text-primary"><%= orderCounts.all %></span>
+                        </a>
+                        <a href="/dashboard/order_importer/product-orders?status=pending" 
+                           class="btn <%= status === 'pending' ? 'btn-warning' : 'btn-outline-warning' %> m-1">
+                            Pending <span class="badge bg-white text-warning"><%= orderCounts.pending %></span>
+                        </a>
+                        <a href="/dashboard/order_importer/product-orders?status=ordered" 
+                           class="btn <%= status === 'ordered' ? 'btn-info' : 'btn-outline-info' %> m-1">
+                            Ordered <span class="badge bg-white text-info"><%= orderCounts.ordered %></span>
+                        </a>
+                        <a href="/dashboard/order_importer/product-orders?status=shipped" 
+                           class="btn <%= status === 'shipped' ? 'btn-primary' : 'btn-outline-primary' %> m-1">
+                            Shipped <span class="badge bg-white text-primary"><%= orderCounts.shipped %></span>
+                        </a>
+                        <a href="/dashboard/order_importer/product-orders?status=delivered" 
+                           class="btn <%= status === 'delivered' ? 'btn-success' : 'btn-outline-success' %> m-1">
+                            Delivered <span class="badge bg-white text-success"><%= orderCounts.delivered %></span>
+                        </a>
+                        <a href="/dashboard/order_importer/product-orders?status=cancelled" 
+                           class="btn <%= status === 'cancelled' ? 'btn-danger' : 'btn-outline-danger' %> m-1">
+                            Cancelled <span class="badge bg-white text-danger"><%= orderCounts.cancelled %></span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            Product Orders
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Order Number</th>
+                            <th>Items</th>
+                            <th>Status</th>
+                            <th>Supplier</th>
+                            <th>Order Date</th>
+                            <th>Expected Delivery</th>
+                            <!-- <th>Total Cost</th> -->
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (orders.length > 0) { %>
+                            <% orders.forEach(order => { %>
+                                <tr>
+                                    <td><%= order.orderNumber %></td>
+                                    <td>
+                                        <% order.items.forEach(item => { %>
+                                            <div>
+                                                <%= item.quantity %> x 
+                                                <% if (item.product) { %>
+                                                    <%= item.product.name %>
+                                                <% } else { %>
+                                                    <span class="text-muted">[Product Deleted]</span>
+                                                <% } %>
+                                            </div>
+                                        <% }) %>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-<%= 
+                                            order.status === 'delivered' ? 'success' : 
+                                            order.status === 'shipped' ? 'info' : 
+                                            order.status === 'ordered' ? 'primary' : 
+                                            order.status === 'pending' ? 'warning' : 
+                                            'danger' %>">
+                                            <%= order.status %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <% if (order.supplier && order.supplier.name) { %>
+                                            <%= order.supplier.name %>
+                                        <% } else { %>
+                                            <span class="text-muted">Not specified</span>
+                                        <% } %>
+                                    </td>
+                                    <td><%= new Date(order.orderDate).toLocaleDateString() %></td>
+                                    <td>
+                                        <% if (order.expectedDelivery) { %>
+                                            <%= new Date(order.expectedDelivery).toLocaleDateString() %>
+                                        <% } else { %>
+                                            <span class="text-muted">Not set</span>
+                                        <% } %>
+                                    </td>
+                                    <!-- <td>$<%= order.totalCost.toFixed(2) %></td> -->
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="/dashboard/order_importer/product-orders/<%= order._id %>" 
+                                               class="btn btn-sm btn-info" title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <!-- <a href="/dashboard/order_importer/product-orders/<%= order._id %>/edit" 
+                                               class="btn btn-sm btn-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a> -->
+                                            <button class="btn btn-sm btn-danger" title="Delete" 
+                                                    onclick="confirmDelete('<%= order._id %>', '<%= order.orderNumber %>')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="8" class="text-center">No product orders found</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <% if (totalPages > 1) { %>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <% if (currentPage > 1) { %>
+                            <li class="page-item">
+                                <a class="page-link" 
+                                   href="/dashboard/order_importer/product-orders?page=<%= currentPage - 1 %><% if (status) { %>&status=<%= status %><% } %>">
+                                    Previous
+                                </a>
+                            </li>
+                        <% } %>
+                        
+                        <% for (let i = 1; i <= totalPages; i++) { %>
+                            <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                <a class="page-link" 
+                                   href="/dashboard/order_importer/product-orders?page=<%= i %><% if (status) { %>&status=<%= status %><% } %>">
+                                    <%= i %>
+                                </a>
+                            </li>
+                        <% } %>
+                        
+                        <% if (currentPage < totalPages) { %>
+                            <li class="page-item">
+                                <a class="page-link" 
+                                   href="/dashboard/order_importer/product-orders?page=<%= currentPage + 1 %><% if (status) { %>&status=<%= status %><% } %>">
+                                    Next
+                                </a>
+                            </li>
+                        <% } %>
+                    </ul>
+                </nav>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(orderId, orderNumber) {
+    if (confirm(`Are you sure you want to delete order ${orderNumber}? This action cannot be undone.`)) {
+        // Create a form and submit it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/dashboard/order_importer/product-orders/${orderId}/delete`;
+        
+        // Add CSRF token if you're using it (recommended)
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_csrf';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+
+<%- include('../../partials/footer') %>

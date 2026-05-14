@@ -1,0 +1,193 @@
+<!-- views/dashboard/stockManager/products/composition.ejs -->
+<%- include('../../../partials/header', { title: 'Product Composition - ' + product.name }) %>
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mt-4">Product Composition: <%= product.name %></h1>
+        <div>
+            <a href="/dashboard/stock_manager/products/<%= product._id %>/edit" class="btn btn-primary me-2">
+                <i class="fas fa-edit"></i> Edit Product
+            </a>
+            <a href="/dashboard/stock_manager/products" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Products
+            </a>
+        </div>
+    </div>
+
+    <!-- Error Messages -->
+    <% if (errors && errors.length > 0) { %>
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                <% errors.forEach(error => { %>
+                    <li><%= error %></li>
+                <% }) %>
+            </ul>
+        </div>
+    <% } %>
+
+    <!-- Add Raw Material Form -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-plus me-1"></i>
+            Add Raw Material to Product
+        </div>
+        <div class="card-body">
+            <form method="POST" action="/dashboard/stock_manager/products/<%= product._id %>/composition">
+                <div class="row">
+                    <div class="col-md-5">
+                        <div class="mb-3">
+                            <label for="rawMaterialId" class="form-label">Raw Material *</label>
+                            <select class="form-select" id="rawMaterialId" name="rawMaterialId" required>
+                                <option value="">Select Raw Material</option>
+                                <% rawMaterials.forEach(material => { %>
+                                    <option value="<%= material._id %>">
+                                        <%= material.name %> (<%= material.sku %>) - <%= material.unit %>
+                                    </option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="quantity" class="form-label">Quantity *</label>
+                            <input type="number" class="form-control" id="quantity" name="quantity" 
+                                   min="1" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Add to Composition</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Current Composition -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-list-alt me-1"></i>
+            Current Raw Material Composition
+        </div>
+        <div class="card-body">
+            <% if (compositions.length > 0) { %>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Raw Material</th>
+                                <th>SKU</th>
+                                <th>Unit</th>
+                                <th>Quantity Required</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% compositions.forEach(comp => { %>
+                                <tr>
+                                    <td><%= comp.rawMaterial.name %></td>
+                                    <td><%= comp.rawMaterial.sku %></td>
+                                    <td><%= comp.rawMaterial.unit %></td>
+                                    <td>
+                                        <form method="POST" action="/dashboard/stock_manager/products/<%= product._id %>/composition/<%= comp._id %>" class="d-inline">
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" class="form-control" name="quantity" 
+                                                       value="<%= comp.quantity %>" min="1" step="0.01" required>
+                                                <button type="submit" class="btn btn-outline-primary">
+                                                    <i class="fas fa-save"></i>
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </td>
+                                    <td>
+                                        <form method="POST" action="/dashboard/stock_manager/products/<%= product._id %>/composition/<%= comp._id %>/delete" 
+                                              class="d-inline" onsubmit="return confirm('Are you sure you want to remove this raw material from the product composition?')">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash"></i> Remove
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="text-center py-4">
+                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No raw materials added to this product yet.</p>
+                    <p class="text-muted">Use the form above to add raw materials to the product composition.</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Production Calculation -->
+    <% if (compositions.length > 0) { %>
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <i class="fas fa-calculator me-1"></i>
+            Production Calculator
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="productionQuantity" class="form-label">Enter Production Quantity</label>
+                        <input type="number" class="form-control" id="productionQuantity" min="1" value="1">
+                    </div>
+                    <button class="btn btn-info" onclick="calculateRequirements()">
+                        <i class="fas fa-calculator"></i> Calculate Material Requirements
+                    </button>
+                </div>
+                <div class="col-md-6">
+                    <div id="requirementResults" class="mt-3" style="display: none;">
+                        <h6>Material Requirements:</h6>
+                        <ul class="list-group" id="requirementList"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <% } %>
+</div>
+
+<script>
+function calculateRequirements() {
+    const quantity = parseInt(document.getElementById('productionQuantity').value);
+    if (!quantity || quantity <= 0) {
+        alert('Please enter a valid production quantity');
+        return;
+    }
+
+    const results = [];
+
+    <% compositions.forEach(comp => { %>
+        results.push({
+            material: '<%= comp.rawMaterial.name %>',
+            required: <%= comp.quantity %> * quantity,
+            unit: '<%= comp.rawMaterial.unit %>'
+        });
+    <% }) %>
+
+    const list = document.getElementById('requirementList');
+    list.innerHTML = '';
+
+    results.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item';
+        li.innerHTML = `<strong>${item.material}:</strong> ${item.required} ${item.unit}`;
+        list.appendChild(li);
+    });
+
+    document.getElementById('requirementResults').style.display = 'block';
+}
+</script>
+
+
+
+<%- include('../../../partials/footer') %>

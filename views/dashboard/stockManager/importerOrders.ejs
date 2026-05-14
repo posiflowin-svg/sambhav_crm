@@ -1,0 +1,369 @@
+<%- include('../../partials/header', { title: 'Importer Orders' }) %>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mt-4">Importer Orders</h1>
+        <div class="btn-group">
+            <a href="/dashboard/stock_manager" class="btn btn-primary">Dashboard</a>
+            <a href="/dashboard/stock_manager/products" class="btn btn-primary">Manage Products</a>
+            <a href="/dashboard/stock_manager/raw-materials" class="btn btn-primary">Manage Raw Materials</a>
+            <a href="/dashboard/stock_manager/production-orders" class="btn btn-primary">Production Orders</a>
+            <a href="/dashboard/stock_manager/importer-orders" class="btn btn-success active">Importer Orders</a>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <ul class="nav nav-tabs mb-4" id="ordersTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link <%= currentTab === 'products' ? 'active' : '' %>" 
+                    id="products-tab" 
+                    data-bs-toggle="tab" 
+                    data-bs-target="#products" 
+                    type="button" 
+                    role="tab" 
+                    aria-controls="products" 
+                    aria-selected="<%= currentTab === 'products' ? 'true' : 'false' %>">
+                Product Orders 
+                <span class="badge bg-primary"><%= productOrderCounts.all %></span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link <%= currentTab === 'raw-materials' ? 'active' : '' %>" 
+                    id="raw-materials-tab" 
+                    data-bs-toggle="tab" 
+                    data-bs-target="#raw-materials" 
+                    type="button" 
+                    role="tab" 
+                    aria-controls="raw-materials" 
+                    aria-selected="<%= currentTab === 'raw-materials' ? 'true' : 'false' %>">
+                Raw Material Orders 
+                <span class="badge bg-primary"><%= rawMaterialOrderCounts.all %></span>
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="ordersTabContent">
+        <!-- Product Orders Tab -->
+        <div class="tab-pane fade <%= currentTab === 'products' ? 'show active' : '' %>" 
+             id="products" 
+             role="tabpanel" 
+             aria-labelledby="products-tab">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Product Orders</h5>
+                    <!-- <a href="/dashboard/order_importer/product-orders/create/new" class="btn btn-success btn-sm">
+                        <i class="fas fa-plus"></i> New Product Order
+                    </a> -->
+                </div>
+                <div class="card-body">
+                    <!-- Status Filter -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <select class="form-select" id="productStatusFilter">
+                                <option value="all">All Orders (<%= productOrderCounts.all %>)</option>
+                                <option value="pending">Pending (<%= productOrderCounts.pending %>)</option>
+                                <option value="ordered">Ordered (<%= productOrderCounts.ordered %>)</option>
+                                <option value="shipped">Shipped (<%= productOrderCounts.shipped %>)</option>
+                                <option value="partially_delivered">Partially Delivered (<%= productOrderCounts.partially_delivered %>)</option>
+                                <option value="delivered">Delivered (<%= productOrderCounts.delivered %>)</option>
+                                <option value="cancelled">Cancelled (<%= productOrderCounts.cancelled %>)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Orders Table -->
+                    <div id="productOrdersContainer">
+                        <div class="text-center py-4">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading product orders...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Raw Material Orders Tab -->
+        <div class="tab-pane fade <%= currentTab === 'raw-materials' ? 'show active' : '' %>" 
+             id="raw-materials" 
+             role="tabpanel" 
+             aria-labelledby="raw-materials-tab">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Raw Material Orders</h5>
+                    <!-- <a href="/dashboard/order_importer/raw-material-orders/create/new" class="btn btn-success btn-sm">
+                        <i class="fas fa-plus"></i> New Raw Material Order
+                    </a> -->
+                </div>
+                <div class="card-body">
+                    <!-- Status Filter -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <select class="form-select" id="rawMaterialStatusFilter">
+                                <option value="all">All Orders (<%= rawMaterialOrderCounts.all %>)</option>
+                                <option value="pending">Pending (<%= rawMaterialOrderCounts.pending %>)</option>
+                                <option value="ordered">Ordered (<%= rawMaterialOrderCounts.ordered %>)</option>
+                                <option value="shipped">Shipped (<%= rawMaterialOrderCounts.shipped %>)</option>
+                                <option value="partially_delivered">Partially Delivered (<%= rawMaterialOrderCounts.partially_delivered %>)</option>
+                                <option value="delivered">Delivered (<%= rawMaterialOrderCounts.delivered %>)</option>
+                                <option value="cancelled">Cancelled (<%= rawMaterialOrderCounts.cancelled %>)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Orders Table -->
+                    <div id="rawMaterialOrdersContainer">
+                        <div class="text-center py-4">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading raw material orders...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load initial data based on active tab
+    if (document.getElementById('products-tab').classList.contains('active')) {
+        loadProductOrders();
+    } else {
+        loadRawMaterialOrders();
+    }
+
+    // Tab change event listeners
+    document.getElementById('products-tab').addEventListener('click', function() {
+        loadProductOrders();
+        updateUrl('products');
+    });
+
+    document.getElementById('raw-materials-tab').addEventListener('click', function() {
+        loadRawMaterialOrders();
+        updateUrl('raw-materials');
+    });
+
+    // Status filter change listeners
+    document.getElementById('productStatusFilter').addEventListener('change', loadProductOrders);
+    document.getElementById('rawMaterialStatusFilter').addEventListener('change', loadRawMaterialOrders);
+
+    function updateUrl(tab) {
+        const url = new URL(window.location);
+        url.searchParams.set('tab', tab);
+        window.history.replaceState({}, '', url);
+    }
+
+    function loadProductOrders() {
+        const status = document.getElementById('productStatusFilter').value;
+        const container = document.getElementById('productOrdersContainer');
+        
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading product orders...</p>
+            </div>
+        `;
+
+        fetch(`/dashboard/stock_manager/importer-orders/products?status=${status}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    renderProductOrders(data.orders, data.orderCounts, container);
+                    setupProductPagination(data.currentPage, data.totalPages);
+                } else {
+                    container.innerHTML = `<div class="alert alert-danger">Error loading product orders</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                container.innerHTML = `<div class="alert alert-danger">Error loading product orders</div>`;
+            });
+    }
+
+    function loadRawMaterialOrders() {
+        const status = document.getElementById('rawMaterialStatusFilter').value;
+        const container = document.getElementById('rawMaterialOrdersContainer');
+        
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading raw material orders...</p>
+            </div>
+        `;
+
+        fetch(`/dashboard/stock_manager/importer-orders/raw-materials?status=${status}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    renderRawMaterialOrders(data.orders, data.orderCounts, container);
+                    setupRawMaterialPagination(data.currentPage, data.totalPages);
+                } else {
+                    container.innerHTML = `<div class="alert alert-danger">Error loading raw material orders</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                container.innerHTML = `<div class="alert alert-danger">Error loading raw material orders</div>`;
+            });
+    }
+
+    function renderProductOrders(orders, orderCounts, container) {
+        if (orders.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                    <h5>No product orders found</h5>
+                    <p class="text-muted">Get started by creating your first product order.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = `
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Order Number</th>
+                            <th>Items</th>
+                            <th>Supplier</th>
+                            <th>Status</th>
+                            <th>Order Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        orders.forEach(order => {
+            const itemsText = order.items.map(item => 
+                `${item.quantity} x ${item.product?.name || 'N/A'}`
+            ).join(', ');
+
+            html += `
+                <tr>
+                    <td><strong>${order.orderNumber}</strong></td>
+                    <td>${itemsText}</td>
+                    <td>${order.supplier?.name || 'N/A'}</td>
+                    <td>
+                        <span class="badge bg-${getStatusBadgeColor(order.status)}">
+                            ${order.status}
+                        </span>
+                    </td>
+                    <td>${new Date(order.orderDate).toLocaleDateString()}</td>
+                    <td>
+                        <a href="/dashboard/order_importer/product-orders/${order._id}" 
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        container.innerHTML = html;
+    }
+
+    function renderRawMaterialOrders(orders, orderCounts, container) {
+        if (orders.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                    <h5>No raw material orders found</h5>
+                    <p class="text-muted">Get started by creating your first raw material order.</p>
+                    
+                </div>
+            `;
+            return;
+        }
+
+        let html = `
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Order Number</th>
+                            <th>Items</th>
+                            <th>Supplier</th>
+                            <th>Status</th>
+                            <th>Order Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        orders.forEach(order => {
+            const itemsText = order.items.map(item => 
+                `${item.quantity} x ${item.rawMaterial?.name || 'N/A'}`
+            ).join(', ');
+
+            html += `
+                <tr>
+                    <td><strong>${order.orderNumber}</strong></td>
+                    <td>${itemsText}</td>
+                    <td>${order.supplier?.name || 'N/A'}</td>
+                    <td>
+                        <span class="badge bg-${getStatusBadgeColor(order.status)}">
+                            ${order.status}
+                        </span>
+                    </td>
+                    <td>${new Date(order.orderDate).toLocaleDateString()}</td>
+                    <td>
+                        <a href="/dashboard/order_importer/raw-material-orders/${order._id}" 
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        container.innerHTML = html;
+    }
+
+    function getStatusBadgeColor(status) {
+        const colors = {
+            'pending': 'warning',
+            'ordered': 'info',
+            'shipped': 'primary',
+            'partially_delivered': 'secondary',
+            'delivered': 'success',
+            'cancelled': 'danger'
+        };
+        return colors[status] || 'secondary';
+    }
+
+    function setupProductPagination(currentPage, totalPages) {
+        // Add pagination logic here if needed
+    }
+
+    function setupRawMaterialPagination(currentPage, totalPages) {
+        // Add pagination logic here if needed
+    }
+});
+</script>
+
+<%- include('../../partials/footer') %>

@@ -1,0 +1,297 @@
+<!-- views/dashboard/stockManager/productionOrders/create.ejs -->
+<%- include('../../../partials/header', { title: 'Create Production Order' }) %>
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mt-4">Create Production Order</h1>
+        <a href="/dashboard/stock_manager/production-orders" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <!-- Error Messages -->
+    <% if (errors && errors.length > 0) { %>
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                <% errors.forEach(error => { %>
+                    <li><%= error %></li>
+                <% }) %>
+            </ul>
+        </div>
+    <% } %>
+
+    <!-- Success Messages -->
+    <% if (success_msg && success_msg.length > 0) { %>
+        <div class="alert alert-success">
+            <%= success_msg %>
+        </div>
+    <% } %>
+
+    <!-- Create Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-plus me-1"></i>
+            Production Order Details
+        </div>
+        <div class="card-body">
+            <form id="productionOrderForm" method="POST" action="/dashboard/stock_manager/production-orders">
+                <input type="hidden" id="formStatus" name="status" value="pending">
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="product" class="form-label">Product *</label>
+                            <select class="form-select" id="product" name="product" required>
+                                <option value="">Select a product</option>
+                                <% products.forEach(product => { %>
+                                    <option value="<%= product._id %>" 
+                                        <%= (productionOrder && productionOrder.product == product._id) ? 'selected' : '' %>>
+                                        <%= product.name %> (<%= product.sku %>)
+                                    </option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="targetQuantity" class="form-label">Target Quantity *</label>
+                            <input type="number" class="form-control" id="targetQuantity" name="targetQuantity" 
+                                   value="<%= productionOrder ? productionOrder.targetQuantity : '' %>" 
+                                   min="1" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="expectedCompletionDate" class="form-label">Expected Completion Date *</label>
+                            <input type="date" class="form-control" id="expectedCompletionDate" 
+                                   name="expectedCompletionDate" 
+                                   value="<%= productionOrder && productionOrder.expectedCompletionDate ? new Date(productionOrder.expectedCompletionDate).toISOString().split('T')[0] : '' %>"
+                                   min="<%= new Date().toISOString().split('T')[0] %>" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="assignedTo" class="form-label">Assign To</label>
+                            <select class="form-select" id="assignedTo" name="assignedTo">
+                                <option value="">Unassigned</option>
+                                <% users.forEach(user => { %>
+                                    <option value="<%= user._id %>" 
+                                        <%= (productionOrder && productionOrder.assignedTo == user._id) ? 'selected' : '' %>>
+                                        <%= user.name %> (<%= user.role %>)
+                                    </option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Notes</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3"><%= productionOrder ? productionOrder.notes : '' %></textarea>
+                </div>
+
+                <!-- Material Requirements Preview -->
+                <div class="mb-4" id="requirementsPreview" style="display: none;">
+                    <h5 class="mb-3">Material Requirements</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Sr. No</th>
+                                    <th>Raw Material</th>
+                                    <th>Current Stock</th>
+                                    <th>Required Quantity</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="requirementsTableBody">
+                                <!-- Will be populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="requirementsSummary" class="alert alert-info mt-3">
+                        <!-- Summary will be populated here -->
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="/dashboard/stock_manager/production-orders" class="btn btn-secondary me-md-2">Cancel</a>
+                    
+                    <!-- Save as Draft Button -->
+                    <!-- <button type="button" class="btn btn-outline-primary me-md-2" id="saveDraftButton">
+                        <span class="spinner-border spinner-border-sm" id="draftSpinner" style="display: none;"></span>
+                        Save as Draft
+                    </button> -->
+                    
+                    <!-- Create Production Order Button -->
+                    <button type="submit" class="btn btn-primary" id="submitButton" disabled>
+                        <span class="spinner-border spinner-border-sm" id="submitSpinner" style="display: none;"></span>
+                        Create Production Order
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Global variables
+let currentRequirements = [];
+let canProduce = false;
+
+// Function to calculate material requirements
+async function calculateRequirements() {
+    const productId = document.getElementById('product').value;
+    const targetQuantity = document.getElementById('targetQuantity').value;
+    const previewDiv = document.getElementById('requirementsPreview');
+    const tableBody = document.getElementById('requirementsTableBody');
+    const summaryDiv = document.getElementById('requirementsSummary');
+    const submitButton = document.getElementById('submitButton');
+    const submitSpinner = document.getElementById('submitSpinner');
+    
+    // Hide preview if no product or quantity
+    if (!productId || !targetQuantity) {
+        previewDiv.style.display = 'none';
+        submitButton.disabled = true;
+        return;
+    }
+    
+    submitSpinner.style.display = 'inline-block';
+    submitButton.disabled = true;
+    
+    try {
+        const response = await fetch('/dashboard/stock_manager/production-orders/calculate-requirements', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                productId,
+                targetQuantity: parseInt(targetQuantity)
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            currentRequirements = data.requirements;
+            canProduce = data.canProduce;
+            
+            // Show requirements preview
+            let html = '';
+            let insufficientMaterials = 0;
+            
+            data.requirements.forEach((req, index) => {
+                const isSufficient = req.availableQuantity >= req.requiredQuantity;
+                if (!isSufficient) insufficientMaterials++;
+                
+                html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${req.materialName}</td>
+                        <td>${req.availableQuantity}</td>
+                        <td>${req.requiredQuantity}</td>
+                        <td>
+                            <span class="badge bg-${isSufficient ? 'success' : 'danger'}">
+                                ${isSufficient ? 'Sufficient' : 'Insufficient'}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = html;
+            
+            // Update summary
+            if (data.canProduce) {
+                summaryDiv.className = 'alert alert-success mt-3';
+                summaryDiv.innerHTML = `
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>All materials are available!</strong> Production can proceed.
+                `;
+            } else {
+                summaryDiv.className = 'alert alert-warning mt-3';
+                summaryDiv.innerHTML = `
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>${insufficientMaterials} material(s) insufficient.</strong> 
+                    Production cannot proceed until materials are available.
+                `;
+            }
+            
+            previewDiv.style.display = 'block';
+            submitButton.disabled = !data.canProduce;
+        } else {
+            console.error('Error calculating requirements:', data.error);
+            previewDiv.style.display = 'none';
+            submitButton.disabled = true;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        previewDiv.style.display = 'none';
+        submitButton.disabled = true;
+    } finally {
+        submitSpinner.style.display = 'none';
+    }
+}
+
+// Save as draft function
+function saveAsDraft() {
+    const draftSpinner = document.getElementById('draftSpinner');
+    const formStatus = document.getElementById('formStatus');
+    const form = document.getElementById('productionOrderForm');
+    
+    // Set status to draft
+    formStatus.value = 'draft';
+    
+    // Show loading spinner
+    draftSpinner.style.display = 'inline-block';
+    document.getElementById('saveDraftButton').disabled = true;
+    document.getElementById('submitButton').disabled = true;
+    
+    // Submit the form
+    form.submit();
+}
+
+// Form submission handler for creating production order
+function submitProductionOrder(e) {
+    if (!canProduce) {
+        e.preventDefault();
+        alert('Cannot create production order. Some materials are insufficient.');
+        return;
+    }
+    
+    // Set status to pending
+    document.getElementById('formStatus').value = 'pending';
+    
+    // Show loading spinner
+    document.getElementById('submitSpinner').style.display = 'inline-block';
+    document.getElementById('submitButton').disabled = true;
+    document.getElementById('saveDraftButton').disabled = true;
+}
+
+// Add event listeners
+document.getElementById('product').addEventListener('change', calculateRequirements);
+document.getElementById('targetQuantity').addEventListener('input', calculateRequirements);
+document.getElementById('saveDraftButton').addEventListener('click', saveAsDraft);
+document.getElementById('productionOrderForm').addEventListener('submit', submitProductionOrder);
+
+// Calculate on page load if values are already filled
+document.addEventListener('DOMContentLoaded', function() {
+    const product = document.getElementById('product').value;
+    const targetQuantity = document.getElementById('targetQuantity').value;
+    
+    if (product && targetQuantity) {
+        calculateRequirements();
+    }
+    
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('expectedCompletionDate').min = today;
+});
+</script>
+
+<%- include('../../../partials/footer') %>

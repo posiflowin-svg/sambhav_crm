@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - StockMaster</title>
+    <!-- Production CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        .nav-link {
+            color: #4a5568;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link:hover {
+            background-color: #f7fafc;
+            color: #2d3748;
+            transform: translateY(-1px);
+        }
+
+        .nav-link.logout:hover {
+            background-color: #fff5f5;
+            color: #c53030;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-pending { background-color: #fef3c7; color: #92400e; }
+        .status-ordered { background-color: #dbeafe; color: #1e40af; }
+        .status-shipped { background-color: #c7d2fe; color: #3730a3; }
+        .status-delivered { background-color: #d1fae5; color: #065f46; }
+        .status-cancelled { background-color: #fee2e2; color: #991b1b; }
+        .status-partially_delivered { background-color: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-boxes text-blue-600 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold text-gray-800">StockMaster</span>
+                    </div>
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <a href="/products" class="nav-link">Products</a>
+                        <a href="/products/transactions" class="nav-link">Transactions</a>
+                        <a href="/api/po" class="nav-link border-blue-500">Purchase Orders</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <% if (user && user.role === 'admin') { %>
+                    <a href="/admin/reports" class="nav-link logout">
+                        <i class="fas fa-chart-bar"></i>
+                        Back To Admin
+                    </a>
+                    <% } %>
+                    
+                    <% if (user) { %>
+                    <a href="/auth/logout" class="nav-link logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </a>
+                    <% } else { %>
+                    <a href="/auth/login" class="nav-link login">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Login
+                    </a>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <!-- Dashboard Stats -->
+        <div id="dashboard-stats" class="mb-8">
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-shopping-cart text-blue-500 text-2xl"></i>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Loading...</dt>
+                                    <dd class="text-lg font-medium text-gray-900">--</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters and Actions -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <div class="flex flex-col space-y-4">
+                <!-- First Row: Search and Actions -->
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </div>
+                            <input type="text" id="search-input" placeholder="Search by PO number or supplier..."
+                                class="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-full focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button onclick="openCreatePOModal()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
+                            <i class="fas fa-plus mr-2"></i>New Purchase Invoice
+                        </button>
+                        <!-- <button onclick="openCreateProductPOModal()" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700">
+                            <i class="fas fa-box mr-2"></i>Create Product + PO
+                        </button> -->
+                    </div>
+                </div>
+
+                <!-- Second Row: Date Filters and Status -->
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+                            <input type="date" id="start-date" class="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                            <input type="date" id="end-date" class="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div class="sm:w-64">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select id="status-filter" class="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="all">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="ordered">Ordered</option>
+                            <option value="shipped">Shipped</option>
+                            <option value="partially_delivered">Partially Delivered</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end space-x-2">
+                        <button onclick="loadPOs(1)" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                            <i class="fas fa-filter mr-2"></i>Apply Filters
+                        </button>
+                        <button onclick="exportToExcel()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
+                            <i class="fas fa-file-excel mr-2"></i>Export Excel
+                        </button>
+                        <button onclick="resetFilters()" class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
+                            <i class="fas fa-undo mr-2"></i>Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div id="content-area">
+            <!-- PO List will be loaded here -->
+            <div class="text-center py-12">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                <p class="mt-4 text-gray-600">Loading purchase orders...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals Container -->
+    <div id="modals-container"></div>
+
+    <!-- JavaScript -->
+    <script>
+        const API_BASE = '/api/po/api';
+        let currentPage = 1;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardStats();
+            loadPOs();
+        });
+
+        // Load dashboard statistics
+        async function loadDashboardStats() {
+            try {
+                const response = await fetch(`${API_BASE}/pos?limit=1`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const stats = data.stats;
+                    const statsHtml = `
+                        <div class="bg-white overflow-hidden shadow rounded-lg">
+                            <div class="p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-shopping-cart text-blue-500 text-2xl"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 truncate">Total Orders</dt>
+                                            <dd class="text-lg font-medium text-gray-900">${stats.totalOrders || 0}</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white overflow-hidden shadow rounded-lg">
+                            <div class="p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-clock text-yellow-500 text-2xl"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 truncate">Pending</dt>
+                                            <dd class="text-lg font-medium text-gray-900">${stats.pendingOrders || 0}</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white overflow-hidden shadow rounded-lg">
+                            <div class="p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-truck text-orange-500 text-2xl"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 truncate">Partial</dt>
+                                            <dd class="text-lg font-medium text-gray-900">${stats.partialOrders || 0}</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white overflow-hidden shadow rounded-lg">
+                            <div class="p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-check-circle text-green-500 text-2xl"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 truncate">Delivered</dt>
+                                            <dd class="text-lg font-medium text-gray-900">${stats.deliveredOrders || 0}</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.querySelector('#dashboard-stats .grid').innerHTML = statsHtml;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load POs
+        async function loadPOs(page = 1) {
+            currentPage = page;
+            
+            const search = document.getElementById('search-input').value;
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const status = document.getElementById('status-filter').value;
+            
+            const queryParams = new URLSearchParams({
+                page: currentPage,
+                limit: 10,
+                ...(search && { search }),
+                ...(startDate && { startDate }),
+                ...(endDate && { endDate }),
+                ...(status && status !== 'all' && { status })
+            });
+            
+            try {
+                const response = await fetch(`${API_BASE}/pos?${queryParams}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderPOs(data.data, data.pagination);
+                } else {
+                    showError(data.message || 'Failed to load POs');
+                }
+            } catch (error) {
+                console.error('Error loading POs:', error);
+                showError('Failed to load POs');
+            }
+        }
+
+        // Render POs
+        function renderPOs(pos, pagination) {
+            let html = `
+                <div class="bg-white shadow-md rounded-lg overflow-hidden">
+                    <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+                        <h2 class="text-xl font-semibold text-gray-800">Purchase Orders</h2>
+                        <div class="text-sm text-gray-600">
+                            Showing ${pos.length} of ${pagination.total} orders
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PO Number</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expected</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+            `;
+            
+            if (pos.length === 0) {
+                html += `
+                    <tr>
+                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                            <i class="fas fa-file-invoice text-3xl mb-3 text-gray-300"></i>
+                            <p>No purchase orders found</p>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                pos.forEach(po => {
+                    const totalItems = po.items.length;
+                    const receivedItems = po.items.filter(i => i.receivedQuantity > 0).length;
+                    
+                    html += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">${po.orderNumber}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">${new Date(po.orderDate).toLocaleDateString()}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900">${po.supplier?.name || 'N/A'}</div>
+                                ${po.supplier?.contact ? `<div class="text-xs text-gray-500">${po.supplier.contact}</div>` : ''}
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900">${totalItems} item(s)</div>
+                                ${po.status === 'partially_delivered' ? 
+                                    `<div class="text-xs text-gray-500">${receivedItems} received</div>` : ''}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="status-badge status-${po.status}">
+                                    ${po.status.replace('_', ' ')}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">
+                                    ${po.expectedDelivery ? new Date(po.expectedDelivery).toLocaleDateString() : 'N/A'}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button onclick="viewPO('${po._id}')" class="text-blue-600 hover:text-blue-900 mr-3" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                ${['pending', 'ordered', 'shipped', 'partially_delivered'].includes(po.status) ? `
+                                    <button onclick="editPO('${po._id}')" class="text-yellow-600 hover:text-yellow-900 mr-3" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="openReceiveModal('${po._id}')" class="text-green-600 hover:text-green-900 mr-3" title="Receive Items">
+                                        <i class="fas fa-truck-loading"></i>
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    ${renderPagination(pagination)}
+                </div>
+            `;
+            
+            document.getElementById('content-area').innerHTML = html;
+        }
+
+        // Render pagination
+        function renderPagination(pagination) {
+            if (pagination.pages <= 1) return '';
+            
+            let html = `
+                <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                    <div class="flex-1 flex justify-between sm:hidden">
+                        ${pagination.page > 1 ? `
+                            <button onclick="loadPOs(${pagination.page - 1})" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                Previous
+                            </button>
+                        ` : ''}
+                        ${pagination.page < pagination.pages ? `
+                            <button onclick="loadPOs(${pagination.page + 1})" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                Next
+                            </button>
+                        ` : ''}
+                    </div>
+                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-gray-700">
+                                Showing <span class="font-medium">${(pagination.page - 1) * pagination.limit + 1}</span>
+                                to <span class="font-medium">${Math.min(pagination.page * pagination.limit, pagination.total)}</span>
+                                of <span class="font-medium">${pagination.total}</span> results
+                            </p>
+                        </div>
+                        <div>
+                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+            `;
+            
+            for (let i = 1; i <= pagination.pages; i++) {
+                if (i === pagination.page) {
+                    html += `
+                        <span class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                            ${i}
+                        </span>
+                    `;
+                } else {
+                    html += `
+                        <button onclick="loadPOs(${i})" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                            ${i}
+                        </button>
+                    `;
+                }
+            }
+            
+            html += `
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return html;
+        }
+
+        // Reset filters
+        function resetFilters() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('start-date').value = '';
+            document.getElementById('end-date').value = '';
+            document.getElementById('status-filter').value = 'all';
+            loadPOs(1);
+        }
+
+        // View PO
+        async function viewPO(id) {
+            try {
+                const response = await fetch(`${API_BASE}/pos/${id}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    showPODetails(data.data);
+                }
+            } catch (error) {
+                showError('Failed to load PO details');
+            }
+        }
+
+        // Open Create PO Modal
+        async function openCreatePOModal() {
+            try {
+                const response = await fetch(`${API_BASE}/products`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    showCreatePOModal(data.data);
+                }
+            } catch (error) {
+                showError('Failed to load products');
+            }
+        }
+
+        // Show Create PO Modal (updated with price field)
+        function showCreatePOModal(products) {
+            let productsOptions = '<option value="">Select Product</option>';
+            products.forEach(product => {
+                productsOptions += `<option value="${product._id}" data-unit="${product.unit}" data-price="${product.unitPrice || 0}">${product.itemName} (${product.stockQuantity} ${product.unit})</option>`;
+            });
+
+            const modalHtml = `
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50"></div>
+                <div class="fixed inset-0 z-50 overflow-y-auto">
+                    <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                        <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-3xl">
+                            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                <div class="flex justify-between items-start mb-4">
+                                    <h3 class="text-lg font-medium leading-6 text-gray-900">Create New Purchase Order</h3>
+                                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-500">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                
+                                <form id="create-po-form">
+                                    <div class="space-y-4">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Supplier Name *</label>
+                                                <input type="text" id="supplier-name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Supplier Contact</label>
+                                                <input type="text" id="supplier-contact" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Expected Delivery</label>
+                                            <input type="date" id="expected-delivery" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Notes</label>
+                                            <textarea id="po-notes" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+                                        </div>
+
+                                        <div>
+                                            <div class="flex justify-between items-center mb-2">
+                                                <label class="block text-sm font-medium text-gray-700">Items *</label>
+                                                <button type="button" onclick="addPOItem()" class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+                                                    <i class="fas fa-plus mr-1"></i>Add Item
+                                                </button>
+                                            </div>
+                                            <div id="po-items-container" class="space-y-2">
+                                                <!-- Items will be added here -->
+                                                <div class="po-item flex gap-2 items-start">
+                                                    <select class="product-select flex-1 rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" required onchange="updatePriceField(this)">
+                                                        ${productsOptions}
+                                                    </select>
+                                                    <input type="number" class="quantity-input w-24 rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Qty" min="1" required onchange="updateSubtotal(this)">
+                                                    <input type="number" class="price-input w-32 rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Price/Unit" step="0.01" min="0" required onchange="updateSubtotal(this)">
+                                                    <span class="subtotal-display w-24 text-sm text-gray-600 self-center">0.00</span>
+                                                    <button type="button" onclick="removePOItem(this)" class="text-red-600 hover:text-red-900">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="bg-gray-50 p-4 rounded-lg">
+                                            <div class="flex justify-between items-center">
+                                                <span class="font-medium text-gray-700">Order Total:</span>
+                                                <span id="order-total" class="text-xl font-bold text-blue-600">0.00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                                <button type="button" onclick="submitCreatePO()" class="inline-flex w-full justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm">
+                                    Create PO
+                                </button>
+                                <button type="button" onclick="closeModal()" class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('modals-container').innerHTML = modalHtml;
+        }
+
+        // Add PO item (updated with price field)
+        function addPOItem() {
+            const container = document.getElementById('po-items-container');
+            const firstItem = container.querySelector('.po-item');
+            const newItem = firstItem.cloneNode(true);
+            
+            // Clear values
+            const select = newItem.querySelector('.product-select');
+            if (select) select.value = '';
+            
+            const quantity = newItem.querySelector('.quantity-input');
+            if (quantity) quantity.value = '';
+            
+            const price = newItem.querySelector('.price-input');
+            if (price) price.value = '';
+            
+            container.appendChild(newItem);
+        }
+
+        // Update price field when product is selected
+        function updatePriceField(selectElement) {
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            const defaultPrice = selectedOption.getAttribute('data-price') || 0;
+            const priceInput = selectElement.closest('.po-item').querySelector('.price-input');
+            if (priceInput && !priceInput.value) {
+                priceInput.value = defaultPrice;
+                updateSubtotal(priceInput);
+            }
+        }
+
+        // Update subtotal and order total
+        function updateSubtotal(element) {
+            const poItem = element.closest('.po-item');
+            const quantity = parseFloat(poItem.querySelector('.quantity-input').value) || 0;
+            const price = parseFloat(poItem.querySelector('.price-input').value) || 0;
+            const subtotal = quantity * price;
+            
+            const subtotalDisplay = poItem.querySelector('.subtotal-display');
+            if (subtotalDisplay) {
+                subtotalDisplay.textContent = subtotal.toFixed(2);
+            }
+            
+            // Update overall order total
+            updateOrderTotal();
+        }
+
+        // Update order total
+        function updateOrderTotal() {
+            const subtotals = document.querySelectorAll('.subtotal-display');
+            let total = 0;
+            subtotals.forEach(subtotal => {
+                total += parseFloat(subtotal.textContent) || 0;
+            });
+            
+            const orderTotalSpan = document.getElementById('order-total');
+            if (orderTotalSpan) {
+                orderTotalSpan.textContent = total.toFixed(2);
+            }
+        }
+
+        // Remove PO item
+        function removePOItem(button) {
+            const container = document.getElementById('po-items-container');
+            if (container.children.length > 1) {
+                button.closest('.po-item').remove();
+            } else {
+                showError('At least one item is required');
+            }
+        }
+
+        // Submit create PO (updated with price)
+        async function submitCreatePO() {
+            const items = [];
+            const itemElements = document.querySelectorAll('.po-item');
+            
+            for (const element of itemElements) {
+                const productId = element.querySelector('.product-select').value;
+                const quantity = element.querySelector('.quantity-input').value;
+                const pricePerUnit = element.querySelector('.price-input').value;
+                
+                if (!productId || !quantity || !pricePerUnit) {
+                    showError('Please fill all item fields (product, quantity, and price per unit)');
+                    return;
+                }
+                
+                items.push({
+                    product: productId,
+                    quantity: parseInt(quantity),
+                    pricePerUnit: parseFloat(pricePerUnit)
+                });
+            }
+
+            const poData = {
+                items,
+                supplier: {
+                    name: document.getElementById('supplier-name').value,
+                    contact: document.getElementById('supplier-contact').value
+                },
+                expectedDelivery: document.getElementById('expected-delivery').value || null,
+                notes: document.getElementById('po-notes').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/pos`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(poData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showSuccess('Purchase Order created successfully');
+                    closeModal();
+                    loadPOs(1);
+                    loadDashboardStats();
+                } else {
+                    showError(data.message || 'Failed to create PO');
+                }
+            } catch (error) {
+                showError('Error creating PO: ' + error.message);
+            }
+        }
+
+        // Open Create Product + PO Modal
+        function openCreateProductPOModal() {
+            const modalHtml = `
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50"></div>
+                <div class="fixed inset-0 z-50 overflow-y-auto">
+                    <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                        <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+                            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                <div class="flex justify-between items-start mb-4">
+                                    <h3 class="text-lg font-medium leading-6 text-gray-900">Create New Product & Purchase Order</h3>
+                                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-500">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                
+                                <form id="create-product-po-form">
+                                    <div class="space-y-4">
+                                        <h4 class="font-medium">Product Details</h4>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Item Code *</label>
+                                                <input type="text" id="new-item-code" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Item Name *</label>
+                                                <input type="text" id="new-item-name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Description</label>
+                                            <textarea id="new-description" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Category *</label>
+                                                <select id="new-category" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                                    <option value="">Select Category</option>
+                                                    <option value="Components">Components</option>
+                                                    <option value="Display">Display</option>
+                                                    <option value="TFT Display">TFT Display</option>
+                                                    <option value="POS">POS</option>
+                                                    <option value="Printer">Printer</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Location *</label>
+                                                <input type="text" id="new-location" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-3 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Unit *</label>
+                                                <input type="text" id="new-unit" value="pcs" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Min Stock</label>
+                                                <input type="number" id="new-min-stock" value="0" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Max Stock</label>
+                                                <input type="number" id="new-max-stock" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                            </div>
+                                        </div>
+
+                                        <h4 class="font-medium mt-4">Purchase Order Details</h4>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Order Quantity *</label>
+                                                <input type="number" id="po-quantity" required min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Supplier Name *</label>
+                                                <input type="text" id="po-supplier-name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Supplier Contact</label>
+                                                <input type="text" id="po-supplier-contact" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Expected Delivery</label>
+                                                <input type="date" id="po-expected-delivery" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">PO Notes</label>
+                                            <textarea id="po-notes" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                                <button type="button" onclick="submitCreateProductPO()" class="inline-flex w-full justify-center rounded-md border border-transparent bg-purple-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm">
+                                    Create Product & PO
+                                </button>
+                                <button type="button" onclick="closeModal()" class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('modals-container').innerHTML = modalHtml;
+        }
+
+        // Submit Create Product + PO
+        async function submitCreateProductPO() {
+            const productData = {
+                itemCode: document.getElementById('new-item-code').value,
+                itemName: document.getElementById('new-item-name').value,
+                description: document.getElementById('new-description').value,
+                category: document.getElementById('new-category').value,
+                location: document.getElementById('new-location').value,
+                unit: document.getElementById('new-unit').value,
+                minimumStock: parseInt(document.getElementById('new-min-stock').value) || 0,
+                maximumStock: document.getElementById('new-max-stock').value ? parseInt(document.getElementById('new-max-stock').value) : null
+            };
+
+            const poData = {
+                quantity: parseInt(document.getElementById('po-quantity').value),
+                supplier: {
+                    name: document.getElementById('po-supplier-name').value,
+                    contact: document.getElementById('po-supplier-contact').value
+                },
+                expectedDelivery: document.getElementById('po-expected-delivery').value || null,
+                notes: document.getElementById('po-notes').value
+            };
+
+            // Validate
+            for (let [key, value] of Object.entries(productData)) {
+                if (['itemCode', 'itemName', 'category', 'location', 'unit'].includes(key) && !value) {
+                    showError(`Please fill ${key} field`);
+                    return;
+                }
+            }
+
+            if (!poData.quantity) {
+                showError('Please enter order quantity');
+                return;
+            }
+
+            if (!poData.supplier.name) {
+                showError('Please enter supplier name');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/product-and-po`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        product: productData,
+                        po: poData
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showSuccess('Product and PO created successfully');
+                    closeModal();
+                    loadPOs(1);
+                    loadDashboardStats();
+                } else {
+                    showError(data.message || 'Failed to create product and PO');
+                }
+            } catch (error) {
+                showError('Error: ' + error.message);
+            }
+        }
+
+        // Edit PO
+        async function editPO(id) {
+            try {
+                const [poResponse, productsResponse] = await Promise.all([
+                    fetch(`${API_BASE}/pos/${id}`),
+                    fetch(`${API_BASE}/products`)
+                ]);
+
+                const poData = await poResponse.json();
+                const productsData = await productsResponse.json();
+
+                if (poData.success && productsData.success) {
+                    showEditPOModal(poData.data, productsData.data);
+                }
+            } catch (error) {
+                showError('Failed to load PO details');
+            }
+        }
+
+        // Open Receive Modal
+        async function openReceiveModal(poId) {
+            try {
+                const response = await fetch(`${API_BASE}/pos/${poId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    showReceiveModal(data.data);
+                }
+            } catch (error) {
+                showError('Failed to load PO details');
+            }
+        }
+
+        // Show Receive Modal
+        function showReceiveModal(po) {
+            let itemsHtml = '';
+            po.items.forEach(item => {
+                const remaining = item.quantity - item.receivedQuantity;
+                if (remaining > 0) {
+                    itemsHtml += `
+                        <div class="receive-item border rounded p-3 mb-2">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-medium">${item.product?.itemCode || 'N/A'} - ${item.product?.itemName || 'N/A'}</p>
+                                    <p class="text-sm text-gray-600">
+                                        Ordered: ${item.quantity} ${item.unit} | 
+                                        Received: ${item.receivedQuantity} | 
+                                        Remaining: <span class="font-medium">${remaining}</span>
+                                    </p>
+                                </div>
+                                <div class="w-48">
+                                    <input type="hidden" class="item-id" value="${item._id}">
+                                    <input type="number" class="receive-quantity w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" 
+                                           placeholder="Qty to receive" min="1" max="${remaining}" step="1">
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <input type="text" class="receive-notes w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" 
+                                       placeholder="Notes (optional)">
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            if (itemsHtml === '') {
+                itemsHtml = '<p class="text-center text-gray-500 py-4">All items have been fully received</p>';
+            }
+
+            const modalHtml = `
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50"></div>
+                <div class="fixed inset-0 z-50 overflow-y-auto">
+                    <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                        <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+                            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                <div class="flex justify-between items-start mb-4">
+                                    <h3 class="text-lg font-medium leading-6 text-gray-900">Receive Items - ${po.orderNumber}</h3>
+                                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-500">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                
+                                <form id="receive-form">
+                                    <div class="space-y-4">
+                                        <div class="bg-blue-50 p-3 rounded">
+                                            <p class="text-sm text-blue-800">
+                                                <i class="fas fa-info-circle mr-2"></i>
+                                                Enter quantities to receive. Stock will be automatically added to inventory.
+                                            </p>
+                                        </div>
+                                        
+                                        <div id="receive-items-container">
+                                            ${itemsHtml}
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                                <button type="button" onclick="submitReceive('${po._id}')" class="inline-flex w-full justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm">
+                                    Receive Items
+                                </button>
+                                <button type="button" onclick="closeModal()" class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('modals-container').innerHTML = modalHtml;
+        }
+
+        // Submit Receive
+        async function submitReceive(poId) {
+            const items = [];
+            const itemElements = document.querySelectorAll('.receive-item');
+            
+            for (const element of itemElements) {
+                const itemId = element.querySelector('.item-id').value;
+                const quantity = element.querySelector('.receive-quantity').value;
+                const notes = element.querySelector('.receive-notes').value;
+                
+                if (quantity) {
+                    items.push({
+                        itemId,
+                        quantity: parseInt(quantity),
+                        notes
+                    });
+                }
+            }
+
+            if (items.length === 0) {
+                showError('Please enter at least one quantity to receive');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/pos/${poId}/receive`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ items })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showSuccess('Items received successfully');
+                    closeModal();
+                    loadPOs(currentPage);
+                    loadDashboardStats();
+                } else {
+                    showError(data.message || 'Failed to receive items');
+                }
+            } catch (error) {
+                showError('Error receiving items: ' + error.message);
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('modals-container').innerHTML = '';
+        }
+
+        // Utility functions
+        function showSuccess(message) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: message,
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+
+        function showError(message) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: message
+            });
+        }
+
+        // Debounce search
+        let searchTimeout;
+        document.getElementById('search-input').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                loadPOs(1);
+            }, 500);
+        });
+
+        // Export to Excel
+        function exportToExcel() {
+            // Get current filter values
+            const search = document.getElementById('search-input').value;
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const status = document.getElementById('status-filter').value;
+            
+            // Build query string
+            const queryParams = new URLSearchParams({
+                ...(search && { search }),
+                ...(startDate && { startDate }),
+                ...(endDate && { endDate }),
+                ...(status && status !== 'all' && { status })
+            });
+            
+            // Show loading
+            Swal.fire({
+                title: 'Generating Excel...',
+                text: 'Please wait',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Create a temporary anchor element for download
+            const link = document.createElement('a');
+            link.href = `${API_BASE}/export/excel?${queryParams}`;
+            link.download = ''; // Let the server set the filename
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Close loading after a short delay
+            setTimeout(() => {
+                Swal.close();
+            }, 2000);
+        }
+    
+        // Show Edit PO Modal (updated with price field)
+        function showEditPOModal(po, products) {
+            let productsOptions = '<option value="">Select Product</option>';
+            products.forEach(product => {
+                productsOptions += `<option value="${product._id}" data-unit="${product.unit}" data-price="${product.unitPrice || 0}">${product.itemName}</option>`;
+            });
+
+            let itemsHtml = '';
+            po.items.forEach((item, index) => {
+                const pricePerUnit = item.pricePerUnit || 0;
+                const subtotal = pricePerUnit * item.quantity;
+                itemsHtml += `
+                    <div class="po-item flex gap-2 items-start mb-2">
+                        <select class="product-select flex-1 rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" required onchange="updatePriceField(this)">
+                            ${productsOptions.replace(`value="${item.product?._id}"`, `value="${item.product?._id}" selected`)}
+                        </select>
+                        <input type="number" class="quantity-input w-24 rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Qty" min="1" value="${item.quantity}" required onchange="updateSubtotal(this)">
+                        <input type="number" class="price-input w-32 rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Price/Unit" step="0.01" min="0" value="${pricePerUnit}" required onchange="updateSubtotal(this)">
+                        <span class="subtotal-display w-24 text-sm text-gray-600 self-center">${subtotal.toFixed(2)}</span>
+                        <input type="number" class="received-input w-24 rounded-md border-gray-300 bg-gray-100 shadow-sm" placeholder="Received" value="${item.receivedQuantity}" readonly disabled>
+                        <button type="button" onclick="removePOItem(this)" class="text-red-600 hover:text-red-900">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+            });
+
+            const modalHtml = `
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50"></div>
+                <div class="fixed inset-0 z-50 overflow-y-auto">
+                    <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                        <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl">
+                            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                <div class="flex justify-between items-start mb-4">
+                                    <h3 class="text-lg font-medium leading-6 text-gray-900">Edit Purchase Order - ${po.orderNumber}</h3>
+                                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-500">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                
+                                <form id="edit-po-form">
+                                    <div class="space-y-4">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Supplier Name *</label>
+                                                <input type="text" id="edit-supplier-name" value="${po.supplier?.name || ''}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Supplier Contact</label>
+                                                <input type="text" id="edit-supplier-contact" value="${po.supplier?.contact || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Expected Delivery</label>
+                                            <input type="date" id="edit-expected-delivery" value="${po.expectedDelivery ? new Date(po.expectedDelivery).toISOString().split('T')[0] : ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Status</label>
+                                            <select id="edit-status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                                <option value="pending" ${po.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                                <option value="ordered" ${po.status === 'ordered' ? 'selected' : ''}>Ordered</option>
+                                                <option value="shipped" ${po.status === 'shipped' ? 'selected' : ''}>Shipped</option>
+                                                <option value="cancelled" ${po.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                            </select>
+                                            <p class="text-xs text-gray-500 mt-1">Note: Delivered status cannot be changed here</p>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Notes</label>
+                                            <textarea id="edit-notes" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">${po.notes || ''}</textarea>
+                                        </div>
+
+                                        <div>
+                                            <div class="flex justify-between items-center mb-2">
+                                                <label class="block text-sm font-medium text-gray-700">Items *</label>
+                                                <button type="button" onclick="addPOItem()" class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+                                                    <i class="fas fa-plus mr-1"></i>Add Item
+                                                </button>
+                                            </div>
+                                            <div id="po-items-container" class="space-y-2">
+                                                ${itemsHtml}
+                                            </div>
+                                            <p class="text-xs text-gray-500 mt-1">Note: Received quantities cannot be edited here</p>
+                                        </div>
+                                        
+                                        <div class="bg-gray-50 p-4 rounded-lg">
+                                            <div class="flex justify-between items-center">
+                                                <span class="font-medium text-gray-700">Order Total:</span>
+                                                <span id="order-total" class="text-xl font-bold text-blue-600">${calculateOrderTotal(po.items).toFixed(2)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                                <button type="button" onclick="submitEditPO('${po._id}')" class="inline-flex w-full justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm">
+                                    Update PO
+                                </button>
+                                <button type="button" onclick="closeModal()" class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('modals-container').innerHTML = modalHtml;
+            
+            // Attach event listeners for subtotal calculations after modal is rendered
+            attachSubtotalListeners();
+        }
+
+        // Calculate order total from items
+        function calculateOrderTotal(items) {
+            return items.reduce((total, item) => {
+                const pricePerUnit = item.pricePerUnit || 0;
+                return total + (pricePerUnit * item.quantity);
+            }, 0);
+        }
+
+        // Attach listeners for subtotal calculation
+        function attachSubtotalListeners() {
+            const quantityInputs = document.querySelectorAll('.quantity-input');
+            const priceInputs = document.querySelectorAll('.price-input');
+            
+            quantityInputs.forEach(input => {
+                input.addEventListener('change', () => updateSubtotal(input));
+            });
+            
+            priceInputs.forEach(input => {
+                input.addEventListener('change', () => updateSubtotal(input));
+            });
+        }
+
+        // Submit Edit PO (updated with price)
+        async function submitEditPO(poId) {
+            const items = [];
+            const itemElements = document.querySelectorAll('.po-item');
+            
+            for (const element of itemElements) {
+                const productId = element.querySelector('.product-select').value;
+                const quantity = element.querySelector('.quantity-input').value;
+                const pricePerUnit = element.querySelector('.price-input').value;
+                
+                if (!productId || !quantity || !pricePerUnit) {
+                    showError('Please fill all item fields (product, quantity, and price per unit)');
+                    return;
+                }
+                
+                items.push({
+                    product: productId,
+                    quantity: parseInt(quantity),
+                    pricePerUnit: parseFloat(pricePerUnit)
+                });
+            }
+
+            const poData = {
+                items,
+                supplier: {
+                    name: document.getElementById('edit-supplier-name').value,
+                    contact: document.getElementById('edit-supplier-contact').value
+                },
+                expectedDelivery: document.getElementById('edit-expected-delivery').value || null,
+                status: document.getElementById('edit-status').value,
+                notes: document.getElementById('edit-notes').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/pos/${poId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(poData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showSuccess('Purchase Order updated successfully');
+                    closeModal();
+                    loadPOs(currentPage);
+                } else {
+                    showError(data.message || 'Failed to update PO');
+                }
+            } catch (error) {
+                showError('Error updating PO: ' + error.message);
+            }
+        }
+
+        function showPODetails(po) {
+            let itemsHtml = '';
+            po.items.forEach(item => {
+                const product = item.product;
+                const pricePerUnit = item.pricePerUnit || 0;
+                const subtotal = pricePerUnit * item.quantity;
+                const receivedValue = pricePerUnit * (item.receivedQuantity || 0);
+                
+                itemsHtml += `
+                    <tr>
+                        <td class="px-4 py-2">${product?.itemCode || 'N/A'}</td>
+                        <td class="px-4 py-2">${product?.itemName || 'N/A'}</td>
+                        <td class="px-4 py-2 text-right">${item.quantity}</td>
+                        <td class="px-4 py-2 text-right">${item.receivedQuantity}</td>
+                        <td class="px-4 py-2 text-right">${item.quantity - item.receivedQuantity}</td>
+                        <td class="px-4 py-2 text-right">${pricePerUnit.toFixed(2)}</td>
+                        <td class="px-4 py-2 text-right">${subtotal.toFixed(2)}</td>
+                        <td class="px-4 py-2">${item.unit}</td>
+                    </tr>
+                `;
+            });
+
+            const totalCost = calculateOrderTotal(po.items);
+            const receivedValue = po.items.reduce((total, item) => {
+                return total + ((item.pricePerUnit || 0) * (item.receivedQuantity || 0));
+            }, 0);
+            
+            const modalHtml = `
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50"></div>
+                <div class="fixed inset-0 z-50 overflow-y-auto">
+                    <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                        <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl">
+                            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                <div class="flex justify-between items-start mb-4">
+                                    <h3 class="text-lg font-medium leading-6 text-gray-900">Purchase Order Details</h3>
+                                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-500">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <p class="text-sm text-gray-500">PO Number</p>
+                                        <p class="font-medium">${po.orderNumber}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500">Status</p>
+                                        <span class="status-badge status-${po.status}">${po.status.replace('_', ' ')}</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500">Order Date</p>
+                                        <p>${new Date(po.orderDate).toLocaleDateString()}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500">Expected Delivery</p>
+                                        <p>${po.expectedDelivery ? new Date(po.expectedDelivery).toLocaleDateString() : 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500">Supplier</p>
+                                        <p class="font-medium">${po.supplier?.name || 'N/A'}</p>
+                                        ${po.supplier?.contact ? `<p class="text-sm">${po.supplier.contact}</p>` : ''}
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500">Created By</p>
+                                        <p>${po.createdBy?.username || 'N/A'}</p>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-4 mb-4 bg-gray-50 p-3 rounded">
+                                    <div>
+                                        <p class="text-sm text-gray-500">Total Order Value</p>
+                                        <p class="font-bold text-blue-600">${totalCost.toFixed(2)}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500">Received Value</p>
+                                        <p class="font-bold text-green-600">${receivedValue.toFixed(2)}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500">Pending Value</p>
+                                        <p class="font-bold text-orange-600">${(totalCost - receivedValue).toFixed(2)}</p>
+                                    </div>
+                                </div>
+
+                                ${po.notes ? `
+                                <div class="mb-4">
+                                    <p class="text-sm text-gray-500">Notes</p>
+                                    <p class="bg-gray-50 p-2 rounded">${po.notes}</p>
+                                </div>
+                                ` : ''}
+
+                                <h4 class="font-medium mb-2">Items</h4>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Item Code</th>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Item Name</th>
+                                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500">Ordered</th>
+                                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500">Received</th>
+                                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500">Remaining</th>
+                                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500">Price/Unit</th>
+                                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500">Subtotal</th>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Unit</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-200">
+                                            ${itemsHtml}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                ${po.items.some(i => i.receivedHistory.length > 0) ? `
+                                <h4 class="font-medium mt-4 mb-2">Receiving History</h4>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Date</th>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Item</th>
+                                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500">Quantity</th>
+                                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500">Value</th>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Notes</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-200">
+                                            ${po.items.flatMap(item => 
+                                                item.receivedHistory.map(history => `
+                                                    <tr>
+                                                        <td class="px-4 py-2">${new Date(history.receivedDate).toLocaleString()}</td>
+                                                        <td class="px-4 py-2">${item.product?.itemCode || 'N/A'}</td>
+                                                        <td class="px-4 py-2 text-right">${history.quantity}</td>
+                                                        <td class="px-4 py-2 text-right">${((item.pricePerUnit || 0) * history.quantity).toFixed(2)}</td>
+                                                        <td class="px-4 py-2">${history.notes || ''}</td>
+                                                    </tr>
+                                                `)
+                                            ).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                ` : ''}
+                            </div>
+                            <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                                <button type="button" onclick="closeModal()" class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('modals-container').innerHTML = modalHtml;
+        }
+    </script>
+</body>
+</html>

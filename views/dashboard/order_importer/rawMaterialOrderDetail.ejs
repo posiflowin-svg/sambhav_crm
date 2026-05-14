@@ -1,0 +1,407 @@
+<!-- views/dashboard/order_importer/rawMaterialOrderDetail.ejs -->
+<%- include('../../partials/header', { title: 'Raw Material Order Details' }) %>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mt-4">Raw Material Order Details</h1>
+        <div class="btn-group">
+            <% let backUrl = '/dashboard'; %>
+                <% if (user.role === 'stock_manager') { %>
+                    <% backUrl = '/dashboard/stock_manager'; %>
+                <% } else if (user.role === 'importer') { %>
+                    <% backUrl = '/dashboard/order_importer'; %>
+                <% } %>
+
+                <a href="<%= backUrl %>" class="btn btn-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Orders
+                </a>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    <% if (messages.error) { %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <%= messages.error %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <% } %>
+    <% if (messages.success) { %>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <%= messages.success %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <% } %>
+
+    <div class="row">
+        <!-- Order Summary -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Order Information
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <strong>Order Number:</strong><br>
+                                <span class="fs-5 text-primary"><%= order.orderNumber %></span>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Status:</strong><br>
+                                <span class="badge bg-<%= 
+                                    order.status === 'delivered' ? 'success' : 
+                                    order.status === 'partially_delivered' ? 'info' :
+                                    order.status === 'shipped' ? 'info' : 
+                                    order.status === 'ordered' ? 'primary' : 
+                                    order.status === 'pending' ? 'warning' : 
+                                    'danger' %> fs-6">
+                                    <%= order.status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') %>
+                                </span>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Order Date:</strong><br>
+                                <%= new Date(order.orderDate).toLocaleDateString() %>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <strong>Expected Delivery:</strong><br>
+                                <% if (order.expectedDelivery) { %>
+                                    <%= new Date(order.expectedDelivery).toLocaleDateString() %>
+                                    <% const today = new Date(); %>
+                                    <% const expectedDate = new Date(order.expectedDelivery); %>
+                                    <% if (order.status !== 'delivered' && order.status !== 'cancelled') { %>
+                                        <% if (expectedDate < today) { %>
+                                            <span class="badge bg-danger ms-2">Overdue</span>
+                                        <% } else if ((expectedDate - today) / (1000 * 60 * 60 * 24) <= 3) { %>
+                                            <span class="badge bg-warning ms-2">Due Soon</span>
+                                        <% } %>
+                                    <% } %>
+                                <% } else { %>
+                                    <span class="text-muted">Not specified</span>
+                                <% } %>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Actual Delivery:</strong><br>
+                                <% if (order.actualDelivery) { %>
+                                    <%= new Date(order.actualDelivery).toLocaleDateString() %>
+                                <% } else { %>
+                                    <span class="text-muted">Not delivered yet</span>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Items with Progress -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-cubes me-1"></i>
+                    Order Items & Delivery Progress
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Raw Material</th>
+                                    <th>Ordered Quantity</th>
+                                    <th>Received Quantity</th>
+                                    <th>Progress</th>
+                                    <th>Remaining</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% order.items.forEach(item => { %>
+                                    <% 
+                                        const receivedQuantity = item.receivedQuantity || 0;
+                                        const remaining = item.quantity - receivedQuantity;
+                                        const progressPercentage = (receivedQuantity / item.quantity) * 100;
+                                    %>
+                                    <tr>
+                                        <td>
+                                            <% if (item.rawMaterial) { %>
+                                                <strong><%= item.rawMaterial.name %></strong><br>
+                                                <% if (item.rawMaterial.sku) { %>
+                                                    <small class="text-muted">SKU: <%= item.rawMaterial.sku %></small>
+                                                <% } %>
+                                            <% } else { %>
+                                                <span class="text-danger">Material not found</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <%= item.quantity %> <%= item.unit || 'kg' %>
+                                        </td>
+                                        <td>
+                                            <span class="<%= receivedQuantity > 0 ? 'text-success fw-bold' : '' %>">
+                                                <%= receivedQuantity %> <%= item.unit || 'kg' %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar 
+                                                    <%= progressPercentage === 100 ? 'bg-success' : 
+                                                         progressPercentage > 0 ? 'bg-info' : 'bg-secondary' %>" 
+                                                    role="progressbar" 
+                                                    style="width: <%= progressPercentage %>%"
+                                                    aria-valuenow="<%= progressPercentage %>" 
+                                                    aria-valuemin="0" 
+                                                    aria-valuemax="100">
+                                                    <%= Math.round(progressPercentage) %>%
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="<%= remaining > 0 ? 'text-warning fw-bold' : 'text-success' %>">
+                                                <%= remaining %> <%= item.unit || 'kg' %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <% if (remaining > 0) { %>
+                                                <button class="btn btn-sm btn-primary" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#receiveModal"
+                                                        data-item-id="<%= item._id %>"
+                                                        data-material-name="<%= item.rawMaterial ? item.rawMaterial.name : 'Unknown Material' %>"
+                                                        data-max-quantity="<%= remaining %>"
+                                                        data-unit="<%= item.unit || 'kg' %>">
+                                                    <i class="fas fa-truck-loading"></i> Receive
+                                                </button>
+                                            <% } else { %>
+                                                <span class="badge bg-success">Completed</span>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Receive History -->
+            <% const hasReceiveHistory = order.items.some(item => item.receivedHistory && item.receivedHistory.length > 0); %>
+            <% if (hasReceiveHistory) { %>
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-history me-1"></i>
+                        Receive History
+                    </div>
+                    <div class="card-body">
+                        <% order.items.forEach(item => { %>
+                            <% if (item.receivedHistory && item.receivedHistory.length > 0) { %>
+                                <div class="mb-4">
+                                    <h6 class="fw-bold">
+                                        <%= item.rawMaterial ? item.rawMaterial.name : 'Unknown Material' %>
+                                    </h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Quantity Received</th>
+                                                    <th>Received By</th>
+                                                    <th>Notes</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% item.receivedHistory.forEach(history => { %>
+                                                    <tr>
+                                                        <td><%= new Date(history.receivedDate).toLocaleString() %></td>
+                                                        <td><%= history.quantity %> <%= item.unit || 'kg' %></td>
+                                                        <td>
+                                                            <% if (history.receivedBy) { %>
+                                                                <%= history.receivedBy.name %>
+                                                            <% } else { %>
+                                                                <span class="text-muted">Unknown</span>
+                                                            <% } %>
+                                                        </td>
+                                                        <td><%= history.notes || '-' %></td>
+                                                    </tr>
+                                                <% }) %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            <% } %>
+                        <% }) %>
+                    </div>
+                </div>
+            <% } %>
+
+            <!-- Notes -->
+            <% if (order.notes) { %>
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-sticky-note me-1"></i>
+                        Order Notes
+                    </div>
+                    <div class="card-body">
+                        <%= order.notes %>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Sidebar with Additional Info -->
+        <div class="col-lg-4">
+            <!-- Supplier Information -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <i class="fas fa-truck me-1"></i>
+                    Supplier Information
+                </div>
+                <div class="card-body">
+                    <% if (order.supplier && order.supplier.name) { %>
+                        <div class="mb-3">
+                            <strong>Name:</strong><br>
+                            <%= order.supplier.name %>
+                        </div>
+                        <% if (order.supplier.contact) { %>
+                            <div class="mb-3">
+                                <strong>Contact:</strong><br>
+                                <%= order.supplier.contact %>
+                            </div>
+                        <% } %>
+                    <% } else { %>
+                        <p class="text-muted">No supplier information available</p>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Order Metadata -->
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <i class="fas fa-history me-1"></i>
+                    Order History
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Created By:</strong><br>
+                        <% if (order.createdBy) { %>
+                            <%= order.createdBy.name %> (<%= order.createdBy.email %>)
+                        <% } else { %>
+                            <span class="text-muted">User information not available</span>
+                        <% } %>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Created On:</strong><br>
+                        <%= new Date(order.createdAt).toLocaleString() %>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Last Updated:</strong><br>
+                        <%= new Date(order.updatedAt).toLocaleString() %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Actions -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <i class="fas fa-cog me-1"></i>
+                    Update Status
+                </div>
+                <div class="card-body">
+                    <form action="/dashboard/order_importer/raw-material-orders/<%= order._id %>/status" method="POST" class="mb-3">
+                        <div class="mb-2">
+                            <label for="status" class="form-label"><strong>Change Status:</strong></label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                                <option value="ordered" <%= order.status === 'ordered' ? 'selected' : '' %>>Ordered</option>
+                                <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+                                <option value="partially_delivered" <%= order.status === 'partially_delivered' ? 'selected' : '' %>>Partially Delivered</option>
+                                <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                                <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100">Update Status</button>
+                    </form>
+
+                    <% if (order.status === 'shipped' || order.status === 'partially_delivered' || order.status === 'delivered') { %>
+                        <form action="/dashboard/order_importer/raw-material-orders/<%= order._id %>/delivery" method="POST">
+                            <div class="mb-2">
+                                <label for="actualDelivery" class="form-label"><strong>Actual Delivery Date:</strong></label>
+                                <input type="date" class="form-control" id="actualDelivery" name="actualDelivery" 
+                                    value="<%= order.actualDelivery ? new Date(order.actualDelivery).toISOString().split('T')[0] : '' %>">
+                            </div>
+                            <button type="submit" class="btn btn-info btn-sm w-100">Update Delivery Date</button>
+                        </form>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Receive Items Modal -->
+<div class="modal fade" id="receiveModal" tabindex="-1" aria-labelledby="receiveModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="receiveModalLabel">Receive Raw Materials</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="receiveForm" method="POST" action="/dashboard/order_importer/raw-material-orders/<%= order._id %>/receive">
+                <div class="modal-body">
+                    <input type="hidden" id="itemId" name="itemId">
+                    <div class="mb-3">
+                        <label for="materialName" class="form-label">Raw Material</label>
+                        <input type="text" class="form-control" id="materialName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity to Receive</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" min="1" step="0.01" required>
+                        <div class="form-text">Maximum quantity: <span id="maxQuantity">0</span> <span id="quantityUnit">kg</span></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Receive Materials</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Receive Modal functionality
+const receiveModal = document.getElementById('receiveModal');
+if (receiveModal) {
+    receiveModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const itemId = button.getAttribute('data-item-id');
+        const materialName = button.getAttribute('data-material-name');
+        const maxQuantity = button.getAttribute('data-max-quantity');
+        const unit = button.getAttribute('data-unit');
+        
+        document.getElementById('itemId').value = itemId;
+        document.getElementById('materialName').value = materialName;
+        document.getElementById('quantity').setAttribute('max', maxQuantity);
+        document.getElementById('quantity').value = '';
+        document.getElementById('maxQuantity').textContent = maxQuantity;
+        document.getElementById('quantityUnit').textContent = unit;
+    });
+}
+
+// Form validation for receive quantity
+document.getElementById('receiveForm')?.addEventListener('submit', function(e) {
+    const quantityInput = document.getElementById('quantity');
+    const maxQuantity = parseFloat(quantityInput.getAttribute('max'));
+    const enteredQuantity = parseFloat(quantityInput.value);
+    
+    if (enteredQuantity > maxQuantity) {
+        e.preventDefault();
+        alert(`Cannot receive more than ${maxQuantity} ${document.getElementById('quantityUnit').textContent}.`);
+        quantityInput.focus();
+    }
+});
+</script>
+
+<%- include('../../partials/footer') %>

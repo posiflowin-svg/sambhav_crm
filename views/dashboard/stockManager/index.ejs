@@ -1,0 +1,237 @@
+<!-- views/dashboard/stockManager/index.ejs -->
+<%- include('../../partials/header', { title: 'Stock Manager Dashboard' }) %>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mt-4">Stock Manager Dashboard</h1>
+        <div class="btn-group">
+            <a href="/dashboard/stock_manager" class="btn btn-success active">Dashboard</a>
+            <a href="/dashboard/stock_manager/products" class="btn btn-primary">Manage Products</a>
+            <a href="/dashboard/stock_manager/raw-materials" class="btn btn-primary">Manage Raw Materials</a>
+            <a href="/dashboard/stock_manager/production-orders" class="btn btn-primary">Production Orders</a>
+            <a href="/dashboard/stock_manager/importer-orders" class="btn btn-primary">Importer Orders</a>
+        </div>
+    </div>
+
+    <!-- Dashboard Cards -->
+    <div class="row">
+        <!-- Products Card -->
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Products</h5>
+                            <h2 class="card-text"><%= productCount %></h2>
+                        </div>
+                        <i class="fas fa-box fa-2x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="/dashboard/stock_manager/products">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Raw Materials Card -->
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Raw Materials</h5>
+                            <h2 class="card-text"><%= rawMaterialCount %></h2>
+                        </div>
+                        <i class="fas fa-tools fa-2x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="/dashboard/stock_manager/raw-materials">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending PO Card -->
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Pending POs</h5>
+                            <h2 class="card-text"><%= pendingPOCount %></h2>
+                        </div>
+                        <i class="fas fa-clipboard-list fa-2x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="/dashboard/stock_manager/production-orders?status=pending">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Card -->
+        <!-- <div class="col-xl-3 col-md-6">
+            <div class="card bg-info text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Quick Actions</h5>
+                            <p class="card-text">Manage inventory</p>
+                        </div>
+                        <i class="fas fa-bolt fa-2x"></i>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-grid gap-2">
+                        <a href="/dashboard/stock_manager/products?action=create" class="btn btn-light btn-sm">Add Product</a>
+                        <a href="/dashboard/stock_manager/raw-materials?action=create" class="btn btn-light btn-sm">Add Material</a>
+                        <a href="/dashboard/stock_manager/production-orders?action=create" class="btn btn-light btn-sm">Create PO</a>
+                    </div>
+                </div>
+            </div>
+        </div> -->
+    </div>
+
+    <!-- Alerts Section -->
+    <div class="row">
+        <!-- Low Stock Products -->
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header bg-danger text-white">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    Low Stock Products
+                </div>
+                <div class="card-body">
+                    <% if (lowStockProducts.length > 0) { %>
+                        <div class="list-group">
+                            <% lowStockProducts.forEach(product => { %>
+                                <div class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1"><%= product.name %></h6>
+                                        <small class="text-danger">Stock: <%= product.currentStock %></small>
+                                    </div>
+                                    <small class="text-muted">SKU: <%= product.sku %></small>
+                                </div>
+                            <% }) %>
+                        </div>
+                    <% } else { %>
+                        <p class="text-muted">No low stock products</p>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Low Stock Materials -->
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <i class="fas fa-exclamation-circle me-1"></i>
+                    Low Stock Raw Materials
+                </div>
+                <div class="card-body">
+                    <% if (lowStockMaterials.length > 0) { %>
+                        <div class="list-group">
+                            <% lowStockMaterials.forEach(material => { %>
+                                <div class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1"><%= material.name %></h6>
+                                        <small class="text-warning">Stock: <%= material.currentStock %></small>
+                                    </div>
+                                    <small class="text-muted">SKU: <%= material.sku %></small>
+                                </div>
+                            <% }) %>
+                        </div>
+                    <% } else { %>
+                        <p class="text-muted">No low stock materials</p>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Production Orders -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            Recent Production Orders
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>PO Number</th>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (recentOrders.length > 0) { %>
+                            <% recentOrders.forEach(order => { %>
+                                <tr>
+                                    <td><%= order.poNumber %></td>
+                                    <td><%= order.product.name %></td>
+                                    <td><%= order.targetQuantity %></td>
+                                    <td>
+                                        <span class="badge bg-<%= 
+                                            order.status === 'completed' ? 'success' : 
+                                            order.status === 'in_progress' ? 'primary' : 
+                                            order.status === 'pending' ? 'warning' : 
+                                            'secondary' %>">
+                                            <%= order.status %>
+                                        </span>
+                                    </td>
+                                    <td><%= new Date(order.createdAt).toLocaleDateString() %></td>
+                                    <td>
+                                        <a href="/dashboard/stock_manager/production-orders/<%= order._id %>" class="btn btn-sm btn-info">View</a>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" class="text-center">No production orders found</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Activate Bootstrap tabs and handle tab state persistence
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the tab parameter from URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeTab = urlParams.get('tab');
+    
+    if (activeTab) {
+        const tabTrigger = document.querySelector(`[data-bs-target="#${activeTab}"]`);
+        if (tabTrigger) {
+            new bootstrap.Tab(tabTrigger).show();
+        }
+    }
+    
+    // Update URL when tab changes without reloading page
+    const tabEls = document.querySelectorAll('button[data-bs-toggle="tab"]');
+    tabEls.forEach(tabEl => {
+        tabEl.addEventListener('shown.bs.tab', function(event) {
+            const target = event.target.getAttribute('data-bs-target').substring(1);
+            const url = new URL(window.location);
+            url.searchParams.set('tab', target);
+            window.history.replaceState({}, '', url);
+        });
+    });
+});
+</script>
+
+
+<%- include('../../partials/footer') %>

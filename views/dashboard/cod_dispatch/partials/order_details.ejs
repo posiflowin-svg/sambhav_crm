@@ -1,0 +1,447 @@
+<div class="order-details-container">
+<!-- Order Header -->
+<div class="row mb-4">
+    <div class="col-md-6">
+      <div class="d-flex align-items-center mb-3">
+        <h4 class="mb-0 me-3">Order #<%= order.orderReference || order._id.toString().slice(-6).toUpperCase() %></h4>
+        <span class="badge rounded-pill bg-<%= getStatusBadgeColor(order.companyStatus) %>" id="orderStatusValue">
+          <i class="bi <%= getStatusIcon(order.companyStatus) %> me-1"></i>
+          <%= order.companyStatus.replace('_', ' ') %>
+        </span>
+        <% if (order.isBillOnHold) { %>
+          <span class="badge rounded-pill bg-warning text-dark ms-2" 
+                data-bs-toggle="tooltip" 
+                data-bs-placement="top"
+                title="Hold Reason: <%= order.holdReason || 'No reason provided' %>">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            BILL ON HOLD
+          </span>
+        <% } %>
+      </div>
+      
+      <% if (order.isBillOnHold) { %>
+        <div class="alert alert-warning py-2 mb-3" role="alert">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+            <div>
+              <strong class="d-block">This bill is currently on hold</strong>
+              <% if (order.holdReason) { %>
+                <span class="d-block mt-1"><%= order.holdReason %></span>
+              <% } else { %>
+                <span class="d-block mt-1 text-muted">No reason provided for hold</span>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% } %>
+      
+      <div class="text-muted">
+        <i class="bi bi-calendar me-1"></i>
+        <%= formatDate(order.createdAt) %>
+      </div>
+      <% if (order.shippingType) { %>
+        <div class="text-muted mt-1">
+          <i class="bi bi-truck me-1"></i>
+          <%= order.shippingType %>
+        </div>
+      <% } %>
+    </div>
+    <div class="col-md-6 text-md-end">
+      <div class="fw-bold fs-5">₹<%= order.total.toLocaleString('en-IN') %></div>
+      <% if (order.companyName) { %>
+        <div class="text-muted mt-1">
+          <i class="bi bi-building me-1"></i>
+          <%= order.companyName %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Customer and Shipping Info -->
+  <div class="row">
+    <!-- Customer Information -->
+    <div class="col-md-6 mb-4">
+      <div class="card h-100">
+        <div class="card-header bg-light">
+          <h6 class="mb-0"><i class="bi bi-person me-2"></i>Customer Information</h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <div class="fw-bold"><%= order.customerName %></div>
+            <div class="text-muted"><%= order.customerGSTIN || 'No GSTIN provided' %></div>
+          </div>
+          <div>
+            <div class="fw-bold">Contact Number</div>
+            <div class="text-muted"><%= order.customerContact %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Shipping and Billing Information -->
+    <div class="col-md-6 mb-4">
+      <div class="card h-100">
+        <div class="card-header bg-light">
+          <h6 class="mb-0"><i class="bi bi-truck me-2"></i>Shipping & Billing</h6>
+        </div>
+        <div class="card-body">
+          <!-- Shipping Address -->
+          <div class="mb-4">
+            <div class="d-flex align-items-center mb-2">
+              <h6 class="mb-0 me-2">Shipping Address</h6>
+              <% if (JSON.stringify(order.shippingAddress) === JSON.stringify(order.billingAddress)) { %>
+                <span class="badge bg-info">Same as billing</span>
+              <% } %>
+            </div>
+            <div class="text-muted">
+              <%= formatAddress(order.shippingAddress) %>
+            </div>
+          </div>
+          
+          <!-- Billing Address -->
+          <div>
+            <h6 class="mb-2">Billing Address</h6>
+            <div class="text-muted">
+              <%= formatAddress(order.billingAddress) %>
+            </div>
+          </div>
+          
+          <!-- Tracking Info -->
+          <hr class="my-3">
+          <% if (order.trackingId) { %>
+            <div>
+              <div class="fw-bold">Tracking ID</div>
+              <div class="text-muted"><%= order.trackingId %></div>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Items -->
+  <div class="card mb-4">
+    <div class="card-header bg-light">
+      <h6 class="mb-0"><i class="bi bi-cart me-2"></i>Order Items (<%= order.items.length %>)</h6>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th class="text-end">Price</th>
+              <th class="text-center">Qty</th>
+              <th class="text-end">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% order.items.forEach(item => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <% if (item.product && item.product.image) { %>
+                      <img src="<%= item.product.image %>" alt="<%= item.product.name %>" 
+                          class="rounded me-3" width="60" height="60">
+                    <% } else { %>
+                      <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" 
+                          style="width: 60px; height: 60px;">
+                        <i class="bi bi-image text-muted"></i>
+                      </div>
+                    <% } %>
+                    <div>
+                      <div class="fw-bold"><%= item.product ? item.product.name : 'Product not found' %></div>
+                      <% if (item.product && item.product.sku) { %>
+                        <small class="text-muted">SKU: <%= item.product.sku %></small>
+                      <% } %>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-end">₹<%= item.price.toLocaleString('en-IN') %></td>
+                <td class="text-center"><%= item.quantity %></td>
+                <td class="text-end">₹<%= (item.price * item.quantity).toLocaleString('en-IN') %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+<br>
+  <!-- Order Summary -->
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <% if (order.notes) { %>
+        <div class="card h-100">
+          <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="bi bi-pencil me-2"></i>Order Notes</h6>
+          </div>
+          <div class="card-body">
+            <%= order.notes %>
+          </div>
+        </div>
+      <% } %>
+    </div>
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h6 class="mb-0"><i class="bi bi-receipt me-2"></i>Order Summary</h6>
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <span>Subtotal:</span>
+            <span>₹<%= order.subtotal.toLocaleString('en-IN') %></span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+           <span>Tax (<%= (order.taxRate || 0).toLocaleString('en-IN') %>):</span>
+            <span>₹<%= (order.tax || 0).toLocaleString('en-IN') %></span>
+          </div>
+          <!-- Add Advance Payment Row (only for COD orders) -->
+          <% if (order.orderType === 'cod' && order.advancePayment > 0) { %>
+            <div class="d-flex justify-content-between mb-1">
+              <span class="text-muted">Advance Paid:</span>
+              <span class="text-success">- ₹<%= order.advancePayment.toLocaleString('en-IN') %></span>
+            </div>
+          <% } %>
+          <hr>
+          <div class="d-flex justify-content-between fw-bold fs-5">
+            <span>Total:</span>
+            <span>₹<%= order.total.toLocaleString('en-IN') %></span>
+          </div>
+
+          <!-- Add Balance Due for COD orders with advance -->
+          <% if (order.orderType === 'cod' && order.advancePayment > 0) { %>
+            <div class="d-flex justify-content-between mt-2 fw-bold border-top pt-2">
+              <span>Balance Due:</span>
+              <span>₹<%= (order.total - order.advancePayment).toLocaleString('en-IN') %></span>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<br>
+  <!-- Status History -->
+  <% if (order.statusHistory && order.statusHistory.length > 0) { %>
+    <div class="card mt-3">
+      <div class="card-header bg-light py-2">
+        <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Status History</h6>
+      </div>
+      <div class="card-body p-3">
+        <div class="timeline">
+          <% order.statusHistory.forEach(history => { %>
+            <div class="timeline-item">
+              <div class="timeline-badge bg-<%= getStatusBadgeColor(history.status) %>"></div>
+              <div class="timeline-content">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="fw-bold"><%= history.status.replace('_', ' ') %></span>
+                  <small class="text-muted">
+                    <%= new Date(history.changedAt || history.date).toLocaleString('en-US', {
+                      timeZone: 'Asia/Kolkata',
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true
+                    }) %>
+                  </small>
+                </div>
+                <% if (history.changedBy) { %>
+                  <div class="text-muted small">By <%= history.changedBy.name %></div>
+                <% } %>
+                <% if (history.notes) { %>
+                  <div class="mt-1 small text-muted"><%= history.notes %></div>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  <% } %>
+</div>
+<br>
+<% if (order.shippingLabels && order.shippingLabels.length > 0) { %>
+  <div class="d-flex flex-wrap gap-3 mb-3">
+    <% order.shippingLabels.forEach(label => { 
+         const labelUrl = `/api/file/files/${label.filename}?bucket=shippingLabels`;
+         const isPDF = label.filename.toLowerCase().endsWith('.pdf');
+    %>
+      <div class="payment-proof-thumbnail" style="width: 120px;">
+        <a href="<%= labelUrl %>" 
+           target="_blank" 
+           class="d-block text-decoration-none"
+           title="Click to view full size or download">
+
+          <% if (isPDF) { %>
+            <div class="d-flex align-items-center justify-content-center bg-light border rounded" 
+                 style="width: 100%; height: 120px;">
+              <i class="bi bi-file-earmark-pdf-fill fs-1 text-danger"></i>
+            </div>
+          <% } else { %>
+            <img src="<%= labelUrl %>" 
+                 alt="Shipping Label" 
+                 class="img-thumbnail w-100 h-auto"
+                 style="max-height: 120px; object-fit: contain;">
+          <% } %>
+
+          <div class="text-center small mt-1 text-truncate">
+            <%= label.originalName || label.filename %>
+          </div>
+        </a>
+      </div>
+    <% }); %>
+  </div>
+<% } %>
+
+<br>
+<!-- Payment Proofs Section -->
+<% if (order.paymentProofs && order.paymentProofs.length > 0) { %>
+  <div class="card mt-3">
+    <div class="card-header bg-light py-2">
+      <h6 class="mb-0"><i class="bi bi-receipt me-2"></i>Payment Proofs</h6>
+    </div>
+    <div class="card-body p-3">
+      <div class="d-flex flex-wrap gap-3">
+        <% order.paymentProofs.forEach(proof => { %>
+          <div class="payment-proof-thumbnail" style="width: 120px;">
+            <a href="/api/file/files/<%= proof.filename %>?bucket=paymentProofs" 
+               target="_blank" 
+               class="d-block text-decoration-none"
+               title="Click to view full size">
+              <img src="/api/file/files/<%= proof.filename %>?bucket=paymentProofs" 
+                   alt="Payment proof" 
+                   class="img-thumbnail w-100 h-auto"
+                   style="max-height: 120px; object-fit: contain;">
+              <div class="text-center small mt-1 text-truncate">
+                <%= proof.originalName || proof.filename %>
+              </div>
+            </a>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+<% } %>
+
+<!-- Boxes Section -->
+<% if (order.boxes && order.boxes.length > 0) { %>
+  <div class="card mt-3">
+    <div class="card-header bg-light py-2">
+      <h6 class="mb-0"><i class="bi bi-box-seam me-2"></i>Boxes</h6>
+    </div>
+    <div class="card-body p-3">
+      <div class="row g-3">
+        <% order.boxes.forEach((box, index) => { %>
+          <div class="col-md-6">
+            <div class="border rounded p-3 h-100">
+              <h6 class="fw-bold mb-2">Box <%= index + 1 %></h6>
+              
+              <!-- Box Details -->
+              <p class="mb-1"><strong>Tracking ID:</strong> <%= box.trackingId %></p>
+              <p class="mb-1"><strong>Weight:</strong> <%= box.weight %> kg</p>
+              <% if (box.dimensions && (box.dimensions.length || box.dimensions.width || box.dimensions.height)) { %>
+                <p class="mb-1">
+                  <strong>Dimensions:</strong> 
+                  <%= box.dimensions.length || '-' %> × 
+                  <%= box.dimensions.width || '-' %> × 
+                  <%= box.dimensions.height || '-' %> cm
+                </p>
+              <% } %>
+              <% if (box.description) { %>
+                <p class="mb-2"><strong>Description:</strong> <%= box.description %></p>
+              <% } %>
+
+              <!-- Box Photos -->
+              <% if (box.photos && box.photos.length > 0) { %>
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                  <% box.photos.forEach(photo => { %>
+                    <div style="width: 100px;">
+                      <a href="/api/file/files/<%= photo.filename %>?bucket=boxPhotos" 
+                         target="_blank" 
+                         class="d-block text-decoration-none"
+                         title="Click to view full size">
+                        <img src="/api/file/files/<%= photo.filename %>?bucket=boxPhotos" 
+                             alt="Box photo" 
+                             class="img-thumbnail w-100 h-auto"
+                             style="max-height: 100px; object-fit: contain;">
+                        <div class="text-center small mt-1 text-truncate">
+                          <%= photo.originalName || photo.filename %>
+                        </div>
+                      </a>
+                    </div>
+                  <% }); %>
+                </div>
+              <% } else { %>
+                <p class="text-muted small">No photos uploaded</p>
+              <% } %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+<% } %>
+
+<style>
+  .order-details-container {
+    font-size: 0.9rem;
+  }
+  
+  .timeline {
+    position: relative;
+    padding-left: 1.5rem;
+  }
+  
+  .timeline-item {
+    position: relative;
+    padding-bottom: 1.5rem;
+    padding-left: 1.5rem;
+    border-left: 1px solid #dee2e6;
+  }
+  
+  .timeline-item:last-child {
+    padding-bottom: 0;
+    border-left-color: transparent;
+  }
+  
+  .timeline-badge {
+    position: absolute;
+    left: -0.5rem;
+    top: 0;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    border: 2px solid white;
+  }
+  
+  .timeline-content {
+    padding-left: 0.5rem;
+  }
+  
+  .table th {
+    font-weight: 500;
+    background-color: #f8f9fa;
+  }
+   /* Payment Proofs Thumbnail Styles */
+  .payment-proof-thumbnail {
+    transition: transform 0.2s;
+  }
+
+  .payment-proof-thumbnail:hover {
+    transform: scale(1.05);
+  }
+
+  .payment-proof-thumbnail img {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    padding: 4px;
+  }
+
+  .payment-proof-thumbnail a:hover img {
+    border-color: #0d6efd;
+  }
+</style>

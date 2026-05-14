@@ -1,0 +1,310 @@
+<!-- views/dashboard/stockManager/productionOrders/view.ejs -->
+<%- include('../../../partials/header', { title: 'Production Order - ' + order.poNumber }) %>
+
+<div class="container-fluid px-4">
+    <!-- Page Title and Navigation -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mt-4">Production Order: <%= order.poNumber %></h1>
+        <div>
+            <a href="/dashboard/stock_manager/production-orders" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+            <% if (order.status === 'draft' || order.status === 'pending') { %>
+            <!-- <a href="/dashboard/stock_manager/production-orders/<%= order._id %>/edit" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit Order
+            </a> -->
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Status Alert -->
+    <% if (order.status === 'draft') { %>
+    <div class="alert alert-info d-flex align-items-center" role="alert">
+        <i class="fas fa-info-circle me-2"></i>
+        <div>This production order is in <strong>draft</strong> status. It needs to be submitted for approval.</div>
+    </div>
+    <% } else if (order.status === 'pending') { %>
+    <div class="alert alert-warning d-flex align-items-center" role="alert">
+        <i class="fas fa-clock me-2"></i>
+        <div>This production order is <strong>pending approval</strong>. Waiting for manager approval.</div>
+    </div>
+    <% } else if (order.status === 'approved') { %>
+    <div class="alert alert-primary d-flex align-items-center" role="alert">
+        <i class="fas fa-check-circle me-2"></i>
+        <div>This production order has been <strong>approved</strong> and is ready to be started.</div>
+    </div>
+    <% } %>
+
+    <!-- Order Details -->
+    <div class="row mb-4">
+        <!-- Order Information -->
+         <!-- col-lg-4  -->
+        <div class="mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-dark text-white">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Order Information
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">PO Number:</div>
+                        <div class="col-sm-8"><%= order.poNumber %></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Product:</div>
+                        <div class="col-sm-8"><%= order.productName %></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Target Quantity:</div>
+                        <div class="col-sm-8"><%= order.targetQuantity %> units</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Completed Quantity:</div>
+                        <div class="col-sm-8"><%= order.completedQuantity || 0 %> units</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Progress:</div>
+                        <div class="col-sm-8">
+                            <% const progress = order.targetQuantity > 0 ? Math.min(100, Math.round((order.completedQuantity / order.targetQuantity) * 100)) : 0; %>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: <%= progress %>%;" 
+                                     aria-valuenow="<%= progress %>" aria-valuemin="0" aria-valuemax="100">
+                                    <%= progress %>%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Status:</div>
+                        <div class="col-sm-8">
+                            <span class="badge bg-<%= 
+                                order.status === 'completed' ? 'success' : 
+                                order.status === 'in_progress' ? 'primary' : 
+                                order.status === 'approved' ? 'info' :
+                                order.status === 'pending' ? 'warning' : 
+                                order.status === 'cancelled' ? 'danger' : 'secondary' %> text-capitalize">
+                                <%= order.status.replace('_', ' ') %>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Raised By:</div>
+                        <div class="col-sm-8"><%= order.raisedBy.name %></div>
+                    </div>
+                    <% if (order.assignedTo && order.assignedTo.name) { %>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Assigned To:</div>
+                        <div class="col-sm-8"><%= order.assignedTo.name %></div>
+                    </div>
+                    <% } %>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Created:</div>
+                        <div class="col-sm-8"><%= new Date(order.createdAt).toLocaleString() %></div>
+                    </div>
+                    <% if (order.expectedCompletionDate) { %>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Expected Completion:</div>
+                        <div class="col-sm-8"><%= new Date(order.expectedCompletionDate).toLocaleDateString() %></div>
+                    </div>
+                    <% } %>
+                    <% if (order.actualCompletionDate) { %>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Actual Completion:</div>
+                        <div class="col-sm-8"><%= new Date(order.actualCompletionDate).toLocaleString() %></div>
+                    </div>
+                    <% } %>
+                    <% if (order.notes) { %>
+                    <div class="row">
+                        <div class="col-sm-4 fw-bold">Notes:</div>
+                        <div class="col-sm-8"><%= order.notes %></div>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions Panel -->
+        <!-- <div class="col-lg-6 mb-4">
+            <% if (order.status === 'approved') { %>
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-play-circle me-1"></i>
+                    Start Production
+                </div>
+                <div class="card-body">
+                    <p>This order has been approved and is ready to begin production.</p>
+                    <form method="POST" action="/dashboard/stock_manager/production-orders/<%= order._id %>/start">
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Start Production</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <% } %>
+
+            <% if (order.status === 'in_progress') { %>
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <i class="fas fa-check-circle me-1"></i>
+                    Complete Production Order
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="/dashboard/stock_manager/production-orders/<%= order._id %>/complete">
+                        <div class="mb-3">
+                            <label for="completedQuantity" class="form-label">Completed Quantity *</label>
+                            <input type="number" class="form-control" id="completedQuantity" name="completedQuantity" 
+                                   min="1" max="<%= order.targetQuantity %>" required>
+                            <div class="form-text">Maximum: <%= order.targetQuantity %></div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Issues (Optional)</label>
+                            <div class="issue-container">
+                                <div class="issue-item mb-2">
+                                    <input type="text" class="form-control" name="issues[0][description]" 
+                                           placeholder="Issue description">
+                                    <input type="number" class="form-control mt-1" name="issues[0][quantityAffected]" 
+                                           placeholder="Quantity affected" min="0">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-1" id="add-issue">
+                                <i class="fas fa-plus"></i> Add Issue
+                            </button>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">Complete Order</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <% } %>
+
+            <% if (order.status === 'draft') { %>
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <i class="fas fa-paper-plane me-1"></i>
+                    Submit for Approval
+                </div>
+                <div class="card-body">
+                    <p>This order is in draft status. Submit it for manager approval.</p>
+                    <form method="POST" action="/dashboard/stock_manager/production-orders/<%= order._id %>/submit">
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-info text-white">Submit for Approval</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <% } %>
+        </div> -->
+    </div>
+
+    <!-- Material Requirements -->
+    <div class="card mb-4">
+        <div class="card-header bg-dark text-white">
+            <i class="fas fa-list-alt me-1"></i>
+            Material Requirements
+        </div>
+        <div class="card-body p-0">
+            <% if (order.materialRequirements && order.materialRequirements.length > 0) { %>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Raw Material</th>
+                                <th>Required Quantity</th>
+                                <th>Available Quantity</th>
+                                <th>Missing Quantity</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% order.materialRequirements.forEach(req => { 
+                                const isSufficient = req.availableQuantity >= req.requiredQuantity;
+                            %>
+                                <tr class="<%= isSufficient ? '' : 'table-warning' %>">
+                                    <td><%= req.materialName %></td>
+                                    <td><%= req.requiredQuantity %></td>
+                                    <td><%= req.availableQuantity %></td>
+                                    <td><%= req.missingQuantity %></td>
+                                    <td>
+                                        <span class="badge bg-<%= isSufficient ? 'success' : 'danger' %>">
+                                            <%= isSufficient ? 'Sufficient' : 'Insufficient' %>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="p-4 text-center text-muted">
+                    <i class="fas fa-box-open fa-2x mb-2"></i>
+                    <p>No material requirements defined for this production order</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Issues -->
+    <% if (order.issues && order.issues.length > 0) { %>
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+            <i class="fas fa-exclamation-triangle me-1"></i>
+            Production Issues
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Description</th>
+                            <th>Material Affected</th>
+                            <th>Quantity Affected</th>
+                            <th>Reported By</th>
+                            <th>Reported At</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% order.issues.forEach(issue => { %>
+                        <tr>
+                            <td><%= issue.description %></td>
+                            <td><%= issue.material ? issue.material.name : 'N/A' %></td>
+                            <td><%= issue.quantityAffected %></td>
+                            <td><%= issue.reportedBy ? issue.reportedBy.name : 'Unknown' %></td>
+                            <td><%= new Date(issue.reportedAt).toLocaleString() %></td>
+                            <td>
+                                <span class="badge bg-<%= issue.resolved ? 'success' : 'warning' %>">
+                                    <%= issue.resolved ? 'Resolved' : 'Pending' %>
+                                </span>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <% } %>
+</div>
+
+<script>
+// Add issue field dynamically
+document.getElementById('add-issue')?.addEventListener('click', function() {
+    const container = document.querySelector('.issue-container');
+    const index = container.children.length;
+    const newIssue = document.createElement('div');
+    newIssue.className = 'issue-item mb-2';
+    newIssue.innerHTML = `
+        <input type="text" class="form-control" name="issues[${index}][description]" 
+               placeholder="Issue description">
+        <input type="number" class="form-control mt-1" name="issues[${index}][quantityAffected]" 
+               placeholder="Quantity affected" min="0">
+    `;
+    container.appendChild(newIssue);
+});
+</script>
+
+<%- include('../../../partials/footer') %>
