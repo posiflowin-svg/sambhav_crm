@@ -38,6 +38,11 @@ const productSchema = new mongoose.Schema({
     required: true,
     default: 'pcs'
   },
+  price: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   minimumStock: {
     type: Number,
     default: 0,

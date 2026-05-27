@@ -513,7 +513,7 @@
                 <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50"></div>
                 <div class="fixed inset-0 z-50 overflow-y-auto">
                     <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                        <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-3xl">
+                        <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl">
                             <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                                 <div class="flex justify-between items-start mb-4">
                                     <h3 class="text-lg font-medium leading-6 text-gray-900">Create New Purchase Order</h3>
@@ -547,23 +547,83 @@
 
                                         <div>
                                             <div class="flex justify-between items-center mb-2">
-                                                <label class="block text-sm font-medium text-gray-700">Items *</label>
-                                                <button type="button" onclick="addPOItem()" class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
-                                                    <i class="fas fa-plus mr-1"></i>Add Item
+                                                <label class="block text-sm font-medium text-gray-700">
+                                                    Items *
+                                                </label>
+
+                                                <button 
+                                                    type="button"
+                                                    onclick="addPOItem()"
+                                                    class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                                                >
+                                                    <i class="fas fa-plus mr-1"></i>
+                                                    Add Item
                                                 </button>
                                             </div>
-                                            <div id="po-items-container" class="space-y-2">
-                                                <!-- Items will be added here -->
-                                                <div class="po-item flex gap-2 items-start">
-                                                    <select class="product-select flex-1 rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" required onchange="updatePriceField(this)">
-                                                        ${productsOptions}
-                                                    </select>
-                                                    <input type="number" class="quantity-input w-24 rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Qty" min="1" required onchange="updateSubtotal(this)">
-                                                    <input type="number" class="price-input w-32 rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Price/Unit" step="0.01" min="0" required onchange="updateSubtotal(this)">
-                                                    <span class="subtotal-display w-24 text-sm text-gray-600 self-center">0.00</span>
-                                                    <button type="button" onclick="removePOItem(this)" class="text-red-600 hover:text-red-900">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
+
+                                            <!-- Scroll Wrapper -->
+                                            <div class="overflow-x-auto">
+                                                
+                                                <!-- Container -->
+                                                <div id="po-items-container" class="space-y-2 min-w-[900px]">
+
+                                                    <!-- Item Row -->
+                                                    <div class="po-item flex gap-2 items-start border rounded-lg p-2 bg-gray-50">
+
+                                                        <!-- Product -->
+                                                        <div class="flex-1 min-w-[280px]">
+                                                            <select
+                                                                class="product-select w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                                                required
+                                                                onchange="updatePriceField(this)"
+                                                            >
+                                                                ${productsOptions}
+                                                            </select>
+                                                        </div>
+
+                                                        <!-- Quantity -->
+                                                        <div class="w-24 flex-shrink-0">
+                                                            <input
+                                                                type="number"
+                                                                class="quantity-input w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                                                placeholder="Qty"
+                                                                min="1"
+                                                                required
+                                                                onchange="updateSubtotal(this)"
+                                                            >
+                                                        </div>
+
+                                                        <!-- Price -->
+                                                        <div class="w-32 flex-shrink-0">
+                                                            <input
+                                                                type="number"
+                                                                class="price-input w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                                                placeholder="Price/Unit"
+                                                                step="0.01"
+                                                                min="0"
+                                                                required
+                                                                onchange="updateSubtotal(this)"
+                                                            >
+                                                        </div>
+
+                                                        <!-- Subtotal -->
+                                                        <div class="w-28 flex-shrink-0 text-sm text-gray-700 self-center font-medium">
+                                                            ₹ <span class="subtotal-display">0.00</span>
+                                                        </div>
+
+                                                        <!-- Delete -->
+                                                        <div class="flex-shrink-0 self-center">
+                                                            <button
+                                                                type="button"
+                                                                onclick="removePOItem(this)"
+                                                                class="text-red-600 hover:text-red-900 p-2"
+                                                            >
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+
+                                                    </div>
+
                                                 </div>
                                             </div>
                                         </div>
