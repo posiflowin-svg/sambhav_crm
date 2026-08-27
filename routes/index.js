@@ -55,6 +55,7 @@ router.use('/', require('./web/dispatcherWeb'));
 router.use('/', require('./web/accountWeb'));
 router.use('/', require('./web/inquiryViewRoutes'));
 router.use('/products', require('./web/productWeb'));
+router.use('/dashboard/stock_manager', require('./web/stockManagerImportWeb'));
 
 // API Routes
 router.use('/api/customers', require('./api/customerApi'));
@@ -68,6 +69,7 @@ router.use('/api/file', require('./api/fileRoutes'));
 router.use('/api/po', require('./api/poRoutes'));
 router.use('/api/inquiries',  require('./api/inquiryRoutes'));
 router.use('/api/account/orders', require('./api/orderInvoice'));
+router.use('/api/intercrm', require('./api/intercrmImports'));
 
 // api/dispatcher/orders
 router.get('/api/dispatcher/orders', authController.protect, async (req, res) => {
