@@ -1,0 +1,72 @@
+<%- include('../../partials/header', { title: 'Byculla Import Receiving' }) %>
+
+<div class="container-fluid px-4 py-3">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="mb-1">Byculla Import Receiving</h1>
+      <div class="text-muted">PIs assigned from Posiflow for Sambhav Stock Manager receiving.</div>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-primary" href="/dashboard/stock_manager/product-mapping">Product Mapping</a>
+      <a class="btn btn-outline-secondary" href="/dashboard">Dashboard</a>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="btn-group">
+        <a class="btn btn-<%= status === 'open' ? 'primary' : 'outline-primary' %>" href="?status=open">Open</a>
+        <a class="btn btn-<%= status === 'pending' ? 'primary' : 'outline-primary' %>" href="?status=pending">Pending</a>
+        <a class="btn btn-<%= status === 'partial' ? 'primary' : 'outline-primary' %>" href="?status=partial">Partial</a>
+        <a class="btn btn-<%= status === 'received' ? 'primary' : 'outline-primary' %>" href="?status=received">Received</a>
+        <a class="btn btn-<%= status === 'all' ? 'primary' : 'outline-primary' %>" href="?status=all">All</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>PI</th>
+            <th>Import Company</th>
+            <th>Supplier</th>
+            <th>Warehouse</th>
+            <th>Qty</th>
+            <th>Received</th>
+            <th>Pending</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (!imports.length) { %>
+            <tr><td colspan="9" class="text-center text-muted py-5">No import PIs found.</td></tr>
+          <% } %>
+          <% imports.forEach(pi => {
+               const total = (pi.items || []).reduce((s,i) => s + Number(i.quantity || 0), 0);
+               const received = (pi.items || []).reduce((s,i) => s + Number(i.receivedQuantity || 0), 0);
+               const pending = Math.max(0, total - received);
+          %>
+            <tr>
+              <td><strong><%= pi.piNumber %></strong><div class="small text-muted"><%= pi.piDate ? new Date(pi.piDate).toLocaleDateString('en-IN') : '' %></div></td>
+              <td><%= pi.importCompany || '-' %></td>
+              <td><%= pi.supplier?.companyName || '-' %></td>
+              <td><span class="badge bg-info text-dark"><%= pi.receivingWarehouse %></span></td>
+              <td><%= total %></td>
+              <td><%= received %></td>
+              <td><strong><%= pending %></strong></td>
+              <td>
+                <span class="badge bg-<%= pi.receivingStatus === 'received' ? 'success' : pi.receivingStatus === 'partial' ? 'warning' : 'secondary' %>">
+                  <%= pi.receivingStatus %>
+                </span>
+              </td>
+              <td><a class="btn btn-primary btn-sm" href="/dashboard/stock_manager/import-receiving/<%= pi._id %>">Receive In</a></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

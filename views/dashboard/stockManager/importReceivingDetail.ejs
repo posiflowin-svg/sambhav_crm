@@ -1,0 +1,102 @@
+<%- include('../../partials/header', { title: 'Receive Import PI' }) %>
+
+<div class="container-fluid px-4 py-3">
+  <div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+      <h1 class="mb-1">Receive PI <%= item.piNumber %></h1>
+      <div class="text-muted"><%= item.importCompany || '-' %> → Byculla Warehouse</div>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-primary" href="/dashboard/stock_manager/product-mapping">Product Mapping</a>
+      <a class="btn btn-outline-secondary" href="/dashboard/stock_manager/import-receiving">Back</a>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Supplier</div><strong><%= item.supplier?.companyName || '-' %></strong></div></div></div>
+    <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Warehouse</div><strong>Byculla</strong></div></div></div>
+    <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Status</div><strong><%= item.receivingStatus %></strong></div></div></div>
+    <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Last Sync</div><strong><%= item.lastSyncedAt ? new Date(item.lastSyncedAt).toLocaleString('en-IN') : '-' %></strong></div></div></div>
+  </div>
+
+  <% (item.items || []).forEach(row => {
+       const pending = Math.max(0, Number(row.quantity || 0) - Number(row.receivedQuantity || 0));
+  %>
+    <div class="card shadow-sm mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+          <strong><%= row.productName %></strong>
+          <div class="small text-muted">SKU: <%= row.sku || '-' %></div>
+        </div>
+        <div>
+          <span class="badge bg-secondary">Ordered <%= row.quantity %></span>
+          <span class="badge bg-success">Received <%= row.receivedQuantity || 0 %></span>
+          <span class="badge bg-warning text-dark">Pending <%= pending %></span>
+        </div>
+      </div>
+      <div class="card-body">
+        <% if (row.mappedProduct) { %>
+          <div class="alert alert-success">
+            Mapped to <strong><%= row.mappedProduct.itemCode %> · <%= row.mappedProduct.itemName %></strong>
+            — Current Sambhav Stock: <strong><%= row.mappedProduct.stockQuantity %></strong>
+          </div>
+        <% } else { %>
+          <div class="alert alert-warning">This item is not mapped to a Sambhav Stock product.</div>
+
+          <div class="row g-3">
+            <div class="col-lg-6">
+              <form method="POST" action="/dashboard/stock_manager/import-receiving/<%= item._id %>/items/<%= row._id %>/map" class="border rounded p-3">
+                <label class="form-label fw-bold">Map Existing Sambhav Product</label>
+                <select class="form-select mb-3" name="productId" required>
+                  <option value="">Select existing product...</option>
+                  <% products.forEach(p => { %>
+                    <option value="<%= p._id %>"><%= p.itemCode %> · <%= p.itemName %> · Stock <%= p.stockQuantity %></option>
+                  <% }) %>
+                </select>
+                <button class="btn btn-primary">Save Mapping</button>
+              </form>
+            </div>
+
+            <div class="col-lg-6">
+              <form method="POST" action="/dashboard/stock_manager/import-receiving/<%= item._id %>/items/<%= row._id %>/create-map" class="border rounded p-3">
+                <label class="form-label fw-bold">Create Product & Map</label>
+                <div class="row g-2">
+                  <div class="col-md-6"><input class="form-control" name="itemCode" value="<%= row.sku %>" placeholder="Item Code / SKU" required></div>
+                  <div class="col-md-6"><input class="form-control" name="itemName" value="<%= row.productName %>" placeholder="Product name" required></div>
+                  <div class="col-md-4">
+                    <select class="form-select" name="category">
+                      <option>POS</option>
+                      <option>Printer</option>
+                      <option>Components</option>
+                      <option>Display</option>
+                      <option>TFT Display</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4"><input class="form-control" name="location" value="Byculla" placeholder="Location"></div>
+                  <div class="col-md-4"><input class="form-control" name="unit" value="pcs" placeholder="Unit"></div>
+                </div>
+                <button class="btn btn-success mt-3">Create Product & Map</button>
+              </form>
+            </div>
+          </div>
+        <% } %>
+
+        <% if (row.mappedProduct && pending > 0) { %>
+          <hr>
+          <form method="POST" action="/dashboard/stock_manager/import-receiving/<%= item._id %>/items/<%= row._id %>/receive" class="row g-3 align-items-end">
+            <div class="col-md-4">
+              <label class="form-label fw-bold">Receive Quantity</label>
+              <input type="number" min="0.001" max="<%= pending %>" step="0.001" name="receiveQty" class="form-control" value="<%= pending %>" required>
+              <div class="form-text">Partial inward allowed. Maximum pending: <%= pending %></div>
+            </div>
+            <div class="col-md-4">
+              <button class="btn btn-success btn-lg" onclick="return confirm('Add this quantity to Sambhav stock?')">Receive In Stock</button>
+            </div>
+          </form>
+        <% } else if (pending <= 0) { %>
+          <div class="alert alert-success mb-0 mt-3"><strong>Fully received.</strong></div>
+        <% } %>
+      </div>
+    </div>
+  <% }) %>
+</div>

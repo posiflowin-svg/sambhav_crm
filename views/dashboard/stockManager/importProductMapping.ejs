@@ -1,0 +1,65 @@
+<%- include('../../partials/header', { title: 'Import Product Mapping' }) %>
+
+<div class="container-fluid px-4 py-3">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="mb-1">Import Product Mapping</h1>
+      <div class="text-muted">Map Posiflow PI SKUs to Sambhav Stock Manager products.</div>
+    </div>
+    <a class="btn btn-outline-secondary" href="/dashboard/stock_manager/import-receiving">Import Receiving</a>
+  </div>
+
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header"><strong>Create / Change Mapping</strong></div>
+    <div class="card-body">
+      <form method="POST" action="/dashboard/stock_manager/product-mapping" class="row g-3 align-items-end">
+        <div class="col-lg-5">
+          <label class="form-label">Posiflow Product</label>
+          <select class="form-select" name="sourceSku" id="sourceSku" required>
+            <option value="">Select source product...</option>
+            <% sourceProducts.forEach(p => { %>
+              <option value="<%= p.sku %>" data-name="<%= p.name %>"><%= p.sku %> · <%= p.name %></option>
+            <% }) %>
+          </select>
+          <input type="hidden" name="sourceProductName" id="sourceProductName">
+        </div>
+        <div class="col-lg-5">
+          <label class="form-label">Sambhav Stock Product</label>
+          <select class="form-select" name="productId" required>
+            <option value="">Select Sambhav product...</option>
+            <% products.forEach(p => { %>
+              <option value="<%= p._id %>"><%= p.itemCode %> · <%= p.itemName %> · Stock <%= p.stockQuantity %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="col-lg-2 d-grid"><button class="btn btn-success">Save Mapping</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark"><tr><th>Posiflow SKU</th><th>Posiflow Product</th><th>Sambhav Product</th><th>Stock</th></tr></thead>
+        <tbody>
+          <% if (!mappings.length) { %><tr><td colspan="4" class="text-center text-muted py-5">No mappings yet.</td></tr><% } %>
+          <% mappings.forEach(m => { %>
+            <tr>
+              <td><strong><%= m.sourceSku %></strong></td>
+              <td><%= m.sourceProductName || '-' %></td>
+              <td><%= m.sambhavProduct ? `${m.sambhavProduct.itemCode} · ${m.sambhavProduct.itemName}` : 'Deleted' %></td>
+              <td><%= m.sambhavProduct ? m.sambhavProduct.stockQuantity : '-' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('sourceSku')?.addEventListener('change', function(){
+  const option = this.options[this.selectedIndex];
+  document.getElementById('sourceProductName').value = option?.dataset?.name || '';
+});
+</script>
