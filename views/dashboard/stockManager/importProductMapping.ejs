@@ -15,6 +15,7 @@
       <form method="POST" action="/dashboard/stock_manager/product-mapping" class="row g-3 align-items-end">
         <div class="col-lg-5">
           <label class="form-label">Posiflow Product</label>
+          <input type="search" class="form-control mb-2" id="sourceProductSearch" placeholder="Search Posiflow SKU / product name..." autocomplete="off">
           <select class="form-select" name="sourceSku" id="sourceSku" required>
             <option value="">Select source product...</option>
             <% sourceProducts.forEach(p => { %>
@@ -25,7 +26,8 @@
         </div>
         <div class="col-lg-5">
           <label class="form-label">Sambhav Stock Product</label>
-          <select class="form-select" name="productId" required>
+          <input type="search" class="form-control mb-2" id="sambhavProductSearch" placeholder="Search Sambhav SKU / product name..." autocomplete="off">
+          <select class="form-select" name="productId" id="sambhavProductId" required>
             <option value="">Select Sambhav product...</option>
             <% products.forEach(p => { %>
               <option value="<%= p._id %>"><%= p.itemCode %> · <%= p.itemName %> · Stock <%= p.stockQuantity %></option>
@@ -38,13 +40,16 @@
   </div>
 
   <div class="card shadow-sm">
+    <div class="card-body border-bottom">
+      <input type="search" class="form-control" id="mappingTableSearch" placeholder="Search saved mapping by Posiflow SKU, product name or Sambhav product..." autocomplete="off">
+    </div>
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0">
         <thead class="table-dark"><tr><th>Posiflow SKU</th><th>Posiflow Product</th><th>Sambhav Product</th><th>Stock</th></tr></thead>
         <tbody>
           <% if (!mappings.length) { %><tr><td colspan="4" class="text-center text-muted py-5">No mappings yet.</td></tr><% } %>
           <% mappings.forEach(m => { %>
-            <tr>
+            <tr class="mapping-row">
               <td><strong><%= m.sourceSku %></strong></td>
               <td><%= m.sourceProductName || '-' %></td>
               <td><%= m.sambhavProduct ? `${m.sambhavProduct.itemCode} · ${m.sambhavProduct.itemName}` : 'Deleted' %></td>
@@ -58,8 +63,54 @@
 </div>
 
 <script>
+function attachSelectSearch(inputId, selectId) {
+  const input = document.getElementById(inputId);
+  const select = document.getElementById(selectId);
+  if (!input || !select) return;
+
+  const options = Array.from(select.options).map(function (option) {
+    return {
+      value: option.value,
+      text: option.textContent,
+      name: option.dataset ? option.dataset.name : '',
+      disabled: option.disabled
+    };
+  });
+
+  input.addEventListener('input', function () {
+    const query = input.value.trim().toLowerCase();
+    const currentValue = select.value;
+    select.innerHTML = '';
+
+    options.forEach(function (item, index) {
+      if (index === 0 || !query || item.text.toLowerCase().includes(query)) {
+        const option = document.createElement('option');
+        option.value = item.value;
+        option.textContent = item.text;
+        option.disabled = item.disabled;
+        if (item.name) option.dataset.name = item.name;
+        select.appendChild(option);
+      }
+    });
+
+    if (Array.from(select.options).some(function (o) { return o.value === currentValue; })) {
+      select.value = currentValue;
+    }
+  });
+}
+
+attachSelectSearch('sourceProductSearch', 'sourceSku');
+attachSelectSearch('sambhavProductSearch', 'sambhavProductId');
+
 document.getElementById('sourceSku')?.addEventListener('change', function(){
   const option = this.options[this.selectedIndex];
   document.getElementById('sourceProductName').value = option?.dataset?.name || '';
+});
+
+document.getElementById('mappingTableSearch')?.addEventListener('input', function () {
+  const query = this.value.trim().toLowerCase();
+  document.querySelectorAll('.mapping-row').forEach(function (row) {
+    row.style.display = !query || row.textContent.toLowerCase().includes(query) ? '' : 'none';
+  });
 });
 </script>

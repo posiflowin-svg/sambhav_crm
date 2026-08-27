@@ -47,12 +47,14 @@
             <div class="col-lg-6">
               <form method="POST" action="/dashboard/stock_manager/import-receiving/<%= item._id %>/items/<%= row._id %>/map" class="border rounded p-3">
                 <label class="form-label fw-bold">Map Existing Sambhav Product</label>
-                <select class="form-select mb-3" name="productId" required>
+                <input type="search" class="form-control mb-2 product-select-search" placeholder="Search by SKU / product name..." autocomplete="off">
+                <select class="form-select mb-3 searchable-product-select" name="productId" required>
                   <option value="">Select existing product...</option>
                   <% products.forEach(p => { %>
                     <option value="<%= p._id %>"><%= p.itemCode %> · <%= p.itemName %> · Stock <%= p.stockQuantity %></option>
                   <% }) %>
                 </select>
+                <div class="form-text mb-3">Type SKU or product name to filter Sambhav products.</div>
                 <button class="btn btn-primary">Save Mapping</button>
               </form>
             </div>
@@ -100,3 +102,37 @@
     </div>
   <% }) %>
 </div>
+
+<script>
+(function () {
+  document.querySelectorAll('.product-select-search').forEach(function (searchInput) {
+    const form = searchInput.closest('form');
+    const select = form && form.querySelector('.searchable-product-select');
+    if (!select) return;
+
+    const allOptions = Array.from(select.options).map(function (option) {
+      return { value: option.value, text: option.textContent, disabled: option.disabled };
+    });
+
+    searchInput.addEventListener('input', function () {
+      const query = this.value.trim().toLowerCase();
+      const currentValue = select.value;
+      select.innerHTML = '';
+
+      allOptions.forEach(function (item, index) {
+        if (index === 0 || !query || item.text.toLowerCase().includes(query)) {
+          const option = document.createElement('option');
+          option.value = item.value;
+          option.textContent = item.text;
+          option.disabled = item.disabled;
+          select.appendChild(option);
+        }
+      });
+
+      if (Array.from(select.options).some(function (o) { return o.value === currentValue; })) {
+        select.value = currentValue;
+      }
+    });
+  });
+})();
+</script>
