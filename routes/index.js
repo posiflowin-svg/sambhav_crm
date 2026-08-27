@@ -1,5 +1,10 @@
 const express = require('express');
 const router = express.Router();
+
+// Server-to-server API: must be mounted before any login/session redirect middleware.
+// Authentication is handled inside intercrmImports via X-InterCRM-Token.
+router.use('/api/intercrm', require('./api/intercrmImports'));
+
 const Order = require('../models/Order');
 const authController = require('../middleware/authMiddleware');
 const Product = require('../models/Product');
@@ -69,7 +74,6 @@ router.use('/api/file', require('./api/fileRoutes'));
 router.use('/api/po', require('./api/poRoutes'));
 router.use('/api/inquiries',  require('./api/inquiryRoutes'));
 router.use('/api/account/orders', require('./api/orderInvoice'));
-router.use('/api/intercrm', require('./api/intercrmImports'));
 
 // api/dispatcher/orders
 router.get('/api/dispatcher/orders', authController.protect, async (req, res) => {

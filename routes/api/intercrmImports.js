@@ -121,4 +121,14 @@ router.post('/import-pis', intercrmAuth, async (req, res) => {
   }
 });
 
+
+// INTERCRM_API_NOT_FOUND
+router.use((req, res) => {
+  return res.status(404).json({
+    success: false,
+    message: 'Inter-CRM API route not found',
+    path: req.originalUrl
+  });
+});
+
 module.exports = router;

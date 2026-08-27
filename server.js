@@ -9,11 +9,17 @@ const cookieParser = require('cookie-parser');
 require('dotenv').config();
 const FileService = require('./utils/fileService');
 
+const intercrmImportsRouter = require('./routes/api/intercrmImports');
 const app = express();
 
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+// DIRECT_INTERCRM_API_MOUNT
+// Keep server-to-server PI sync outside normal web-login redirects.
+app.use('/api/intercrm', intercrmImportsRouter);
+
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
