@@ -80,38 +80,55 @@ router.post('/import-receiving/:piId/items/:itemId/map', protect, stockAccess, a
     if (!item) throw new Error('Import item not found');
 
     const productId = String(req.body.productId || '');
-    if (!mongoose.Types.ObjectId.isValid(productId)) throw new Error('Select a Sambhav product');
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      throw new Error('Select a Sambhav product');
+    }
 
     const product = await Product.findById(productId);
-    if (!product) throw new Error('Sambhav product not found');
+    if (!product) throw new Error('Selected Sambhav product not found');
 
+    // IMPORTANT: when user selects an existing Sambhav product, always keep
+    // that exact product ID on the import item. Receive In must stock this ID.
     item.mappedProduct = product._id;
     await pi.save();
 
-    if (item.sku) {
+    const sourceSku = String(item.sku || '').trim().toUpperCase();
+    if (sourceSku) {
       await ImportProductMapping.findOneAndUpdate(
-        { sourceSystem: pi.sourceSystem || 'posiflow', sourceSku: item.sku },
+        { sourceSystem: pi.sourceSystem || 'posiflow', sourceSku },
         {
           sourceSystem: pi.sourceSystem || 'posiflow',
           sourceProductId: item.sourceProductId || '',
-          sourceSku: item.sku,
-          sourceProductName: item.productName,
+          sourceSku,
+          sourceProductName: item.productName || '',
           sambhavProduct: product._id,
           isActive: true,
           updatedBy: req.user._id || req.user.id
         },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+
+      // Back-fill the same mapping into every pending/partial import item
+      // with this source SKU so future PIs use the existing Sambhav product.
+      await ExternalImportPI.updateMany(
         {
-          upsert: true,
-          new: true,
-          setDefaultsOnInsert: true
-        }
+          receivingWarehouse: 'Byculla',
+          receivingStatus: { $in: ['pending', 'partial'] },
+          'items.sku': sourceSku
+        },
+        { $set: { 'items.$[row].mappedProduct': product._id } },
+        { arrayFilters: [{ 'row.sku': sourceSku }] }
       );
     }
 
-    req.flash('success_msg', `Mapped ${item.productName} to ${product.itemName}`);
+    req.flash(
+      'success_msg',
+      `Mapped ${item.productName || item.sku} to existing Sambhav product ${product.itemCode} · ${product.itemName}`
+    );
   } catch (error) {
     req.flash('error_msg', error.message || 'Unable to map product');
   }
+
   return res.redirect(`/dashboard/stock_manager/import-receiving/${req.params.piId}`);
 });
 
@@ -132,32 +149,66 @@ router.post('/import-receiving/:piId/items/:itemId/create-map', protect, stockAc
     if (!itemCode) throw new Error('SKU / Item Code is required');
     if (!itemName) throw new Error('Product name is required');
 
-    let product = await Product.findOne({ itemCode });
-    if (!product) {
-      product = await Product.create({
-        itemCode,
-        itemName,
-        description: `Created during import inward for PI ${pi.piNumber}`,
-        category,
-        location,
-        stockQuantity: 0,
-        unit,
-        price: Number(item.unitPrice || 0),
-        minimumStock: 0,
-        isActive: true
-      });
+    // Never silently create a duplicate. If this Item Code already exists,
+    // map the import item to that existing product instead.
+    let product = await Product.findOne({
+      itemCode: { $regex: `^${itemCode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' }
+    });
+
+    if (product) {
+      item.mappedProduct = product._id;
+      await pi.save();
+
+      await ImportProductMapping.findOneAndUpdate(
+        {
+          sourceSystem: pi.sourceSystem || 'posiflow',
+          sourceSku: String(item.sku || itemCode).trim().toUpperCase()
+        },
+        {
+          sourceSystem: pi.sourceSystem || 'posiflow',
+          sourceProductId: item.sourceProductId || '',
+          sourceSku: String(item.sku || itemCode).trim().toUpperCase(),
+          sourceProductName: item.productName || '',
+          sambhavProduct: product._id,
+          isActive: true,
+          updatedBy: req.user._id || req.user.id
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+
+      req.flash(
+        'success_msg',
+        `Existing product ${product.itemCode} · ${product.itemName} found and mapped. No duplicate product was created.`
+      );
+      return res.redirect(`/dashboard/stock_manager/import-receiving/${req.params.piId}`);
     }
+
+    product = await Product.create({
+      itemCode,
+      itemName,
+      description: `Created during import inward for PI ${pi.piNumber}`,
+      category,
+      location,
+      stockQuantity: 0,
+      unit,
+      price: Number(item.unitPrice || 0),
+      minimumStock: 0,
+      isActive: true
+    });
 
     item.mappedProduct = product._id;
     await pi.save();
 
     await ImportProductMapping.findOneAndUpdate(
-      { sourceSystem: pi.sourceSystem || 'posiflow', sourceSku: item.sku || itemCode },
+      {
+        sourceSystem: pi.sourceSystem || 'posiflow',
+        sourceSku: String(item.sku || itemCode).trim().toUpperCase()
+      },
       {
         sourceSystem: pi.sourceSystem || 'posiflow',
         sourceProductId: item.sourceProductId || '',
-        sourceSku: item.sku || itemCode,
-        sourceProductName: item.productName,
+        sourceSku: String(item.sku || itemCode).trim().toUpperCase(),
+        sourceProductName: item.productName || '',
         sambhavProduct: product._id,
         isActive: true,
         updatedBy: req.user._id || req.user.id
@@ -165,10 +216,11 @@ router.post('/import-receiving/:piId/items/:itemId/create-map', protect, stockAc
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    req.flash('success_msg', `Product ${product.itemCode} created/mapped successfully`);
+    req.flash('success_msg', `Product ${product.itemCode} created and mapped successfully`);
   } catch (error) {
     req.flash('error_msg', error.message || 'Unable to create/map product');
   }
+
   return res.redirect(`/dashboard/stock_manager/import-receiving/${req.params.piId}`);
 });
 
@@ -184,30 +236,28 @@ router.post('/import-receiving/:piId/items/:itemId/receive', protect, stockAcces
     if (!item) throw new Error('Import item not found');
 
     const receiveQty = Number(req.body.receiveQty || 0);
-    const pendingQty = Math.max(0, Number(item.quantity || 0) - Number(item.receivedQuantity || 0));
+    const pendingQty = Math.max(
+      0,
+      Number(item.quantity || 0) - Number(item.receivedQuantity || 0)
+    );
 
     if (!(receiveQty > 0)) throw new Error('Receive quantity must be greater than 0');
-    if (receiveQty > pendingQty) throw new Error(`Maximum pending quantity is ${pendingQty}`);
-
-    let product = null;
-    if (item.mappedProduct) {
-      product = await Product.findById(item.mappedProduct).session(session);
+    if (receiveQty > pendingQty) {
+      throw new Error(`Maximum pending quantity is ${pendingQty}`);
     }
 
-    if (!product && item.sku) {
-      const savedMapping = await ImportProductMapping.findOne({
-        sourceSystem: pi.sourceSystem || 'posiflow',
-        sourceSku: item.sku,
-        isActive: true
-      }).session(session);
-      if (savedMapping) {
-        product = await Product.findById(savedMapping.sambhavProduct).session(session);
-        if (product) item.mappedProduct = product._id;
-      }
+    if (!item.mappedProduct) {
+      throw new Error(
+        'Product is not mapped. Select an existing Sambhav product or use Create Product & Map first.'
+      );
     }
 
+    // Critical fix:
+    // Receive In must always increment the exact Sambhav product chosen in mapping.
+    // Do not create/search another product during inward.
+    const product = await Product.findById(item.mappedProduct).session(session);
     if (!product) {
-      throw new Error('Product is not mapped. Select an existing product or use Create Product & Map first.');
+      throw new Error('Mapped Sambhav product no longer exists. Please remap this item.');
     }
 
     const previousStock = Number(product.stockQuantity || 0);
@@ -227,28 +277,37 @@ router.post('/import-receiving/:piId/items/:itemId/receive', protect, stockAcces
       previousStock,
       newStock: product.stockQuantity,
       reference: `import_pi:${pi.piNumber}`,
-      description: `Byculla import inward against PI ${pi.piNumber}. Source: ${pi.importCompany || 'Posiflow'}`,
+      description: `Byculla import inward against PI ${pi.piNumber}. Source item: ${item.productName || item.sku}. Mapped to existing Sambhav product ${product.itemCode}.`,
       performedBy: req.user._id || req.user.id,
       transactionDate: new Date()
     }], { session });
 
     item.receivedQuantity = Number(item.receivedQuantity || 0) + receiveQty;
 
-    const totalQty = pi.items.reduce((s, row) => s + Number(row.quantity || 0), 0);
-    const totalReceived = pi.items.reduce((s, row) => s + Number(row.receivedQuantity || 0), 0);
+    const totalQty = pi.items.reduce(
+      (sum, row) => sum + Number(row.quantity || 0),
+      0
+    );
+    const totalReceived = pi.items.reduce(
+      (sum, row) => sum + Number(row.receivedQuantity || 0),
+      0
+    );
 
-    pi.receivingStatus = totalReceived <= 0
-      ? 'pending'
-      : (totalReceived >= totalQty ? 'received' : 'partial');
+    pi.receivingStatus =
+      totalReceived <= 0
+        ? 'pending'
+        : (totalReceived >= totalQty ? 'received' : 'partial');
 
-    if (pi.receivingStatus === 'received') pi.receivedAt = new Date();
+    if (pi.receivingStatus === 'received') {
+      pi.receivedAt = new Date();
+    }
 
     await pi.save({ session });
-
     await session.commitTransaction();
+
     req.flash(
       'success_msg',
-      `Received ${receiveQty} ${product.unit || 'pcs'} of ${product.itemName}. Remaining: ${Math.max(0, pendingQty - receiveQty)}`
+      `Received ${receiveQty} ${product.unit || 'pcs'} into ${product.itemCode} · ${product.itemName}. Stock ${previousStock} → ${product.stockQuantity}. Remaining: ${Math.max(0, pendingQty - receiveQty)}`
     );
   } catch (error) {
     await session.abortTransaction();
