@@ -9,7 +9,7 @@ const ImportProductMapping = require('../../models/ImportProductMapping');
 
 function stockAccess(req, res, next) {
   const role = String(req.user?.role || '').toLowerCase();
-  if (!['admin', 'stock_manager'].includes(role)) {
+  if (!['admin', 'stock_manager', 'dispatcher'].includes(role)) {
     req.flash('error_msg', 'Stock Manager or Admin access required');
     return res.redirect('/dashboard');
   }
