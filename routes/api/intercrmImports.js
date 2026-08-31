@@ -13,6 +13,33 @@ function intercrmAuth(req, res, next) {
   next();
 }
 
+
+router.get('/products', intercrmAuth, async (req, res) => {
+  try {
+    const products = await Product.find({ isActive: { $ne: false } })
+      .select('_id itemCode itemName category location stockQuantity unit price isActive')
+      .sort({ itemName: 1, itemCode: 1 })
+      .lean();
+
+    return res.json({
+      success: true,
+      products: products.map(product => ({
+        _id: String(product._id),
+        itemCode: String(product.itemCode || ''),
+        itemName: String(product.itemName || ''),
+        category: String(product.category || ''),
+        location: String(product.location || ''),
+        stockQuantity: Number(product.stockQuantity || 0),
+        unit: String(product.unit || 'pcs'),
+        price: Number(product.price || 0)
+      }))
+    });
+  } catch (error) {
+    console.error('[InterCRM Product Catalog]', error);
+    return res.status(500).json({ success: false, message: error.message || 'Unable to load Sambhav products' });
+  }
+});
+
 router.post('/import-pis', intercrmAuth, async (req, res) => {
   try {
     const payload = req.body || {};
