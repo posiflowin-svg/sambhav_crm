@@ -73,6 +73,16 @@ router.get('/import-receiving', protect, stockAccess, async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
+    // Idempotent recovery sync: older PIs may already have been fully received
+    // before the Posiflow shipment-status callback fix was deployed. When the
+    // Received/All list is opened, retry their status callback so Posiflow can
+    // reconcile PI + shipment dashboard state without receiving stock again.
+    if (['received', 'all'].includes(status)) {
+      const receivedImports = imports.filter(item => item.receivingStatus === 'received');
+      Promise.allSettled(receivedImports.map(item => notifyPosiflowReceivingStatus(item)))
+        .catch(() => {});
+    }
+
     return res.render('dashboard/stockManager/importReceiving', {
       title: 'Byculla Import Receiving',
       user: req.user,
