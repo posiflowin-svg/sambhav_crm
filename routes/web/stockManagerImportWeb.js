@@ -1,11 +1,55 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const axios = require('axios');
 const { protect } = require('../../middleware/authMiddleware');
 const Product = require('../../models/Product');
 const StockTransaction = require('../../models/StockTransaction');
 const ExternalImportPI = require('../../models/ExternalImportPI');
 const ImportProductMapping = require('../../models/ImportProductMapping');
+
+
+async function notifyPosiflowReceivingStatus(pi) {
+  const baseUrl = String(
+    process.env.POSIFLOW_CRM_URL || 'https://handover-nhia.onrender.com'
+  ).replace(/\/+$/, '');
+  const token = String(
+    process.env.INTERCRM_SYNC_TOKEN || 'pf-sambhav-byculla-sync-v1-20260827'
+  );
+
+  const totalQty = (pi.items || []).reduce((sum, row) => sum + Number(row.quantity || 0), 0);
+  const totalReceived = (pi.items || []).reduce((sum, row) => sum + Number(row.receivedQuantity || 0), 0);
+
+  try {
+    await axios.post(
+      `${baseUrl}/api/intercrm/sambhav/import-receiving-status`,
+      {
+        sourcePiId: String(pi.sourcePiId || ''),
+        piNumber: String(pi.piNumber || ''),
+        receivingStatus: String(pi.receivingStatus || 'pending'),
+        receivedAt: pi.receivedAt || null,
+        totalQty,
+        totalReceived
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-InterCRM-Token': token
+        },
+        timeout: 15000,
+        validateStatus: status => status >= 200 && status < 300
+      }
+    );
+  } catch (error) {
+    // Stock inward is already committed in Sambhav. Never roll it back because
+    // the Posiflow status callback failed; log it so the next action/resync can retry.
+    console.error('[Posiflow Receiving Callback] Failed', {
+      piNumber: pi.piNumber,
+      status: error.response?.status,
+      message: error.response?.data?.message || error.message
+    });
+  }
+}
 
 function stockAccess(req, res, next) {
   const role = String(req.user?.role || '').toLowerCase();
@@ -304,6 +348,9 @@ router.post('/import-receiving/:piId/items/:itemId/receive', protect, stockAcces
 
     await pi.save({ session });
     await session.commitTransaction();
+
+    // Keep Posiflow PI stage in sync with the Sambhav Byculla inward result.
+    await notifyPosiflowReceivingStatus(pi);
 
     req.flash(
       'success_msg',
