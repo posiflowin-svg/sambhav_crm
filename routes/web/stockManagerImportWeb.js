@@ -7,6 +7,7 @@ const Product = require('../../models/Product');
 const StockTransaction = require('../../models/StockTransaction');
 const ExternalImportPI = require('../../models/ExternalImportPI');
 const ImportProductMapping = require('../../models/ImportProductMapping');
+const { reconcileDuplicateLines, refreshReceivingStatus } = require('../../utils/importReceivingLines');
 
 
 async function notifyPosiflowReceivingStatus(pi) {
@@ -69,6 +70,14 @@ router.get('/import-receiving', protect, stockAccess, async (req, res) => {
     else if (status === 'received') query.receivingStatus = 'received';
     else if (status === 'open') query.receivingStatus = { $in: ['pending', 'partial'] };
 
+    // Repair historical duplicate-SKU rows before applying status filters.
+    const candidates = await ExternalImportPI.find({ receivingWarehouse: 'Byculla' });
+    for (const candidate of candidates) {
+      if (reconcileDuplicateLines(candidate.items)) {
+        refreshReceivingStatus(candidate);
+        await candidate.save();
+      }
+    }
     const imports = await ExternalImportPI.find(query)
       .sort({ createdAt: -1 })
       .lean();
@@ -98,6 +107,11 @@ router.get('/import-receiving', protect, stockAccess, async (req, res) => {
 
 router.get('/import-receiving/:id', protect, stockAccess, async (req, res) => {
   try {
+    const historical = await ExternalImportPI.findById(req.params.id);
+    if (historical && reconcileDuplicateLines(historical.items)) {
+      refreshReceivingStatus(historical);
+      await historical.save();
+    }
     const item = await ExternalImportPI.findById(req.params.id)
       .populate('items.mappedProduct', 'itemCode itemName stockQuantity location category unit')
       .lean();
@@ -129,6 +143,7 @@ router.post('/import-receiving/:piId/items/:itemId/map', protect, stockAccess, a
   try {
     const pi = await ExternalImportPI.findById(req.params.piId);
     if (!pi) throw new Error('Import PI not found');
+    if (reconcileDuplicateLines(pi.items)) refreshReceivingStatus(pi);
 
     const item = pi.items.id(req.params.itemId);
     if (!item) throw new Error('Import item not found');
@@ -190,6 +205,7 @@ router.post('/import-receiving/:piId/items/:itemId/create-map', protect, stockAc
   try {
     const pi = await ExternalImportPI.findById(req.params.piId);
     if (!pi) throw new Error('Import PI not found');
+    if (reconcileDuplicateLines(pi.items)) refreshReceivingStatus(pi);
 
     const item = pi.items.id(req.params.itemId);
     if (!item) throw new Error('Import item not found');
@@ -285,6 +301,7 @@ router.post('/import-receiving/:piId/items/:itemId/receive', protect, stockAcces
   try {
     const pi = await ExternalImportPI.findById(req.params.piId).session(session);
     if (!pi) throw new Error('Import PI not found');
+    if (reconcileDuplicateLines(pi.items)) refreshReceivingStatus(pi);
 
     const item = pi.items.id(req.params.itemId);
     if (!item) throw new Error('Import item not found');
