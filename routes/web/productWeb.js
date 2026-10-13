@@ -3,6 +3,7 @@ const router = express.Router();
 const Product = require('../../models/Product');
 const StockTransaction = require('../../models/StockTransaction');
 const ProductOrder = require('../../models/ProductOrder');
+const ExcelJS = require('exceljs');
 
 // ==================== WEB PAGES ====================
 
@@ -669,6 +670,93 @@ router.post('/api/products/bulk/stock', async (req, res) => {
   } catch (error) {
     console.error('Error in bulk stock update:', error);
     res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// Export the full current stock inventory as an Excel workbook (not page-limited).
+router.get('/api/export/stock-excel', async (req, res) => {
+  try {
+    const { search = '', category = '', location = '', lowStockOnly = '', scope = 'all' } = req.query;
+    const query = { isActive: true };
+    if (scope === 'filtered') {
+      if (category) query.category = category;
+      if (location) query.location = location;
+      if (search.trim()) {
+        const escaped = search.trim().replace(/[^a-zA-Z0-9 ]/g, '\\$&');
+        query.$or = ['itemCode', 'itemName', 'description'].map(field => ({
+          [field]: { $regex: escaped, $options: 'i' }
+        }));
+      }
+      if (lowStockOnly === 'true') {
+        query.$expr = { $and: [
+          { $gt: ['$minimumStock', 0] },
+          { $lte: ['$stockQuantity', '$minimumStock'] }
+        ] };
+      }
+    }
+
+    const products = await Product.find(query).sort({ itemCode: 1 }).lean();
+    const productIds = products.map(product => product._id);
+    const priceMap = new Map();
+    if (productIds.length) {
+      const prices = await ProductOrder.aggregate([
+        { $unwind: '$items' },
+        { $match: { 'items.product': { $in: productIds }, 'items.pricePerUnit': { $exists: true, $ne: null } } },
+        { $sort: { orderDate: -1, _id: -1 } },
+        { $group: { _id: '$items.product', latestPrice: { $first: '$items.pricePerUnit' } } }
+      ]);
+      for (const entry of prices) priceMap.set(String(entry._id), Number(entry.latestPrice) || 0);
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'Sambhav CRM';
+    workbook.created = new Date();
+    const sheet = workbook.addWorksheet('Stock Inventory', { views: [{ state: 'frozen', ySplit: 1 }] });
+    sheet.columns = [
+      { header: 'Item Code / SKU', key: 'itemCode', width: 22 },
+      { header: 'Item Name', key: 'itemName', width: 43 },
+      { header: 'Description', key: 'description', width: 42 },
+      { header: 'Category', key: 'category', width: 19 },
+      { header: 'Location', key: 'location', width: 24 },
+      { header: 'Available Stock Qty', key: 'quantity', width: 23 },
+      { header: 'Unit', key: 'unit', width: 12 },
+      { header: 'Minimum Stock', key: 'minimumStock', width: 18 },
+      { header: 'Maximum Stock', key: 'maximumStock', width: 18 },
+      { header: 'Stock Status', key: 'status', width: 17 },
+      { header: 'Item Price', key: 'price', width: 17 },
+      { header: 'Stock Value', key: 'value', width: 20 },
+      { header: 'Last Updated', key: 'updated', width: 22 }
+    ];
+    sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1D4ED8' } };
+    for (const product of products) {
+      const quantity = Number(product.stockQuantity) || 0;
+      const hasLatestPrice = priceMap.has(String(product._id));
+      const price = hasLatestPrice ? priceMap.get(String(product._id)) : (Number(product.price) || 0);
+      const min = Number(product.minimumStock) || 0;
+      const row = sheet.addRow({
+        itemCode: product.itemCode || '', itemName: product.itemName || '',
+        description: product.description || '', category: product.category || '',
+        location: product.location || '', quantity, unit: product.unit || '',
+        minimumStock: min, maximumStock: product.maximumStock ?? '',
+        status: min > 0 && quantity <= min ? 'Low Stock' : 'Normal',
+        price, value: quantity * price,
+        updated: product.lastUpdated || product.updatedAt || null
+      });
+      row.getCell('price').numFmt = '#,##0.00';
+      row.getCell('value').numFmt = '#,##0.00';
+      row.getCell('updated').numFmt = 'dd-mmm-yyyy hh:mm';
+    }
+    sheet.autoFilter = { from: 'A1', to: 'M1' };
+    const stamp = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="Sambhav_Stock_${scope === 'filtered' ? 'Filtered_' : 'All_'}${stamp}.xlsx"`);
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error('Error exporting stock Excel:', error);
+    if (!res.headersSent) res.status(500).json({ success: false, message: 'Unable to export stock inventory' });
+    else res.end();
   }
 });
 

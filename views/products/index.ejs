@@ -176,6 +176,14 @@
                         </div>
                     </div>
                     
+                    <div class="relative inline-flex gap-2 flex-wrap">
+                        <button type="button" onclick="exportStockExcel('all')" class="bg-emerald-700 text-white px-4 py-2 rounded-md hover:bg-emerald-800">
+                            <i class="fas fa-file-excel mr-2"></i>Export All Stock
+                        </button>
+                        <button type="button" onclick="exportStockExcel('filtered')" class="bg-emerald-50 text-emerald-800 border border-emerald-300 px-4 py-2 rounded-md hover:bg-emerald-100">
+                            Export Filtered Stock
+                        </button>
+                    </div>
                     <button onclick="loadProducts()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
                         <i class="fas fa-filter mr-2"></i>Filter
                     </button>
@@ -336,6 +344,18 @@
                     </div>
                 `;
             }
+        }
+
+        // Export directly from the server so pagination never truncates the workbook.
+        function exportStockExcel(scope) {
+            const params = new URLSearchParams({ scope });
+            if (scope === 'filtered') {
+                const search = document.getElementById('search-input').value.trim();
+                const category = document.getElementById('category-filter').value;
+                if (search) params.set('search', search);
+                if (category) params.set('category', category);
+            }
+            window.location.href = `/products/api/export/stock-excel?${params.toString()}`;
         }
 
         // Load products
