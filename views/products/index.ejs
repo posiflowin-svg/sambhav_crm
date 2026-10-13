@@ -114,53 +114,53 @@
         </div>
 
         <!-- Filters and Actions -->
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
-            <div class="space-y-4">
-                <div class="w-full">
+        <div class="bg-white shadow rounded-lg px-4 py-4 mb-6">
+            <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+                <div class="w-full lg:flex-[1_1_230px] lg:min-w-[170px]">
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fas fa-search text-gray-400"></i>
                         </div>
                         <input type="text" id="search-input" placeholder="Search products by item code, name or description..."
-                            class="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-full focus:ring-blue-500 focus:border-blue-500"
+                            class="pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-md w-full focus:ring-blue-500 focus:border-blue-500"
                             onkeyup="if(event.keyCode===13) loadProducts()">
                     </div>
                 </div>
-                <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3 lg:contents">
                     <!-- Hidden category input -->
                     <input type="hidden" id="category-filter" value="">
                     
-                    <div class="min-w-0 w-full xl:w-auto overflow-x-auto">
+                    <div class="min-w-0 w-full sm:w-auto lg:flex-[0_1_auto] overflow-x-auto">
                         <!-- Category Tabs Container -->
-                        <div class="bg-gray-100 rounded-lg p-1 flex items-center gap-1 w-max">
+                        <div class="bg-gray-100 rounded-lg p-1 flex items-center gap-0.5 w-max">
                             <button type="button" 
                                     data-category="" 
-                                    class="category-tab-btn px-3 py-1.5 text-sm font-medium rounded transition-all duration-200 bg-white text-blue-700 shadow-sm border border-blue-300">
+                                    class="category-tab-btn px-2 py-1.5 text-xs font-medium rounded transition-all duration-200 bg-white text-blue-700 shadow-sm border border-blue-300">
                                 All
                             </button>
                             <button type="button" 
                                     data-category="Components" 
-                                    class="category-tab-btn px-3 py-1.5 text-sm font-medium rounded transition-all duration-200 text-gray-700 hover:bg-white hover:text-blue-700 hover:shadow-sm">
+                                    class="category-tab-btn px-2 py-1.5 text-xs font-medium rounded transition-all duration-200 text-gray-700 hover:bg-white hover:text-blue-700 hover:shadow-sm">
                                 Components
                             </button>
                             <button type="button" 
                                     data-category="TFT Display" 
-                                    class="category-tab-btn px-3 py-1.5 text-sm font-medium rounded transition-all duration-200 text-gray-700 hover:bg-white hover:text-blue-700 hover:shadow-sm">
+                                    class="category-tab-btn px-2 py-1.5 text-xs font-medium rounded transition-all duration-200 text-gray-700 hover:bg-white hover:text-blue-700 hover:shadow-sm">
                                 TFT Display
                             </button>
                             <button type="button" 
                                     data-category="Display" 
-                                    class="category-tab-btn px-3 py-1.5 text-sm font-medium rounded transition-all duration-200 text-gray-700 hover:bg-white hover:text-blue-700 hover:shadow-sm">
+                                    class="category-tab-btn px-2 py-1.5 text-xs font-medium rounded transition-all duration-200 text-gray-700 hover:bg-white hover:text-blue-700 hover:shadow-sm">
                                 Display
                             </button>
                             <button type="button" 
                                     data-category="POS" 
-                                    class="category-tab-btn px-3 py-1.5 text-sm font-medium rounded transition-all duration-200 text-gray-700 hover:bg-white hover:text-blue-700 hover:shadow-sm">
+                                    class="category-tab-btn px-2 py-1.5 text-xs font-medium rounded transition-all duration-200 text-gray-700 hover:bg-white hover:text-blue-700 hover:shadow-sm">
                                 POS
                             </button>
                             <button type="button" 
                                     data-category="Printer" 
-                                    class="category-tab-btn px-3 py-1.5 text-sm font-medium rounded transition-all duration-200 text-gray-700 hover:bg-white hover:text-blue-700 hover:shadow-sm">
+                                    class="category-tab-btn px-2 py-1.5 text-xs font-medium rounded transition-all duration-200 text-gray-700 hover:bg-white hover:text-blue-700 hover:shadow-sm">
                                 Printer
                             </button>
                             <!-- <button type="button" 
@@ -176,18 +176,18 @@
                         </div>
                     </div>
                     
-                    <div class="flex flex-wrap items-center gap-2 xl:justify-end">
-                        <button type="button" onclick="exportStockExcel('all')" class="inline-flex items-center justify-center whitespace-nowrap bg-emerald-700 text-white text-sm font-medium px-3 py-2 rounded-lg hover:bg-emerald-800">
-                            <i class="fas fa-file-excel mr-2"></i>Export All Stock
+                    <div class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 lg:ml-auto lg:shrink-0">
+                        <button type="button" onclick="exportStockExcel('all')" class="inline-flex items-center justify-center whitespace-nowrap bg-emerald-700 text-white text-xs font-medium px-2.5 py-2 rounded-lg hover:bg-emerald-800">
+                            <i class="fas fa-file-excel mr-1"></i>Export All Stock
                         </button>
-                        <button type="button" onclick="exportStockExcel('filtered')" class="inline-flex items-center justify-center whitespace-nowrap bg-white text-emerald-800 border border-emerald-300 text-sm font-medium px-3 py-2 rounded-lg hover:bg-emerald-50">
-                            <i class="fas fa-filter mr-2"></i>Export Filtered
+                        <button type="button" onclick="exportStockExcel('filtered')" class="inline-flex items-center justify-center whitespace-nowrap bg-white text-emerald-800 border border-emerald-300 text-xs font-medium px-2.5 py-2 rounded-lg hover:bg-emerald-50">
+                            <i class="fas fa-filter mr-1"></i>Export Filtered
                         </button>
-                        <button type="button" onclick="loadProducts()" class="inline-flex items-center justify-center whitespace-nowrap bg-blue-600 text-white text-sm font-medium px-3 py-2 rounded-lg hover:bg-blue-700">
-                            <i class="fas fa-filter mr-2"></i>Filter
+                        <button type="button" onclick="loadProducts()" class="inline-flex items-center justify-center whitespace-nowrap bg-blue-600 text-white text-xs font-medium px-2.5 py-2 rounded-lg hover:bg-blue-700">
+                            <i class="fas fa-filter mr-1"></i>Filter
                         </button>
-                        <button type="button" onclick="window.location.href='/products/add'" class="inline-flex items-center justify-center whitespace-nowrap bg-green-600 text-white text-sm font-medium px-3 py-2 rounded-lg hover:bg-green-700">
-                            <i class="fas fa-plus mr-2"></i>Add Product
+                        <button type="button" onclick="window.location.href='/products/add'" class="inline-flex items-center justify-center whitespace-nowrap bg-green-600 text-white text-xs font-medium px-2.5 py-2 rounded-lg hover:bg-green-700">
+                            <i class="fas fa-plus mr-1"></i>Add Product
                         </button>
                     </div>
                 </div>
