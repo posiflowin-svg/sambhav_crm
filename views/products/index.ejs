@@ -115,8 +115,8 @@
 
         <!-- Filters and Actions -->
         <div class="bg-white shadow rounded-lg p-6 mb-6">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div class="flex-1">
+            <div class="space-y-4">
+                <div class="w-full">
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fas fa-search text-gray-400"></i>
@@ -126,13 +126,13 @@
                             onkeyup="if(event.keyCode===13) loadProducts()">
                     </div>
                 </div>
-                <div class="flex space-x-3">
+                <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
                     <!-- Hidden category input -->
                     <input type="hidden" id="category-filter" value="">
                     
-                    <div class="relative">
+                    <div class="min-w-0 w-full xl:w-auto overflow-x-auto">
                         <!-- Category Tabs Container -->
-                        <div class="bg-gray-100 rounded-md p-1 flex space-x-1">
+                        <div class="bg-gray-100 rounded-lg p-1 flex items-center gap-1 w-max">
                             <button type="button" 
                                     data-category="" 
                                     class="category-tab-btn px-3 py-1.5 text-sm font-medium rounded transition-all duration-200 bg-white text-blue-700 shadow-sm border border-blue-300">
@@ -176,20 +176,20 @@
                         </div>
                     </div>
                     
-                    <div class="relative inline-flex gap-2 flex-wrap">
-                        <button type="button" onclick="exportStockExcel('all')" class="bg-emerald-700 text-white px-4 py-2 rounded-md hover:bg-emerald-800">
+                    <div class="flex flex-wrap items-center gap-2 xl:justify-end">
+                        <button type="button" onclick="exportStockExcel('all')" class="inline-flex items-center justify-center whitespace-nowrap bg-emerald-700 text-white text-sm font-medium px-3 py-2 rounded-lg hover:bg-emerald-800">
                             <i class="fas fa-file-excel mr-2"></i>Export All Stock
                         </button>
-                        <button type="button" onclick="exportStockExcel('filtered')" class="bg-emerald-50 text-emerald-800 border border-emerald-300 px-4 py-2 rounded-md hover:bg-emerald-100">
-                            Export Filtered Stock
+                        <button type="button" onclick="exportStockExcel('filtered')" class="inline-flex items-center justify-center whitespace-nowrap bg-white text-emerald-800 border border-emerald-300 text-sm font-medium px-3 py-2 rounded-lg hover:bg-emerald-50">
+                            <i class="fas fa-filter mr-2"></i>Export Filtered
+                        </button>
+                        <button type="button" onclick="loadProducts()" class="inline-flex items-center justify-center whitespace-nowrap bg-blue-600 text-white text-sm font-medium px-3 py-2 rounded-lg hover:bg-blue-700">
+                            <i class="fas fa-filter mr-2"></i>Filter
+                        </button>
+                        <button type="button" onclick="window.location.href='/products/add'" class="inline-flex items-center justify-center whitespace-nowrap bg-green-600 text-white text-sm font-medium px-3 py-2 rounded-lg hover:bg-green-700">
+                            <i class="fas fa-plus mr-2"></i>Add Product
                         </button>
                     </div>
-                    <button onclick="loadProducts()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                        <i class="fas fa-filter mr-2"></i>Filter
-                    </button>
-                    <button onclick="window.location.href='/products/add'" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
-                        <i class="fas fa-plus mr-2"></i>Add Product
-                    </button>
                 </div>
             </div>
         </div>
