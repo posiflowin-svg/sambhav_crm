@@ -392,6 +392,11 @@
                                         <i class="fas fa-truck-loading"></i>
                                     </button>
                                 ` : ''}
+                                ${po.status !== 'cancelled' ? `
+                                    <button onclick="reversePO('${po._id}')" class="text-red-600 hover:text-red-900 mr-3" title="Cancel PO and reverse received stock">
+                                        <i class="fas fa-undo"></i>
+                                    </button>
+                                ` : ''}
                             </td>
                         </tr>
                     `;
@@ -477,6 +482,29 @@
         }
 
         // View PO
+        async function reversePO(id) {
+            try {
+                const response = await fetch(`${API_BASE}/pos/${id}`);
+                const result = await response.json();
+                if (!response.ok || !result.success) throw new Error(result.message || 'Unable to load PO');
+                const po = result.data;
+                const lines = (po.items || []).filter(item => Number(item.receivedQuantity || 0) > 0)
+                    .map(item => `${item.product?.itemName || 'Product'}: ${item.receivedQuantity} pcs`).join('\n');
+                if (!confirm(`CANCEL PO ${po.orderNumber}?\n\nThe following inward stock will be deducted:\n${lines || 'No inward stock (nothing to deduct)'}\n\nThe PO and its audit history will be retained as Cancelled. This cannot be undone automatically.`)) return;
+                const reason = prompt('Mandatory reason for cancelling/reversing this PO (minimum 8 characters):');
+                if (reason === null) return;
+                if (reason.trim().length < 8) return showError('Enter a reason of at least 8 characters');
+                const reversal = await fetch(`${API_BASE}/pos/${id}/reverse`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason: reason.trim() })
+                });
+                const outcome = await reversal.json();
+                if (!reversal.ok || !outcome.success) throw new Error(outcome.message || 'Reversal failed');
+                alert(outcome.message);
+                loadPOs(currentPage);
+            } catch (error) { showError(error.message); }
+        }
+
         async function viewPO(id) {
             try {
                 const response = await fetch(`${API_BASE}/pos/${id}`);

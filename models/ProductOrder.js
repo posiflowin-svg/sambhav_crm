@@ -53,6 +53,7 @@ const orderSchema = new mongoose.Schema({
       notes: String
     }]
   }],
+  reversal: { reason: String, reversedAt: Date, reversedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, quantities: [{ product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' }, quantity: Number }] },
   status: {
     type: String,
     enum: ['pending', 'ordered', 'shipped', 'delivered', 'cancelled', 'partially_delivered'],

@@ -315,6 +315,52 @@ exports.updatePO = async (req, res) => {
     } finally { session.endSession(); }
 };
 
+// Cancel a wrongly received PO and reverse its stock in one database transaction.
+// Keep the PO and original inward records for audit instead of hard-deleting them.
+exports.reversePO = async (req, res) => {
+    if (!req.user || !['admin', 'stock_manager'].includes(req.user.role)) {
+        return res.status(403).json({ success: false, message: 'Only Admin or Stock Manager may reverse a PO' });
+    }
+    const reason = String(req.body?.reason || '').trim();
+    if (reason.length < 8) return res.status(400).json({ success: false, message: 'Please enter a reversal reason (minimum 8 characters)' });
+    const session = await mongoose.startSession();
+    try {
+        await session.withTransaction(async () => {
+            const po = await ProductOrder.findById(req.params.id).session(session);
+            if (!po) throw new Error('PO not found');
+            if (po.status === 'cancelled' || po.reversal?.reversedAt) throw new Error('This PO is already cancelled/reversed');
+            const byProduct = new Map();
+            for (const line of po.items) {
+                const qty = Number(line.receivedQuantity || 0);
+                if (!Number.isFinite(qty) || qty < 0) throw new Error('Invalid received quantity in PO');
+                if (qty > 0) {
+                    const key = String(line.product);
+                    byProduct.set(key, (byProduct.get(key) || 0) + qty);
+                }
+            }
+            const StockTransaction = require('../models/StockTransaction');
+            const reversals = [];
+            for (const [id, quantity] of byProduct) {
+                const product = await Product.findById(id).session(session);
+                if (!product) throw new Error(`Product ${id} no longer exists; manual stock reconciliation required`);
+                const previousStock = Number(product.stockQuantity || 0);
+                if (previousStock < quantity) throw new Error(`Cannot reverse ${product.itemName}: current stock ${previousStock}, PO inward ${quantity}. Stock may already have been consumed.`);
+                // Atomic conditional update prevents concurrent reversals from creating negative stock.
+                const updated = await Product.updateOne({ _id: id, stockQuantity: { $gte: quantity } }, { $inc: { stockQuantity: -quantity }, $set: { lastUpdated: new Date() } }, { session });
+                if (updated.modifiedCount !== 1) throw new Error(`Stock changed while reversing ${product.itemName}; retry`);
+                reversals.push({ product: product._id, quantity });
+                await StockTransaction.create([{ type: 'stock_out', item: product._id, itemCode: product.itemCode, itemName: product.itemName, category: product.category, location: product.location, quantity: -quantity, unit: product.unit, previousStock, newStock: previousStock - quantity, reference: po.orderNumber, referenceId: po._id, description: `PO inward reversal: ${reason}`, performedBy: req.user._id }], { session });
+            }
+            po.reversal = { reason, reversedAt: new Date(), reversedBy: req.user._id, quantities: reversals };
+            po.status = 'cancelled';
+            await po.save({ session });
+        });
+        res.json({ success: true, message: 'PO cancelled and received stock reversed successfully. Audit history retained.' });
+    } catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+    } finally { await session.endSession(); }
+};
+
 // API: Receive items
 exports.receiveItems = async (req, res) => {
     const session = await mongoose.startSession();
