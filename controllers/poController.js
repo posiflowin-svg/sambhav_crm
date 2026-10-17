@@ -255,48 +255,64 @@ exports.createPO = async (req, res) => {
   }
 };
 
-// API: Update PO
+// API: Update PO, preserving each line's inward history and stock ledger.
 exports.updatePO = async (req, res) => {
     const session = await mongoose.startSession();
-    session.startTransaction();
-
     try {
-        const po = await ProductOrder.findById(req.params.id);
-        if (!po) {
-            throw new Error('PO not found');
+        session.startTransaction();
+        const po = await ProductOrder.findById(req.params.id).session(session);
+        if (!po) throw new Error('PO not found');
+        if (['delivered', 'cancelled'].includes(po.status)) throw new Error('Delivered or cancelled POs cannot be edited');
+        const { items, supplier, expectedDelivery, notes } = req.body;
+        if (!Array.isArray(items) || !items.length) throw new Error('At least one item is required');
+        const seen = new Set();
+        const nextItems = [];
+        for (const input of items) {
+            const quantity = Number(input.quantity);
+            const price = Number(input.pricePerUnit);
+            if (!mongoose.isValidObjectId(input.product) || !Number.isSafeInteger(quantity) || quantity < 1 || !Number.isFinite(price) || price < 0) {
+                throw new Error('Invalid product, quantity or unit price');
+            }
+            const product = await Product.findById(input.product).session(session);
+            if (!product) throw new Error('Product not found');
+            if (input.itemId) {
+                if (!mongoose.isValidObjectId(input.itemId) || seen.has(String(input.itemId))) throw new Error('Invalid or duplicate PO line');
+                const existing = po.items.id(input.itemId);
+                if (!existing) throw new Error('PO line not found');
+                if (String(existing.product) !== String(product._id) && existing.receivedQuantity > 0) {
+                    throw new Error('Cannot change product on an already received line');
+                }
+                if (quantity < existing.receivedQuantity) throw new Error('Quantity cannot be less than received quantity');
+                seen.add(String(existing._id));
+                const preserved = existing.toObject();
+                preserved.product = product._id;
+                preserved.quantity = quantity;
+                preserved.pricePerUnit = price;
+                preserved.unit = product.unit;
+                nextItems.push(preserved);
+            } else {
+                nextItems.push({ product: product._id, quantity, pricePerUnit: price, unit: product.unit });
+            }
         }
-
-        // Check if PO can be edited
-        if (['delivered', 'cancelled'].includes(po.status)) {
-            throw new Error('Cannot edit delivered or cancelled orders');
+        for (const existing of po.items) {
+            if (!seen.has(String(existing._id)) && existing.receivedQuantity > 0) {
+                throw new Error('Cannot remove a PO line with received stock');
+            }
         }
-
-        const { items, supplier, expectedDelivery, notes, status } = req.body;
-
-        // Update fields
-        if (items) po.items = items;
-        if (supplier) po.supplier = supplier;
-        if (expectedDelivery) po.expectedDelivery = expectedDelivery;
+        if (!supplier || !String(supplier.name || '').trim()) throw new Error('Supplier name is required');
+        po.items = nextItems;
+        po.supplier = { name: String(supplier.name).trim(), contact: String(supplier.contact || '') };
+        po.expectedDelivery = expectedDelivery || undefined;
         if (notes !== undefined) po.notes = notes;
-        if (status) po.status = status;
-
+        // Derive status from inward quantities rather than trusting a manually supplied status.
+        if (po.items.some(i => i.receivedQuantity > 0)) po.updateStatus();
         await po.save({ session });
         await session.commitTransaction();
-
-        res.json({
-            success: true,
-            message: 'PO updated successfully',
-            data: po
-        });
+        res.json({ success: true, message: 'PO updated successfully', data: po });
     } catch (error) {
         await session.abortTransaction();
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
-    } finally {
-        session.endSession();
-    }
+        res.status(400).json({ success: false, message: error.message });
+    } finally { session.endSession(); }
 };
 
 // API: Receive items

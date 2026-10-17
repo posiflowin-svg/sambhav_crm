@@ -741,6 +741,7 @@
                 }
                 
                 items.push({
+                    ...(element.dataset.itemId ? { itemId: element.dataset.itemId } : {}),
                     product: productId,
                     quantity: parseInt(quantity),
                     pricePerUnit: parseFloat(pricePerUnit)
@@ -1208,15 +1209,15 @@
                 const pricePerUnit = item.pricePerUnit || 0;
                 const subtotal = pricePerUnit * item.quantity;
                 itemsHtml += `
-                    <div class="po-item flex gap-2 items-start mb-2">
-                        <select class="product-select flex-1 rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" required onchange="updatePriceField(this)">
+                    <div class="po-item flex gap-2 items-start mb-2" data-item-id="${item._id}">
+                        <select class="product-select flex-1 rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" ${item.receivedQuantity > 0 ? 'disabled' : ''} required onchange="updatePriceField(this)">
                             ${productsOptions.replace(`value="${item.product?._id}"`, `value="${item.product?._id}" selected`)}
                         </select>
-                        <input type="number" class="quantity-input w-24 rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Qty" min="1" value="${item.quantity}" required onchange="updateSubtotal(this)">
+                        <input type="number" class="quantity-input w-24 rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Qty" min="${Math.max(1, item.receivedQuantity || 0)}" value="${item.quantity}" required onchange="updateSubtotal(this)">
                         <input type="number" class="price-input w-32 rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Price/Unit" step="0.01" min="0" value="${pricePerUnit}" required onchange="updateSubtotal(this)">
                         <span class="subtotal-display w-24 text-sm text-gray-600 self-center">${subtotal.toFixed(2)}</span>
                         <input type="number" class="received-input w-24 rounded-md border-gray-300 bg-gray-100 shadow-sm" placeholder="Received" value="${item.receivedQuantity}" readonly disabled>
-                        <button type="button" onclick="removePOItem(this)" class="text-red-600 hover:text-red-900">
+                        <button type="button" onclick="removePOItem(this)" ${item.receivedQuantity > 0 ? 'disabled title="Received item cannot be removed"' : ''} class="text-red-600 hover:text-red-900 disabled:opacity-30">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -1254,7 +1255,7 @@
                                             <input type="date" id="edit-expected-delivery" value="${po.expectedDelivery ? new Date(po.expectedDelivery).toISOString().split('T')[0] : ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
                                         </div>
 
-                                        <div>
+                                        <div class="hidden">
                                             <label class="block text-sm font-medium text-gray-700">Status</label>
                                             <select id="edit-status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
                                                 <option value="pending" ${po.status === 'pending' ? 'selected' : ''}>Pending</option>
@@ -1349,6 +1350,7 @@
                 }
                 
                 items.push({
+                    ...(element.dataset.itemId ? { itemId: element.dataset.itemId } : {}),
                     product: productId,
                     quantity: parseInt(quantity),
                     pricePerUnit: parseFloat(pricePerUnit)
@@ -1362,7 +1364,6 @@
                     contact: document.getElementById('edit-supplier-contact').value
                 },
                 expectedDelivery: document.getElementById('edit-expected-delivery').value || null,
-                status: document.getElementById('edit-status').value,
                 notes: document.getElementById('edit-notes').value
             };
 
