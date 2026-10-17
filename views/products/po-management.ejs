@@ -482,10 +482,21 @@
         }
 
         // View PO
+        async function readPOJson(response) {
+            const contentType = response.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                if (response.redirected || response.status === 401 || response.status === 403) {
+                    throw new Error('Your login session may have expired. Please sign in again and retry. No cancellation was confirmed.');
+                }
+                throw new Error(`Server returned an unexpected response (HTTP ${response.status}). Please check Render logs; cancellation was not confirmed.`);
+            }
+            return response.json();
+        }
+
         async function reversePO(id) {
             try {
-                const response = await fetch(`${API_BASE}/pos/${id}`);
-                const result = await response.json();
+                const response = await fetch(`${API_BASE}/pos/${id}`, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+                const result = await readPOJson(response);
                 if (!response.ok || !result.success) throw new Error(result.message || 'Unable to load PO');
                 const po = result.data;
                 const lines = (po.items || []).filter(item => Number(item.receivedQuantity || 0) > 0)
@@ -495,10 +506,10 @@
                 if (reason === null) return;
                 if (reason.trim().length < 8) return showError('Enter a reason of at least 8 characters');
                 const reversal = await fetch(`${API_BASE}/pos/${id}/reverse`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     body: JSON.stringify({ reason: reason.trim() })
                 });
-                const outcome = await reversal.json();
+                const outcome = await readPOJson(reversal);
                 if (!reversal.ok || !outcome.success) throw new Error(outcome.message || 'Reversal failed');
                 alert(outcome.message);
                 loadPOs(currentPage);
