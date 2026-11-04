@@ -988,7 +988,8 @@
 
     <!-- JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script>
+    <script src="/js/inquiry-attachments.js"></script>
+<script>
         // Global variables
         let currentPage = 1;
         let currentInquiryId = null;
@@ -1266,6 +1267,8 @@
                         </div>
                     </div>
 
+                    ${inquiryAttachmentMarkup(inquiry._id)}
+
                     <!-- Products -->
                     <div>
                         <h4 class="text-sm font-medium text-gray-700 mb-3">
@@ -1287,6 +1290,7 @@
             `;
 
             document.getElementById('viewContent').innerHTML = html;
+            inquiryAttachmentRefresh(inquiry._id);
         }
 
         // Helper function to generate star rating HTML

@@ -127,6 +127,11 @@
                     <textarea name="initialNote" rows="3" 
                               class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                               placeholder="Add any initial notes about this inquiry..."></textarea>
+                                <div class="mt-4 p-3 border rounded-lg bg-gray-50">
+                                    <label class="block font-semibold text-sm mb-2">Attach Images / Excel (Optional)</label>
+                                    <input type="file" name="inquiryAttachments" accept=".jpg,.jpeg,.png,.webp,.xls,.xlsx,.csv" multiple class="w-full text-sm">
+                                    <p class="text-xs text-gray-500 mt-1">Up to 5 files, 4 MB each. Files are saved after inquiry creation.</p>
+                                </div>
                 </div>
 
                 <!-- Submit Buttons -->
@@ -142,6 +147,7 @@
         </div>
     </main>
 
+    <script src="/js/inquiry-attachments.js"></script>
     <script>
         let productCount = 1;
 
@@ -235,6 +241,16 @@
                 const result = await response.json();
 
                 if (response.ok) {
+                    const filesInput = form.querySelector('input[name="inquiryAttachments"]');
+                    if (filesInput && filesInput.files.length) {
+                        try {
+                            const inquiryId = result.data?._id || result.inquiry?._id || result.data?.inquiry?._id;
+                            if (!inquiryId) throw new Error('Inquiry created, but response did not include inquiry ID');
+                            await inquiryAttachmentUpload(inquiryId, filesInput);
+                        } catch (uploadError) {
+                            alert('Inquiry created, but attachments were not saved: ' + uploadError.message + '. Open the inquiry to retry.');
+                        }
+                    }
                     alert('Inquiry created successfully!');
                     window.location.href = '/inquiries';
                 } else {
