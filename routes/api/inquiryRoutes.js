@@ -12,6 +12,8 @@ const allowedAttachments = new Map([
   ['.xls', 'application/vnd.ms-excel'], ['.csv', 'text/csv']
 ]);
 const path = require('path');
+const ATTACHMENT_RETENTION_MS = 60 * 24 * 60 * 60 * 1000;
+const activeAttachmentFilter = () => ({ createdAt: { $gt: new Date(Date.now() - ATTACHMENT_RETENTION_MS) } });
 const attachmentUpload = multer({
   storage: multer.memoryStorage(), limits: { fileSize: 4 * 1024 * 1024, files: 5 },
   fileFilter: (req, file, cb) => {
@@ -46,7 +48,7 @@ router.get('/:inquiryId/attachments', async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.inquiryId)) return res.status(400).json({ success: false, message: 'Invalid inquiry ID' });
     if (!await Inquiry.exists({ _id: req.params.inquiryId })) return res.status(404).json({ success: false, message: 'Inquiry not found' });
-    const data = await InquiryAttachment.find({ inquiryId: req.params.inquiryId }).select('filename mimeType size createdAt').sort({ createdAt: 1 }).lean();
+    const data = await InquiryAttachment.find({ inquiryId: req.params.inquiryId, ...activeAttachmentFilter() }).select('filename mimeType size createdAt').sort({ createdAt: 1 }).lean();
     res.json({ success: true, data });
   } catch (err) { res.status(500).json({ success: false, message: 'Unable to list attachments' }); }
 });
@@ -55,7 +57,7 @@ router.post('/:inquiryId/attachments', uploadFiles, async (req, res) => {
     if (!mongoose.isValidObjectId(req.params.inquiryId)) return res.status(400).json({ success: false, message: 'Invalid inquiry ID' });
     if (!await Inquiry.exists({ _id: req.params.inquiryId })) return res.status(404).json({ success: false, message: 'Inquiry not found' });
     if (!req.files?.length) return res.status(400).json({ success: false, message: 'Select files first' });
-    const existing = await InquiryAttachment.countDocuments({ inquiryId: req.params.inquiryId });
+    const existing = await InquiryAttachment.countDocuments({ inquiryId: req.params.inquiryId, ...activeAttachmentFilter() });
     if (existing + req.files.length > 20) return res.status(400).json({ success: false, message: 'Maximum 20 attachments per inquiry' });
     await InquiryAttachment.insertMany(req.files.map(f => ({
       inquiryId: req.params.inquiryId, filename: path.basename(f.originalname).slice(0, 180),
@@ -68,7 +70,7 @@ router.get('/:inquiryId/attachments/:attachmentId/download', async (req, res) =>
   try {
     if (!mongoose.isValidObjectId(req.params.inquiryId) || !mongoose.isValidObjectId(req.params.attachmentId)) return res.status(400).end();
     if (!await Inquiry.exists({ _id: req.params.inquiryId })) return res.status(404).end();
-    const file = await InquiryAttachment.findOne({ _id: req.params.attachmentId, inquiryId: req.params.inquiryId }).select('+content');
+    const file = await InquiryAttachment.findOne({ _id: req.params.attachmentId, inquiryId: req.params.inquiryId, ...activeAttachmentFilter() }).select('+content');
     if (!file) return res.status(404).end();
     res.set('Content-Type', file.mimeType);
     res.set('X-Content-Type-Options', 'nosniff');

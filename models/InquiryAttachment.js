@@ -9,4 +9,7 @@ const schema = new mongoose.Schema({
   uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   createdAt: { type: Date, default: Date.now }
 });
+// MongoDB automatically removes expired attachment documents, including binary content.
+// TTL cleanup is asynchronous, so API routes also exclude expired documents.
+schema.index({ createdAt: 1 }, { expireAfterSeconds: 60 * 24 * 60 * 60 });
 module.exports = mongoose.model('InquiryAttachment', schema);

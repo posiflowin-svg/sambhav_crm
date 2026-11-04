@@ -14,7 +14,7 @@ window.inquiryAttachmentMarkup = function(inquiryId) {
     <div class="font-semibold mb-2">Images & Excel Attachments</div>
     <input type="file" multiple accept=".jpg,.jpeg,.png,.webp,.xlsx,.xls,.csv" class="block w-full text-sm mb-2" aria-label="Add inquiry attachments">
     <button type="button" class="px-3 py-2 rounded bg-blue-600 text-white text-sm" onclick="inquiryAttachmentAddFromPanel(this)">Upload files</button>
-    <p class="text-xs text-gray-500 mt-1">Up to 5 files per upload, 4 MB each</p>
+    <p class="text-xs text-gray-500 mt-1">Up to 5 files per upload, 4 MB each. Files automatically expire 60 days after upload.</p>
     <div class="attachment-list mt-2 text-sm">Loading attachments...</div>
   </section>`;
 };
