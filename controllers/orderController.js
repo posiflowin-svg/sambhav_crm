@@ -363,6 +363,11 @@ class OrderController {
       //   });
       // }
 
+      // Prevent edits through the generic API after dispatch, too.
+      if (!['pending', 'approved'].includes(order.status)) {
+        return res.status(409).json({ error: 'Order editing is locked after dispatch (or cancellation)' });
+      }
+
       // Update fields
       if (products) {
         let productsArray;
@@ -448,9 +453,9 @@ class OrderController {
       // =============================
       // 3️⃣ Status Check
       // =============================
-      if (order.status !== 'pending') {
-        return res.status(400).json({
-          error: 'Only pending orders can be edited'
+      if (!['pending', 'approved'].includes(order.status)) {
+        return res.status(409).json({
+          error: 'Order editing is locked after dispatch (or cancellation)'
         });
       }
 

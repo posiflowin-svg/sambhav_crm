@@ -89,6 +89,11 @@ router.get('/sales/orders/:id/edit', authController.protect, async (req, res) =>
       return res.redirect('/sales/orders');
     }
 
+    if (!['pending', 'approved'].includes(order.status)) {
+      req.flash('error_msg', 'Order editing is locked after dispatch (or cancellation)');
+      return res.redirect('/sales/orders');
+    }
+
     res.render('sales/edit-order', {
       title: `Edit Order #${order.invoiceNo}`,
       order,

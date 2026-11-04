@@ -665,8 +665,8 @@ class SalesOrdersManager {
               <i class="bi bi-eye"></i>
             </a>
             
-            <!-- Edit Button - Only show for pending orders -->
-            ${order.status === 'pending' ? `
+            <!-- Edit until dispatch; approved orders remain editable -->
+            ${['pending', 'approved'].includes(order.status) ? `
               <a href="/sales/orders/${order._id || order.orderId}/edit" class="btn btn-outline-warning btn-sm" title="Edit Order">
                 <i class="bi bi-pencil"></i>
               </a>
