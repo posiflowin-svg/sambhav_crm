@@ -69,6 +69,11 @@ const orderSchema = new mongoose.Schema({
   },
 
   trackingId: String,
+  dispatchNotes: [{
+    message: { type: String, required: true, maxlength: 2000 },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    createdAt: { type: Date, default: Date.now }
+  }],
 
   approvedAt: Date,
   dispatchedAt: Date,

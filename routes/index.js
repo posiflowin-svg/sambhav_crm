@@ -464,6 +464,27 @@ router.patch('/api/dispatcher/orders/:id/status', authController.protect, async 
   }
 });
 
+// Add a dispatch note without changing the order status.
+router.post('/api/dispatcher/orders/:id/notes', authController.protect, async (req, res) => {
+  try {
+    if (!['dispatcher', 'admin', 'stock_manager'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Not authorized to add dispatch notes' });
+    }
+    const message = typeof req.body.message === 'string' ? req.body.message.trim() : '';
+    if (!message || message.length > 2000) {
+      return res.status(400).json({ error: 'Note must contain 1 to 2000 characters' });
+    }
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    order.dispatchNotes.push({ message, createdBy: req.user._id, createdAt: new Date() });
+    await order.save();
+    return res.json({ message: 'Dispatch note saved successfully' });
+  } catch (error) {
+    console.error('Dispatch note error:', error);
+    return res.status(500).json({ error: 'Failed to save dispatch note' });
+  }
+});
+
 // Send order back for update with reason (with stock reversal)
 router.patch('/api/dispatcher/orders/:id/send-back', authController.protect, async (req, res) => {
   const session = await mongoose.startSession();

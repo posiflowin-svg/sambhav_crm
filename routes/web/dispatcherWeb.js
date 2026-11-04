@@ -23,7 +23,7 @@ router.get('/dispatcher/orders', authController.protect, (req, res) => {
 router.get('/dispatcher/orders/:id', authController.protect, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
-      .populate('customer', 'name mobileNumber billingAddress')
+      .populate('customer', 'name mobileNumber billingAddress shippingAddress')
       .populate('salesPerson', 'name');
 
     if (!order) {
