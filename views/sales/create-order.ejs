@@ -1021,10 +1021,50 @@
     calculateTotals();
   }
 
+  // Keep validation errors inline and preserve all user-entered form values.
+  function showOrderFieldError(field, message) {
+    if (!field) return;
+    field.classList.add('is-invalid');
+    field.setAttribute('aria-invalid', 'true');
+    let feedback = document.getElementById('orderCreditValidationMessage');
+    if (!feedback) {
+      feedback = document.createElement('div');
+      feedback.id = 'orderCreditValidationMessage';
+      feedback.className = 'invalid-feedback';
+      feedback.style.display = 'block';
+      field.insertAdjacentElement('afterend', feedback);
+    }
+    feedback.textContent = message;
+    field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    field.focus({ preventScroll: true });
+  }
+
+  function clearOrderCreditError() {
+    const field = document.querySelector('input[name="creditAmount"]');
+    if (field) {
+      field.classList.remove('is-invalid');
+      field.removeAttribute('aria-invalid');
+    }
+    const feedback = document.getElementById('orderCreditValidationMessage');
+    if (feedback) feedback.remove();
+  }
+
+  document.querySelector('input[name="creditAmount"]').addEventListener('input', clearOrderCreditError);
+  document.querySelector('select[name="orderType"]').addEventListener('change', clearOrderCreditError);
+
   // Form submission
   document.getElementById('createOrderForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
+    clearOrderCreditError();
+    const creditField = this.querySelector('input[name="creditAmount"]');
+    const orderType = this.querySelector('select[name="orderType"]');
+    if (orderType && orderType.value === 'credit' &&
+        (!creditField || !Number.isFinite(Number(creditField.value)) || Number(creditField.value) <= 0)) {
+      showOrderFieldError(creditField, 'Please enter a valid Credit Amount greater than zero.');
+      return; // Do not submit or reset the existing order form.
+    }
+
     // Disable submit button and show loading state
     const submitBtn = this.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
@@ -1122,8 +1162,17 @@
       
     } catch (error) {
       console.error('Error creating order:', error);
-      alert('Error: ' + error.message);
-      
+      // Stop the loading overlay so the existing form remains editable.
+      animation.stop();
+      animation.destroy();
+      lottieContainer.style.display = 'none';
+      if (/credit amount/i.test(error.message)) {
+        showOrderFieldError(this.querySelector('input[name="creditAmount"]'),
+          'Please enter a valid Credit Amount greater than zero.');
+      } else {
+        alert('Error: ' + error.message);
+      }
+
       // Re-enable button on error
       submitBtn.innerHTML = originalText;
       submitBtn.disabled = false;
