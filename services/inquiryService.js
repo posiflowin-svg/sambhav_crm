@@ -179,8 +179,17 @@ class InquiryService {
       delete data.notes;
     }
 
+    // A fresh price-ready transition or revised final selling price triggers a new notification.
+    const oldReady = inquiry.overallStatus === 'pricing-ready';
+    const newReady = (data.overallStatus || inquiry.overallStatus) === 'pricing-ready';
+    const revisedPrice = Array.isArray(data.products) && data.products.some((p, i) =>
+      Number(p.finalSellingPrice ?? 0) !== Number(inquiry.products[i]?.finalSellingPrice ?? 0));
     // Update other fields
     Object.assign(inquiry, data);
+    if (newReady && (!oldReady || revisedPrice)) {
+      inquiry.priceReadyAt = new Date();
+      inquiry.priceReadyNoticeVersion = (inquiry.priceReadyNoticeVersion || 0) + 1;
+    }
     inquiry.updatedAt = Date.now();
 
     await inquiry.save();

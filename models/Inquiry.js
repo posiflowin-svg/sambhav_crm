@@ -106,6 +106,8 @@ const inquirySchema = new mongoose.Schema({
     default: 'new'
   },
 
+  priceReadyAt: { type: Date, default: null },
+  priceReadyNoticeVersion: { type: Number, default: 0 },
   notes: [noteSchema],
 
   createdBy: {

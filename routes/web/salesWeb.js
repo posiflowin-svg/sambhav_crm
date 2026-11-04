@@ -9,6 +9,31 @@ const inquiryController = require('../../controllers/inquiryController');
 const companyViewController = require('../../controllers/companyController');
 // router.use(authController.protect);
 
+// Sales inquiry management: scoped to the authenticated salesperson.
+const Inquiry = require('../../models/Inquiry');
+router.get('/sales/inquiries', authController.protect, (req, res) => {
+  res.render('sales/inquiries', { user: req.user, title: 'My Inquiries', activeTab: 'inquiries' });
+});
+router.get('/sales/inquiries/data', authController.protect, async (req, res) => {
+  try {
+    const items = await Inquiry.find({ assignedSalesPerson: req.user._id })
+      .populate('companyId', 'name companyName mobileNumber phone')
+      .select('companyId products overallStatus createdAt updatedAt priceReadyAt priceReadyNoticeVersion')
+      .sort({ updatedAt: -1 }).limit(500).lean();
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, data: items });
+  } catch (e) { console.error('Sales inquiry listing failed', e); res.status(500).json({ success: false, message: 'Unable to load inquiries' }); }
+});
+router.get('/sales/inquiries/:id/detail', authController.protect, async (req, res) => {
+  try {
+    const inquiry = await Inquiry.findOne({ _id: req.params.id, assignedSalesPerson: req.user._id })
+      .populate('companyId', 'name companyName mobileNumber phone')
+      .populate('notes.addedBy', 'name').lean();
+    if (!inquiry) return res.status(404).json({ success: false, message: 'Inquiry not found' });
+    res.json({ success: true, data: inquiry });
+  } catch (e) { res.status(400).json({ success: false, message: 'Invalid inquiry' }); }
+});
+
 // Sales Dashboard
 router.get('/sales/dashboard',authController.protect, (req, res) => {
   res.render('sales/dashboard', {
