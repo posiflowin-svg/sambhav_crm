@@ -351,20 +351,7 @@
   }
 </style>
 
-<div class="tab-nav">
-  <!-- <a href="/sales/dashboard">
-    <i class="bi bi-speedometer2"></i> Dashboard
-  </a> -->
-  <a href="/sales/orders">
-    <i class="bi bi-cart-fill"></i> Dashboard
-  </a>
-  <a href="/sales/orders/create">
-    <i class="bi bi-plus-circle"></i> Create Order
-  </a>
-  <a href="/sales/customers">
-    <i class="bi bi-people-fill"></i> Customers
-  </a>
-</div>
+<%- include('partials/navigation', { activeSalesTab: 'orders' }) %>
 
 <div class="sales-content">
   <!-- Alert Messages -->
